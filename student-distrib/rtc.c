@@ -16,13 +16,13 @@ void rtc_init(void);
 
 
 // GLOBAL FUNCTIONS
-/* rtc_init
+/*
+rtc_init
     DESCRIPTION: initializes the rtc chip
     INPUTS: none
     OUTPUTS: none
     RETURNS: none
     NOTES: important that interrupts are disabled when calling this function
-
 */
 void rtc_init(void) {
     outb(RTC_ADDR, 0x8B); // address register 0x0B and disable NMIs (0x80)

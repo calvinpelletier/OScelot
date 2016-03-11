@@ -24,7 +24,13 @@ unsigned char master_mask; /* IRQs 7-0 */
 unsigned char slave_mask; /* IRQs 15-8 */
 
 
-/* Initialize the 8259 PIC */
+/*
+i8259_init
+    DESCRIPTION: initializes the PIC
+    INPUTS: none
+    OUTPUTS: none
+    RETURNS: none
+*/
 void i8259_init(void) {
     // mask all interrupts
     outb(MASTER_DATA, 0xFF);
@@ -54,7 +60,13 @@ void i8259_init(void) {
 }
 
 
-/* Enable (unmask) the specified IRQ */
+/*
+enable_irq
+    DESCRIPTION: enables (unmasks) a specific irq
+    INPUTS: the number (0-15) of the irq
+    OUTPUTS: none
+    RETURNS: none
+*/
 void enable_irq(unsigned int irq_num) {
     // check if irq is on master or slave
     if (irq_num < 8) { // master
@@ -74,7 +86,13 @@ void enable_irq(unsigned int irq_num) {
 }
 
 
-/* Disable (mask) the specified IRQ */
+/*
+disable_irq
+    DESCRIPTION: disables (masks) a specific irq
+    INPUTS: the number (0-15) of the irq
+    OUTPUTS: none
+    RETURNS: none
+*/
 void disable_irq(unsigned int irq_num) {
     // check if irq is on master or slave
     if (irq_num < 8) { // master
@@ -94,7 +112,13 @@ void disable_irq(unsigned int irq_num) {
 }
 
 
-/* Send end-of-interrupt signal for the specified IRQ */
+/*
+send_eoi
+    DESCRIPTION: sends EOI to PIC letting it know that a specific IRQ is done being serviced.
+    INPUTS: the number (0-15) of the irq
+    OUTPUTS: none
+    RETURNS: none
+*/
 void send_eoi(unsigned int irq_num) {
     if (irq_num > 15) {return;}
 
