@@ -98,4 +98,23 @@ void disable_irq(unsigned int irq_num) {
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(unsigned int irq_num) {
+    if (irq_num > 15) {return;}
+
+    // TODO: not sure if I'm using EOI correctly... if it doesn't work try sending it over data line?
+    if (irq_num < 8) { // master
+        outb(MASTER_CMD, EOI | (unsigned char)(irq_num));
+    } else { // slave
+        outb(SLAVE_CMD, EOI | (unsigned char)(irq_num - 8));
+        // TODO: not sure if I should send master the exact irq num or the irq num for the connected slave (4) or not send anything at all
+        // outb(MASTER_CMD, EOI | (unsigned char)(irq_num)); // let master know as well
+
+        // verify that no interrupts are being serviced
+        if (DEBUG) {
+            outb(MASTER_CMD, 0x0B); // 0x0B tells the PIC to ready ISR for a read
+            outb(SLAVE_CMD, 0x0B);
+            if (inb(MASTER_CMD) || inb(SLAVE_CMD)) {
+                printf("WARNING: ISR is not 0 after sending EOI. Either the EOI function is not working, or another interrupt was serviced immediately.");
+            }
+        }
+    }
 }
