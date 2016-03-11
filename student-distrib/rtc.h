@@ -6,6 +6,6 @@
 
 #include "types.h"
 
-
+extern void rtc_init(void);
 
 #endif // RTC_H

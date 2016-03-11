@@ -32,11 +32,11 @@ void i8259_init(void) {
     master_mask = 0xFF;
     slave_mask = 0xFF;
 
-    // TODO: should we wait at all between commands?
+    // NOTE: should we wait at all between commands?
     // initialize master
     outb(MASTER_CMD, ICW1); // begin sequence
     outb(MASTER_DATA, ICW2_MASTER); // specify port #
-    outb(MASTER_DATA, ICW3_MASTER); // info about slave
+    outb(MASTER_DATA, ICW3_MASTER); // info about slave (connected to line 4)
     outb(MASTER_DATA, ICW4); // extra info
 
     // initialize slave
@@ -51,8 +51,6 @@ void i8259_init(void) {
             printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.")
         }
     }
-
-    //TODO: initialize devices
 }
 
 
@@ -100,7 +98,7 @@ void disable_irq(unsigned int irq_num) {
 void send_eoi(unsigned int irq_num) {
     if (irq_num > 15) {return;}
 
-    // TODO: not sure if I'm using EOI correctly... if it doesn't work try sending it over data line?
+    // NOTE: not sure if I'm using EOI correctly... if it doesn't work try sending it over data line?
     if (irq_num < 8) { // master
         outb(MASTER_CMD, EOI | (unsigned char)(irq_num));
     } else { // slave
