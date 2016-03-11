@@ -144,6 +144,34 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
+	/* Set the IDT appropriately */
+	{
+		x86_desc_t tmp;
+		tmp.addr = (uint32_t) idt_desc_ptr;
+		tmp.size = 0x07FF;
+		tmp.padding = 0x0000;
+		lidt(tmp);
+
+		SET_IDT_ENTRY(0, 0x00000000);
+		SET_IDT_ENTRY(1, 0x00000000);
+		SET_IDT_ENTRY(2, 0x00000000);
+		SET_IDT_ENTRY(3, 0x00000000);
+		SET_IDT_ENTRY(4, 0x00000000);
+		SET_IDT_ENTRY(5, 0x00000000);
+		SET_IDT_ENTRY(6, 0x00000000);
+		SET_IDT_ENTRY(7, 0x00000000);
+		SET_IDT_ENTRY(8, 0x00000000);
+		SET_IDT_ENTRY(9, 0x00000000);
+		SET_IDT_ENTRY(10, 0x00000000);
+		SET_IDT_ENTRY(11, 0x00000000);
+		SET_IDT_ENTRY(12, 0x00000000);
+		SET_IDT_ENTRY(13, 0x00000000);
+		SET_IDT_ENTRY(14, 0x00000000);
+		SET_IDT_ENTRY(15, 0x00000000);
+		SET_IDT_ENTRY(16, 0x00000000);
+		SET_IDT_ENTRY(17, 0x00000000);
+	}
+
 	/* Init the PIC */
 	i8259_init();
 
@@ -162,4 +190,3 @@ entry (unsigned long magic, unsigned long addr)
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
 }
-
