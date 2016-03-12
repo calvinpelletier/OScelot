@@ -28,7 +28,7 @@ void rtc_init(void) {
     outb(RTC_ADDR, 0x8B); // address register 0x0B and disable NMIs (0x80)
     unsigned char temp = inb(RTC_DATA); // read register 0x0B
     outb(RTC_ADDR, 0x8B); // address register again because apparently reading resets this
-    outb(RTC_DATA, 0x40 | temp); // turns on periodic interrupts
+    outb(RTC_DATA, temp | 0x40); // turns on periodic interrupts
     // NOTE: should we reenable NMIs?
 }
 

@@ -8,6 +8,11 @@
 
 #include "types.h"
 
+// useful IRQ numbers
+#define RTC_IRQ_NUM 8
+#define KEYBOARD_IRQ_NUM 1
+
+
 /* Ports that each PIC sits on */
 #define MASTER_CMD    0x20
 #define MASTER_DATA   0x21
