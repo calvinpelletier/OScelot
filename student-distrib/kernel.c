@@ -7,6 +7,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "debug.h"
+#include "paging.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -157,9 +158,13 @@ entry (unsigned long magic, unsigned long addr)
 	/*printf("Enabling Interrupts\n");
 	sti();*/
 
+	// setup paging
+	if (paging_init()) {
+		printf("ERROR: Paging failed to initialize.");
+	};
+
 	/* Execute the first program (`shell') ... */
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
 }
-
