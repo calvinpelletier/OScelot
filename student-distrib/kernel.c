@@ -278,11 +278,6 @@ entry (unsigned long magic, unsigned long addr)
 	 }
 	 enable_irq(KEYBOARD_IRQ_NUM);
 
-	 // setup paging
-	if (paging_init()) {
-		printf("ERROR: Paging failed to initialize.");
-	};
-
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
@@ -290,8 +285,14 @@ entry (unsigned long magic, unsigned long addr)
 	printf("Enabling Interrupts\n");
 	sti();
 
+	// setup paging
+	if (paging_init()) {
+		printf("ERROR: Paging failed to initialize.");
+	};
 
 	/* Execute the first program (`shell') ... */
+	int * ptr = NULL;
+	int a = *ptr;
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
