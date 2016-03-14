@@ -248,7 +248,7 @@ entry (unsigned long magic, unsigned long addr)
 		idt[19] = simdFPE;
 
 		idt_desc_t rtc = first;
-		SET_IDT_ENTRY(rtc, &testInterrupts);
+		SET_IDT_ENTRY(rtc, &test_interrupts);
 		idt[32] = rtc;
 
 		idt_desc_t kb = first;
