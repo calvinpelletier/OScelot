@@ -6,5 +6,6 @@
 
 #include "types.h"
 
+extern int paging_init(void);
 
 #endif

@@ -3,14 +3,18 @@
 #include "paging.h"
 #include "lib.h"
 
+// CONSTANTS
+#define DEBUG 1
+#define KERNEL_LOC 0x00400000
+
 
 // FUNCTION DECLARATIONS
-void paging_init(void);
+int paging_init(void);
 
 
 // GLOBAL VARIABLES
-static unsigned int pageDir[1024] __attribute__((aligned(4096)));
-static unsigned int vidMemTable[1024] __attribute__((aligned(4096)));
+static unsigned long pageDir[1024] __attribute__((aligned(4096)));
+static unsigned long vidMemTable[1024] __attribute__((aligned(4096)));
 
 
 /*
@@ -34,7 +38,7 @@ D: dirty (0 = hasn't been written to, 1 = has been written to)
 
 
 // GLOBAL FUNCTIONS
-void paging_init(void) {
+int paging_init(void) {
     // initialize pageDir
     int i;
     for (i = 0; i < 1024; i++) {
@@ -42,7 +46,17 @@ void paging_init(void) {
     }
 
     // initialize first table (video memory)
+    if (DEBUG) {
+        // sanity check
+        if (vidMemTable & 0xFFFFF000) {
+            printf("ERROR: vidMemTable not aligned to 4KB.\n");
+        }
+    }
+    pageDir[0] = vidMemTable | 0x00000007; // sets flags to accessable-by-everyone, write-enabled, and present.
+    for (i = 0; i < 1024; i++) {
+        vidMemTable[i] = (i << 12) | 0x00000107; // maps exactly to physical address (and sets same flags as above plus global flag)
+    }
 
     // initialize kernel
-
+    pageDir[1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
 }
