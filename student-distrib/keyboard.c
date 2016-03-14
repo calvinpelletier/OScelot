@@ -47,11 +47,13 @@ int keyboard_init(void) {
     outb(KEYBOARD_DATA, TEST_DEVICE);
     unsigned char test_results = inb(KEYBOARD_DATA);
     if (test_results != 0x55) { // pass on 0x55
+        printf("ERROR: keyboard failed device test.\n");
         return -1;
     }
     outb(KEYBOARD_CMD, TEST_PORT1);
     test_results = inb(KEYBOARD_DATA);
     if (test_results) { // pass on 0x00
+        printf("ERROR: keyboard failed port test.\n");
         return -1;
     }
 
@@ -68,6 +70,7 @@ int keyboard_init(void) {
         status = inb(KEYBOARD_STATUS);
     } while ((status & 0x02) && !(status & 0x40));
     if (status & 0x40) { // check if we timed out
+        printf("ERROR: keyboard input buffer timed out.\n");
         return -1;
     }
 
