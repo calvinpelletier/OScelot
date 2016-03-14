@@ -87,6 +87,11 @@ int keyboard_init(void) {
 }
 
 
+void keyboard_handler(void) {
+    unsigned char data = inb(KEYBOARD_DATA);
+}
+
+
 // LOCAL FUNCTIONS
 int waitForOutput(void) {
     unsigned char status;
