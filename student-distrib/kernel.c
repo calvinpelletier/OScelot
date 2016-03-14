@@ -249,10 +249,8 @@ entry (unsigned long magic, unsigned long addr)
 		idt[19] = simdFPE;
 
 		idt_desc_t rtc = first;
-		SET_IDT_ENTRY(rtc, rtc_handler);
-		//idt[32] = rtc;
-		// NOTE: try idt[112]
-		idt[112] = rtc;
+		SET_IDT_ENTRY(rtc, rtcTest);
+		idt[32] = rtc;
 
 		idt_desc_t kb = first;
 		SET_IDT_ENTRY(kb, keyboard_handler);
@@ -274,17 +272,11 @@ entry (unsigned long magic, unsigned long addr)
 	 // initialize RTC
 	 rtc_init();
 	 enable_irq(RTC_IRQ_NUM);
-
 	 // initialize keyboard
 	 if (keyboard_init()) {
 		 printf("ERROR: keyboard failed initialization.\n");
 	 }
 	 enable_irq(KEYBOARD_IRQ_NUM);
-
-	// setup paging
-	if (paging_init()) {
-		printf("ERROR: Paging failed to initialize.");
-	};
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -293,8 +285,13 @@ entry (unsigned long magic, unsigned long addr)
 	printf("Enabling Interrupts\n");
 	sti();
 
-	/* Execute the first program (`shell') ... */
+	// setup paging
+	if (paging_init()) {
+		printf("ERROR: Paging failed to initialize.");
+	};
 
+	/* Execute the first program (`shell') ... */
+	
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

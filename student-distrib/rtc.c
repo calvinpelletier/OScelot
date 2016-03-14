@@ -7,14 +7,12 @@
 
 
 // CONSTANTS
-#define DEBUG 1
 #define RTC_ADDR 0x70 // port for addressing RTC registers and enabling/disabling NMIs
 #define RTC_DATA 0x71 // port for writing data to RTC registers
 
 
 // FUNCTION DECLARATIONS
 void rtc_init(void);
-void rtc_handler(void);
 
 
 // GLOBAL FUNCTIONS
@@ -31,25 +29,15 @@ void rtc_init(void) {
     unsigned char temp = inb(RTC_DATA); // read register 0x0B
     outb(0x8B, RTC_ADDR); // address register again because apparently reading resets this
     outb(temp | 0x40, RTC_DATA); // turns on periodic interrupts
-    // outb(0x0B, RTC_ADDR); // reenable NMIs and I guess just address 0x0B just for the hell of it
-}
-
-
-/*
-rtc_handler
-    DESCRIPTION: called on RTC interrupts
-    INPUTS: none
-    OUTPUTS: none
-    RETURNS: none
-    NOTES: important that interrupts are disabled when calling this function
-*/
-void rtc_handler(void) {
-    outb(0x0C, RTC_ADDR); // select register 0x0C
-    inb(RTC_DATA); // throw away contents (important)
-    if (DEBUG) {
-        printf("DEBUG: received RTC interrupt.\n");
-        test_interrupts();
-    }
+    outb(0x0B, RTC_ADDR); // reenable NMIs and I guess just address 0x0B just for the hell of it
+    // cli();
+    // outb(0x70, 0x8A);
+    // char prev = inb(0x71);
+    // outb(0x70, 0x8A);
+    // outb(0x71, (prev & 0xF0) | 15);
+    // sti();
+    // outb(0x70, 0x0C);
+    // inb(0x71);
 }
 
 
