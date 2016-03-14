@@ -35,7 +35,7 @@ keyboard_init
     RETURNS: 0 for success, -1 for failure
 */
 int keyboard_init(void) {
-    unsigned char status, config, test_results;
+    unsigned char config, test_results;
 
     outb(DISABLE_PORT1, KEYBOARD_CMD);
     outb(DISABLE_PORT2, KEYBOARD_CMD); // will be ignored if there is no port 2
@@ -87,6 +87,7 @@ int keyboard_init(void) {
 
 // LOCAL FUNCTIONS
 int waitForOutput(void) {
+    unsigned char status;
     do {
         status = inb(KEYBOARD_STATUS);
     } while (!(status & 0x01) && !(status & 0x40));
@@ -98,6 +99,7 @@ int waitForOutput(void) {
 }
 
 int waitForInput(void) {
+    unsigned char status;
     do {
         status = inb(KEYBOARD_STATUS);
     } while ((status & 0x02) && !(status & 0x40));
