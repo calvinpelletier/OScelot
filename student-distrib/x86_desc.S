@@ -10,7 +10,7 @@
 .globl  gdt_desc, ldt_desc, tss_desc
 .globl  tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl  gdt_ptr
-.globl  idt_desc_ptr, idt
+.globl  idt_desc_ptr, idt, idt_size
 .globl  gdt
 
 .align 4
