@@ -22,5 +22,6 @@ extern void alignmentCheck();
 extern void machineCheck();
 extern void simdFloatingPointException();
 extern void rtcTest();
+extern void genericIrqHandler();
 
 #endif
