@@ -58,7 +58,7 @@ int keyboard_init(void) {
     // enable device
     outb(KEYBOARD_CMD, ENABLE_PORT1);
     outb(KEYBOARD_DATA, READ_FROM_CONFIG);
-    unsigned char config = inb(KEYBOARD_DATA);
+    config = inb(KEYBOARD_DATA);
     outb(KEYBOARD_CMD, WRITE_TO_CONFIG);
     outb(KEYBOARD_DATA, config | 0x01); // reenable interrupts
 

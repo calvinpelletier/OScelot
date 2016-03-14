@@ -49,12 +49,12 @@ void i8259_init(void) {
     outb(SLAVE_CMD, ICW1);
     outb(SLAVE_DATA, ICW2_SLAVE);
     outb(SLAVE_DATA, ICW3_SLAVE); // cascade info
-    outb(SLAVE_DATA, ICW4) // extra info
+    outb(SLAVE_DATA, ICW4); // extra info
 
     // DEBUG: verify that all interrupts are indeed masked
     if (DEBUG) {
         if (inb(MASTER_DATA) || inb(SLAVE_DATA)) {
-            printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.")
+            printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.");
         }
     }
 }
