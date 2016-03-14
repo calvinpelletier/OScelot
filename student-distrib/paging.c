@@ -57,12 +57,12 @@ int paging_init(void) {
     // initialize first table
     if (DEBUG) {
         // sanity check
-        if (vidMemTable & 0xFFFFF000) {
+        if ((unsigned long)(vidMemTable) & 0xFFFFF000) {
             printf("ERROR: vidMemTable not aligned to 4KB.\n");
             return -1;
         }
     }
-    pageDir[0] = vidMemTable | 0x00000007; // sets flags to accessable-by-everyone, write-enabled, and present.
+    pageDir[0] = (unsigned long)(vidMemTable) | 0x00000007; // sets flags to accessable-by-everyone, write-enabled, and present.
     for (i = 0; i < 1024; i++) {
         vidMemTable[i] = 0x00000002; // sets flags to everyone, write-enabled, and not-present
     }
