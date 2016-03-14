@@ -146,14 +146,21 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Set the IDT appropriately */
 	{
-		x86_desc_t tmp;
-		tmp.addr = (uint32_t) idt_desc_ptr;
-		tmp.size = 0x07FF;
-		tmp.padding = 0x0000;
-		lidt(tmp);
-
-		idt_desc_t test;
-		SET_IDT_ENTRY(test, &printf);
+		idt_desc_t first;
+		int i;
+		for (i = 0; i < NUM_VEC; i++ ) {
+			first.present = 1;
+			first.dpl = 0;
+			first.reserved0 = 0;
+			first.size = 1;
+			first.reserved1 = 1;
+			first.reserved2 = 1;
+			first.reserved3 = 0;
+			first.reserved4 = 0;
+			first.seg_selector = KERNEL_CS;
+			SET_IDT_ENTRY(first, &printf);
+			idt[i] = first;
+		}
 	}
 
 	/* Init the PIC */
@@ -166,8 +173,8 @@ entry (unsigned long magic, unsigned long addr)
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	/*printf("Enabling Interrupts\n");
-	sti();*/
+	printf("Enabling Interrupts\n");
+	sti();
 
 	/* Execute the first program (`shell') ... */
 
