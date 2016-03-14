@@ -121,12 +121,12 @@ send_eoi
 */
 void send_eoi(unsigned int irq_num) {
     if (irq_num > 15) {return;}
-    //enable_irq(irq_num); // unmask irq
+    enable_irq(irq_num); // unmask irq
     // NOTE: not sure if I'm using EOI correctly... if it doesn't work try sending it over data line?
     if (irq_num < 8) { // master
         outb(EOI | (unsigned char)(irq_num), MASTER_CMD);
     } else { // slave
-    	//enable_irq(2); // unmask master IRQ2, which slave PIC is connected to
+    	enable_irq(2); // unmask master IRQ2, which slave PIC is connected to
         outb(EOI | (unsigned char)(irq_num - 8), SLAVE_CMD);
         outb(EOI | (unsigned char)(2), MASTER_CMD); // let master know as well
 

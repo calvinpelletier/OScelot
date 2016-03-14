@@ -44,7 +44,6 @@ rtc_handler
     NOTES: important that interrupts are disabled when calling this function
 */
 void rtc_handler(void) {
-    cli();
     outb(0x0C, RTC_ADDR); // select register 0x0C
     inb(RTC_DATA); // throw away contents (important)
     if (DEBUG) {
@@ -52,7 +51,6 @@ void rtc_handler(void) {
         test_interrupts();
     }
     send_eoi(8);
-    sti();
 }
 
 
