@@ -5,9 +5,9 @@
 
 
 # Flags to use when compiling, preprocessing, assembling, and linking
-CFLAGS 	+= -Wall -fno-builtin -fno-stack-protector -nostdlib
-ASFLAGS +=
-LDFLAGS += -nostdlib -static
+CFLAGS 	+= -Wall -fno-builtin -fno-stack-protector -nostdlib -m32
+ASFLAGS += -m32
+LDFLAGS += -nostdlib -static -m32
 CC=gcc
 
 #If you have any .h files in another directory, add -I<dir> to this line
@@ -19,7 +19,7 @@ SRC =  $(wildcard *.S) $(wildcard *.c)
 # This generates the list of .o files. The order matters, boot.o must be first
 OBJS  = boot.o
 OBJS += $(filter-out boot.o,$(patsubst %.S,%.o,$(filter %.S,$(SRC))))
-OBJS += $(patsubst %.c,%.o,$(filter %.c,$(SRC))) 
+OBJS += $(patsubst %.c,%.o,$(filter %.c,$(SRC)))
 
 
 bootimg: Makefile $(OBJS)
@@ -32,7 +32,7 @@ Makefile.dep: $(SRC)
 	$(CC) -MM $(CPPFLAGS) $(SRC) > $@
 
 .PHONY: clean
-clean: 
+clean:
 	rm -f *.o Makefile.dep bootimg
 
 ifneq ($(MAKECMDGOALS),dep)
