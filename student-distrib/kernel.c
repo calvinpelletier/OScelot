@@ -7,6 +7,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "debug.h"
+#include "paging.h"
 #include "kernel_handlers.h"
 #include "rtc.h"
 #include "keyboard.h"
@@ -283,6 +284,11 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
+
+	// setup paging
+	if (paging_init()) {
+		printf("ERROR: Paging failed to initialize.");
+	};
 
 	/* Execute the first program (`shell') ... */
 
