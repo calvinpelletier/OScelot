@@ -1,25 +1,25 @@
 #ifndef KERNEL_HANDLER_H
 #define KERNEL_HANDLER_H
 
-void divideByZero();
-void debug();
-void nonMaskableInterrupts();
-void breakpoint();
-void overflow();
-void bounds();
-void invalidOpCode();
-void coprocessorNotAvailable();
-void doubleFault();
-void coprocessorSegmentOverrun();
-void invalidTaskStateSegment();
-void segmentNotPresent();
-void stackFault();
-void generalProtectionFault();
-void pageFault();
-void reserved();
-void mathFault();
-void alignmentCheck();
-void machineCheck();
-void simdFloatingPointException();
+extern void divideByZero();
+extern void debug();
+extern void nonMaskableInterrupts();
+extern void breakpoint();
+extern void overflow();
+extern void bounds();
+extern void invalidOpCode();
+extern void coprocessorNotAvailable();
+extern void doubleFault();
+extern void coprocessorSegmentOverrun();
+extern void invalidTaskStateSegment();
+extern void segmentNotPresent();
+extern void stackFault();
+extern void generalProtectionFault();
+extern void pageFault();
+extern void reserved();
+extern void mathFault();
+extern void alignmentCheck();
+extern void machineCheck();
+extern void simdFloatingPointException();
 
 #endif
