@@ -167,8 +167,3 @@ void rtcTest()
     printf("Hello World\n");
     while(1);
 }
-
-void commonIrqHandler()
-{
-	
-}
