@@ -22,6 +22,7 @@
 
 // FUNCTION DECLARATIONS
 int keyboard_init(void);
+void keyboard_handler(void);
 int waitForInput(void);
 int waitForOutput(void);
 
