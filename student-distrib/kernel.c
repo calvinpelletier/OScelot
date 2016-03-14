@@ -8,10 +8,13 @@
 #include "i8259.h"
 #include "debug.h"
 #include "paging.h"
+#include "rtc.h"
+#include "keyboard.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
+
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -145,18 +148,45 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
+	/* Set the IDT appropriately */
+	{
+		idt_desc_t first;
+		int i;
+		for (i = 0; i < NUM_VEC; i++ ) {
+			first.present = 1;
+			first.dpl = 0;
+			first.reserved0 = 0;
+			first.size = 1;
+			first.reserved1 = 1;
+			first.reserved2 = 1;
+			first.reserved3 = 0;
+			first.reserved4 = 0;
+			first.seg_selector = KERNEL_CS;
+			SET_IDT_ENTRY(first, &printf);
+			idt[i] = first;
+		}
+	}
+
 	/* Init the PIC */
 	i8259_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
+	 // initialize RTC
+	 rtc_init();
+	 enable_irq(RTC_IRQ_NUM);
+	 // initialize keyboard
+	 if (keyboard_init()) {
+		 printf("ERROR: keyboard failed initialization.");
+	 }
+	 enable_irq(KEYBOARD_IRQ_NUM);
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
-	/*printf("Enabling Interrupts\n");
-	sti();*/
+	printf("Enabling Interrupts\n");
+	sti();
 
 	// setup paging
 	if (paging_init()) {

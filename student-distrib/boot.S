@@ -13,6 +13,15 @@
 	.long MULTIBOOT_HEADER_FLAGS
 	.long -(MULTIBOOT_HEADER_MAGIC+MULTIBOOT_HEADER_FLAGS)
 
+gdtr:
+	# A 6-byte operand needed to load the GDTR with the base address (upper 4 bytes) and limit (size -1 in bytes) of the GDT
+	.word 0 /* Stores size of GDT */
+	.long 0 /* Stores base of GDT */
+
+idtr:
+	.word 0 /* stores size of IDT */
+	.long 0 /* stores base of GDT */
+
 # Entrypoint to the kernel
 .globl  start, _start
 
@@ -25,7 +34,24 @@ _start:
 
 continue:
 	# Load the GDT
+	# Get base and size of gdt from x86_desc.S, store them in gdtr operand, and lgdt with these values
+	pushl	%eax
+	leal	gdt, %eax
+	movl 	%eax, gdtr+2
+	movw	gdt_size, %ax
+	movw 	%ax, gdtr
+	lgdt 	gdtr
 
+	# Load the IDT in a similar fashion as the GDT above
+	leal	ldt, %eax
+	movl	%eax, idtr+2
+	movw	idt_size, %ax
+	movw	%ax, idtr
+	lidt	idtr
+
+	popl 	%eax
+
+	# flush GDT - initialize CS to KERNEL_CS and all other segments to KERNEL_DS:
 	# Load CS with the new descriptor value
 	ljmp    $KERNEL_CS, $keep_going
 
@@ -54,4 +80,3 @@ keep_going:
 halt:
 	hlt
 	jmp     halt
-

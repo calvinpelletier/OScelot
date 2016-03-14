@@ -1,4 +1,4 @@
-/* x86_desc.h - Defines for various x86 descriptors, descriptor tables, 
+/* x86_desc.h - Defines for various x86 descriptors, descriptor tables,
  * and selectors
  * vim:ts=4 noexpandtab
  */
@@ -171,7 +171,7 @@ extern x86_desc_t idt_desc_ptr;
 #define SET_IDT_ENTRY(str, handler) \
 do { \
 	str.offset_31_16 = ((uint32_t)(handler) & 0xFFFF0000) >> 16; \
-		str.offset_15_00 = ((uint32_t)(handler) & 0xFFFF); \
+	str.offset_15_00 = ((uint32_t)(handler) & 0xFFFF); \
 } while(0)
 
 /* Load task register.  This macro takes a 16-bit index into the GDT,

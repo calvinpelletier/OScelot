@@ -8,9 +8,16 @@
 
 #include "types.h"
 
+// useful IRQ numbers
+#define RTC_IRQ_NUM 8
+#define KEYBOARD_IRQ_NUM 1
+
+
 /* Ports that each PIC sits on */
-#define MASTER_8259_PORT 0x20
-#define SLAVE_8259_PORT  0xA0
+#define MASTER_CMD    0x20
+#define MASTER_DATA   0x21
+#define SLAVE_CMD    0xA0
+#define SLAVE_DATA   0xA1
 
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
@@ -32,10 +39,10 @@
 /* Initialize both PICs */
 void i8259_init(void);
 /* Enable (unmask) the specified IRQ */
-void enable_irq(uint32_t irq_num);
+void enable_irq(unsigned int irq_num);
 /* Disable (mask) the specified IRQ */
-void disable_irq(uint32_t irq_num);
+void disable_irq(unsigned int irq_num);
 /* Send end-of-interrupt signal for the specified IRQ */
-void send_eoi(uint32_t irq_num);
+void send_eoi(unsigned int irq_num);
 
 #endif /* _I8259_H */
