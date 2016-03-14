@@ -246,6 +246,21 @@ entry (unsigned long magic, unsigned long addr)
 		idt_desc_t simdFPE = first;
 		SET_IDT_ENTRY(simdFPE, &simdFloatingPointException);
 		idt[19] = simdFPE;
+
+		idt_desc_t rtc = first;
+		SET_IDT_ENTRY(rtc, &testInterrupts);
+		idt[32] = rtc;
+
+		idt_desc_t kb = first;
+		SET_IDT_ENTRY(kb, &keyboard_handler);
+		idt[33] = kb;
+
+		first.reserved3 = 1;
+		first.dpl = 3;
+
+		idt_desc_t sys = first;
+		SET_IDT_ENTRY(sys, &dispatch);
+		idt[127] = sys;
 	}
 
 	/* Init the PIC */
