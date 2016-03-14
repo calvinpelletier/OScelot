@@ -176,7 +176,7 @@ entry (unsigned long magic, unsigned long addr)
 	 enable_irq(RTC_IRQ_NUM);
 	 // initialize keyboard
 	 if (keyboard_init()) {
-		 printf("ERROR: keyboard failed initialization.");
+		 printf("ERROR: keyboard failed initialization.\n");
 	 }
 	 enable_irq(KEYBOARD_IRQ_NUM);
 

@@ -54,7 +54,7 @@ void i8259_init(void) {
     // DEBUG: verify that all interrupts are indeed masked
     if (DEBUG) {
         if (inb(MASTER_DATA) || inb(SLAVE_DATA)) {
-            printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.");
+            printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.\n");
         }
     }
 }
@@ -81,7 +81,7 @@ void enable_irq(unsigned int irq_num) {
             outb(slave_mask, SLAVE_DATA);
         }
     } else { // error
-        printf("ERROR: invalid irq_num in enable_irq.");
+        printf("ERROR: invalid irq_num in enable_irq.\n");
     }
 }
 
@@ -97,7 +97,7 @@ void disable_irq(unsigned int irq_num) {
     // check if irq is on master or slave
     if (irq_num < 8) { // master
         if (!(master_mask & (1 << irq_num))) { // not already disabled
-        	master_mask |= (1 << irq_num);	
+        	master_mask |= (1 << irq_num);
             outb(master_mask, MASTER_DATA);
         }
     } else if (irq_num < 16) { // slave
@@ -107,7 +107,7 @@ void disable_irq(unsigned int irq_num) {
             outb(slave_mask, SLAVE_DATA);
         }
     } else { // error
-        printf("ERROR: invalid irq_num in disable_irq.");
+        printf("ERROR: invalid irq_num in disable_irq.\n");
     }
 }
 
@@ -135,7 +135,7 @@ void send_eoi(unsigned int irq_num) {
             outb(0x0B, MASTER_CMD); // 0x0B tells the PIC to ready ISR for a read
             outb(0x0B, SLAVE_CMD);
             if (inb(MASTER_CMD) || inb(SLAVE_CMD)) {
-                printf("WARNING: ISR is not 0 after sending EOI. Either the EOI function is not working, or another interrupt was serviced immediately.");
+                printf("WARNING: ISR is not 0 after sending EOI. Either the EOI function is not working, or another interrupt was serviced immediately.\n");
             }
         }
     }

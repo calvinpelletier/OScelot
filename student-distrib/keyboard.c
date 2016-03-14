@@ -50,8 +50,7 @@ int keyboard_init(void) {
     outb(config & 0xBC, KEYBOARD_DATA); // disables interrupts
 
     // perform tests
-    if (waitForInput()) {return -1;}
-    outb(TEST_DEVICE, KEYBOARD_DATA);
+    outb(TEST_DEVICE, KEYBOARD_CMD);
     if (waitForOutput()) {return -1;}
     test_results = inb(KEYBOARD_DATA);
     if (test_results != 0x55) { // pass on 0x55
