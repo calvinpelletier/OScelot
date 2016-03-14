@@ -25,11 +25,11 @@ rtc_init
     NOTES: important that interrupts are disabled when calling this function
 */
 void rtc_init(void) {
-    outb(RTC_ADDR, 0x8B); // address register 0x0B and disable NMIs (0x80)
+    outb(0x8B, RTC_ADDR); // address register 0x0B and disable NMIs (0x80)
     unsigned char temp = inb(RTC_DATA); // read register 0x0B
-    outb(RTC_ADDR, 0x8B); // address register again because apparently reading resets this
-    outb(RTC_DATA, temp | 0x40); // turns on periodic interrupts
-    // NOTE: should we reenable NMIs?
+    outb(0x8B, RTC_ADDR); // address register again because apparently reading resets this
+    outb(temp | 0x40, RTC_DATA); // turns on periodic interrupts
+    outb(0x0B, RTC_ADDR); // reenable NMIs and I guess just address 0x0B just for the hell of it
 }
 
 

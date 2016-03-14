@@ -256,12 +256,12 @@ entry (unsigned long magic, unsigned long addr)
 		SET_IDT_ENTRY(kb, &keyboard_handler);
 		idt[33] = kb;
 
-		first.reserved3 = 1;
-		first.dpl = 3;
-
-		idt_desc_t sys = first;
-		SET_IDT_ENTRY(sys, &dispatch);
-		idt[127] = sys;
+		// first.reserved3 = 1;
+		// first.dpl = 3;
+		//
+		// idt_desc_t sys = first;
+		// SET_IDT_ENTRY(sys, &dispatch);
+		// idt[127] = sys;
 	}
 
 	/* Init the PIC */
@@ -291,6 +291,8 @@ entry (unsigned long magic, unsigned long addr)
 	};
 
 	/* Execute the first program (`shell') ... */
+
+	int a = 1 / 0;
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
