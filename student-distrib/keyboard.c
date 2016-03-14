@@ -56,6 +56,9 @@ int keyboard_init(void) {
     test_results = inb(KEYBOARD_DATA);
     if (test_results != 0x55) { // pass on 0x55
         printf("ERROR: keyboard failed device test.\n");
+        if (test_results != 0xFC) {
+            printf("ERROR: fuck, the controller didn't even send back device test failed.");
+        }
         return -1;
     }
     outb(TEST_PORT1, KEYBOARD_CMD);
