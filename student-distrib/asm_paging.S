@@ -1,7 +1,5 @@
 // paging.S
 
-#include "paging.h"
-
 .text
 .globl loadPageDir
 .globl enablePaging
