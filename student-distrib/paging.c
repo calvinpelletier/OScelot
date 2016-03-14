@@ -10,10 +10,11 @@
 
 // FUNCTION DECLARATIONS
 int paging_init(void);
+void * virt_to_phys(void *);
 
 
 // GLOBAL VARIABLES
-static unsigned long pageDir[1024] __attribute__((aligned(4096)));
+unsigned long pageDir[1024] __attribute__((aligned(4096)));
 static unsigned long vidMemTable[1024] __attribute__((aligned(4096)));
 
 
@@ -52,7 +53,7 @@ int paging_init(void) {
         pageDir[i] = 0x00000002; // this sets the flags to kernel-only, write-enabled, and not-present
     }
 
-    // initialize first table (video memory)
+    // initialize first table
     if (DEBUG) {
         // sanity check
         if (vidMemTable & 0xFFFFF000) {
@@ -62,7 +63,7 @@ int paging_init(void) {
     }
     pageDir[0] = vidMemTable | 0x00000007; // sets flags to accessable-by-everyone, write-enabled, and present.
     for (i = 0; i < 1024; i++) {
-        vidMemTable[i] = (i << 12) | 0x00000107; // maps video memory to 0x0 (and sets same flags as above plus global flag)
+        vidMemTable[i] = 0x00000002; // sets flags to everyone, write-enabled, and not-present
     }
 
     // initialize kernel
@@ -70,3 +71,10 @@ int paging_init(void) {
 
     return 0;
 }
+
+/*
+void * virt_to_phys(void * addr) {
+    int pageDirIdx = (int)(addr >> 22);
+    int pageTblIdx = (int)((addr >> 12) & 0x000003FF);
+    if ()
+}*/
