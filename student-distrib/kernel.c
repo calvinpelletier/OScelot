@@ -291,7 +291,8 @@ entry (unsigned long magic, unsigned long addr)
 	};
 
 	/* Execute the first program (`shell') ... */
-	
+	int * ptr = NULL;
+	int a = *ptr;
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
