@@ -50,6 +50,7 @@ void rtc_handler(void) {
         printf("DEBUG: received RTC interrupt.\n");
         test_interrupts();
     }
+    send_eoi(8);
 }
 
 

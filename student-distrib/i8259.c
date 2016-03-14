@@ -39,16 +39,14 @@ void i8259_init(void) {
     slave_mask = 0xFF;
 
     // NOTE: should we wait at all between commands?
-    // initialize master
+    // initialize master and slave
     outb(ICW1, MASTER_CMD); // begin sequence
-    outb(ICW2_MASTER, MASTER_DATA); // specify port #
-    outb(ICW3_MASTER, MASTER_DATA); // info about slave (connected to line 4)
-    outb(ICW4, MASTER_DATA); // extra info
-
-    // initialize slave
     outb(ICW1, SLAVE_CMD);
+    outb(ICW2_MASTER, MASTER_DATA); // specify port #
     outb(ICW2_SLAVE, SLAVE_DATA);
+    outb(ICW3_MASTER, MASTER_DATA); // info about slave (connected to line 4)
     outb(ICW3_SLAVE, SLAVE_DATA); // cascade info
+    outb(ICW4, MASTER_DATA); // extra info
     outb(ICW4, SLAVE_DATA); // extra info
 
     // DEBUG: verify that all interrupts are indeed masked
@@ -57,6 +55,8 @@ void i8259_init(void) {
             printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.\n");
         }
     }
+
+    enable_irq(2); // slave is connected to port 2 on master
 }
 
 
