@@ -7,10 +7,13 @@
 #include "lib.h"
 #include "i8259.h"
 #include "debug.h"
+#include "rtc.h"
+#include "keyboard.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
+
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -149,6 +152,14 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
+	 // initialize RTC
+	 rtc_init();
+	 enable_irq(RTC_IRQ_NUM);
+	 // initialize keyboard
+	 if (keyboard_init()) {
+		 printf("ERROR: keyboard failed initialization.");
+	 }
+	 enable_irq(KEYBOARD_IRQ_NUM);
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -162,4 +173,3 @@ entry (unsigned long magic, unsigned long addr)
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");
 }
-
