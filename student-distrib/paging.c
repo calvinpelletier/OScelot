@@ -16,7 +16,7 @@ void * virt_to_phys(void *);
 
 // GLOBAL VARIABLES
 static unsigned long pageDir[1024] __attribute__((aligned(4096)));
-static unsigned long vidMemTable[1024] __attribute__((aligned(4096)));
+static unsigned long first_4MB[1024] __attribute__((aligned(4096)));
 
 
 /*
@@ -57,21 +57,26 @@ int paging_init(void) {
     // initialize first table
     if (DEBUG) {
         // sanity check
-        if ((unsigned long)(vidMemTable) & 0xFFFFF000) {
-            printf("ERROR: vidMemTable not aligned to 4KB.\n");
+        if ((unsigned long)(first_4MB) & 0x00000FFF) {
+            printf("ERROR: first_4MB table not aligned to 4KB.\n");
+            printf("Address: %x\n", (unsigned long)(first_4MB));
             return -1;
         }
     }
-    pageDir[0] = (unsigned long)(vidMemTable) | 0x00000007; // sets flags to accessable-by-everyone, write-enabled, and present.
-    for (i = 0; i < 1024; i++) {
-        vidMemTable[i] = 0x00000002; // sets flags to everyone, write-enabled, and not-present
-    }
 
-    // initialize kernel
+    
+    pageDir[0] = (unsigned long)(first_4MB) | 0x00000003; // sets flags to accessable-by-kernel, write-enabled, and present.
+    for (i = 0; i < 1024; i++) {
+        first_4MB[i] = (i * 0x1000) | 0x00000003; // sets flags to kernel, write-enabled, and present
+    }
+    first_4MB[0] &= ~0x00000003; // make first 4kB not present and not writable
+
+    // initialize kernel 4 MB
     pageDir[1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
 
     // enable paging
     loadPageDir(pageDir);
+    enable4MB();
     enablePaging();
 
     return 0;
