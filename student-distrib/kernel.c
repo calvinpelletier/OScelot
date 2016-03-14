@@ -249,7 +249,7 @@ entry (unsigned long magic, unsigned long addr)
 		idt[19] = simdFPE;
 
 		idt_desc_t rtc = first;
-		SET_IDT_ENTRY(rtc, test_interrupts);
+		SET_IDT_ENTRY(rtc, rtcTest);
 		idt[32] = rtc;
 
 		idt_desc_t kb = first;
@@ -291,9 +291,7 @@ entry (unsigned long magic, unsigned long addr)
 	};
 
 	/* Execute the first program (`shell') ... */
-
-	// divideByZero();
-	int a = 1 / 0;
+	
 
 	/* Spin (nicely, so we don't chew up cycles) */
 	asm volatile(".1: hlt; jmp .1;");

@@ -30,6 +30,14 @@ void rtc_init(void) {
     outb(0x8B, RTC_ADDR); // address register again because apparently reading resets this
     outb(temp | 0x40, RTC_DATA); // turns on periodic interrupts
     outb(0x0B, RTC_ADDR); // reenable NMIs and I guess just address 0x0B just for the hell of it
+    // cli();
+    // outb(0x70, 0x8A);
+    // char prev = inb(0x71);
+    // outb(0x70, 0x8A);
+    // outb(0x71, (prev & 0xF0) | 15);
+    // sti();
+    // outb(0x70, 0x0C);
+    // inb(0x71);
 }
 
 

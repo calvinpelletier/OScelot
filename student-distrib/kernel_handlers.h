@@ -21,5 +21,6 @@ extern void mathFault();
 extern void alignmentCheck();
 extern void machineCheck();
 extern void simdFloatingPointException();
+extern void rtcTest();
 
 #endif
