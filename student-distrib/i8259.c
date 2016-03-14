@@ -20,8 +20,8 @@ void send_eoi(unsigned int irq_num);
 // GLOBAL VARIABLES
 /* Interrupt masks to determine which interrupts
  * are enabled and disabled */
-unsigned char master_mask; /* IRQs 7-0 */
-unsigned char slave_mask; /* IRQs 15-8 */
+static unsigned char master_mask; /* IRQs 7-0 */
+static unsigned char slave_mask; /* IRQs 15-8 */
 
 
 /*
