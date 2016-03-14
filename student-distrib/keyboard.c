@@ -22,6 +22,9 @@
 
 // FUNCTION DECLARATIONS
 int keyboard_init(void);
+void keyboard_handler(void);
+int waitForInput(void);
+int waitForOutput(void);
 
 
 // GLOBAL FUNCTIONS
@@ -33,46 +36,104 @@ keyboard_init
     RETURNS: 0 for success, -1 for failure
 */
 int keyboard_init(void) {
-    outb(KEYBOARD_CMD, DISABLE_PORT1);
-    outb(KEYBOARD_CMD, DISABLE_PORT2); // will be ignored if there is no port 2
+    unsigned char config, test_results;
+
+    outb(DISABLE_PORT1, KEYBOARD_CMD);
+    outb(DISABLE_PORT2, KEYBOARD_CMD); // will be ignored if there is no port 2
     inb(KEYBOARD_DATA); // flushes output buffer
 
     // set config
-    outb(KEYBOARD_DATA, READ_FROM_CONFIG);
-    unsigned char config = inb(KEYBOARD_DATA);
-    outb(KEYBOARD_CMD, WRITE_TO_CONFIG);
-    outb(KEYBOARD_DATA, config & 0xBC); // disables interrupts
+    outb(READ_FROM_CONFIG, KEYBOARD_CMD);
+    if (waitForOutput()) {return -1;}
+    config = inb(KEYBOARD_DATA);
+    outb(WRITE_TO_CONFIG, KEYBOARD_CMD);
+    if (waitForInput()) {return -1;}
+    outb(config & 0xBC, KEYBOARD_DATA); // disables interrupts
 
     // perform tests
-    outb(KEYBOARD_DATA, TEST_DEVICE);
-    unsigned char test_results = inb(KEYBOARD_DATA);
+    outb(TEST_DEVICE, KEYBOARD_CMD);
+    if (waitForOutput()) {return -1;}
+    test_results = inb(KEYBOARD_DATA);
     if (test_results != 0x55) { // pass on 0x55
+        printf("ERROR: keyboard failed device test.\n");
+        if (test_results != 0xFC) {
+            printf("ERROR: fuck, the controller didn't even send back device test failed.");
+        }
         return -1;
     }
-    outb(KEYBOARD_CMD, TEST_PORT1);
+    outb(TEST_PORT1, KEYBOARD_CMD);
+    if (waitForOutput()) {return -1;}
     test_results = inb(KEYBOARD_DATA);
     if (test_results) { // pass on 0x00
+        printf("ERROR: keyboard failed port test.\n");
         return -1;
     }
 
     // enable device
-    outb(KEYBOARD_CMD, ENABLE_PORT1);
-    outb(KEYBOARD_DATA, READ_FROM_CONFIG);
+    outb(ENABLE_PORT1, KEYBOARD_CMD);
+    if (waitForInput()) {return -1;}
+    outb(READ_FROM_CONFIG, KEYBOARD_DATA);
+    if (waitForOutput()) {return -1;}
     config = inb(KEYBOARD_DATA);
-    outb(KEYBOARD_CMD, WRITE_TO_CONFIG);
-    outb(KEYBOARD_DATA, config | 0x01); // reenable interrupts
+    outb(WRITE_TO_CONFIG, KEYBOARD_CMD);
+    if (waitForInput()) {return -1;}
+    outb(config | 0x01, KEYBOARD_DATA); // reenable interrupts
 
-    // wait for input buffer to be empty (or time out)
+
+    // send reset byte
+    if (waitForInput()) {return -1;}
+    outb(0xFF, KEYBOARD_DATA);
+
+    return 0;
+}
+
+/*
+keyboard_handler
+    DESCRIPTION: called on keyboard interrupts
+    INPUT: none
+    OUTPUT: none
+    RETURNS: none
+*/
+void keyboard_handler(void) {
+    unsigned char data = inb(KEYBOARD_DATA);
+}
+
+
+// LOCAL FUNCTIONS
+/*
+waitForOutput
+    DESCRIPTION: makes sure output buffer is full before returning
+    INPUT: none
+    OUTPUT: none
+    RETURNS: 0 for success, -1 for failure
+*/
+int waitForOutput(void) {
+    unsigned char status;
+    do {
+        status = inb(KEYBOARD_STATUS);
+    } while (!(status & 0x01) && !(status & 0x40));
+    if (status & 0x40) { // check if we timed out
+        printf("ERROR: keyboard output buffer timed out.\n");
+        return -1;
+    }
+    return 0;
+}
+
+/*
+waitForInput
+    DESCRIPTION: makes sure input buffer is empty before returning
+    INPUT: none
+    OUTPUT: none
+    RETURNS: 0 for success, -1 for failure
+*/
+int waitForInput(void) {
     unsigned char status;
     do {
         status = inb(KEYBOARD_STATUS);
     } while ((status & 0x02) && !(status & 0x40));
     if (status & 0x40) { // check if we timed out
+        printf("ERROR: keyboard input buffer timed out.\n");
         return -1;
     }
-
-    // send reset byte
-    outb(KEYBOARD_DATA, 0xFF);
-
     return 0;
 }

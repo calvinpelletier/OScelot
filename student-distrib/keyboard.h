@@ -5,5 +5,6 @@
 #include "types.h"
 
 extern int keyboard_init(void);
+extern void keyboard_handler(void);
 
 #endif

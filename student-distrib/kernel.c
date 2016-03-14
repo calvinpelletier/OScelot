@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 #include "paging.h"
+#include "kernel_handlers.h"
 #include "rtc.h"
 #include "keyboard.h"
 
@@ -153,7 +154,7 @@ entry (unsigned long magic, unsigned long addr)
 		idt_desc_t first;
 		int i;
 		for (i = 0; i < NUM_VEC; i++ ) {
-			first.present = 1;
+			first.present = 0;
 			first.dpl = 0;
 			first.reserved0 = 0;
 			first.size = 1;
@@ -162,9 +163,105 @@ entry (unsigned long magic, unsigned long addr)
 			first.reserved3 = 0;
 			first.reserved4 = 0;
 			first.seg_selector = KERNEL_CS;
-			SET_IDT_ENTRY(first, &printf);
 			idt[i] = first;
 		}
+
+		first.present = 1;
+
+		idt_desc_t divZero = first;
+		SET_IDT_ENTRY(divZero, &divideByZero);
+		idt[0] = divZero;
+
+		idt_desc_t dbug = first;
+		SET_IDT_ENTRY(dbug, &debug);
+		idt[1] = dbug;
+
+		idt_desc_t nmi = first;
+		SET_IDT_ENTRY(nmi, &nonMaskableInterrupts);
+		idt[2] = nmi;
+
+		idt_desc_t bpoint = first;
+		SET_IDT_ENTRY(bpoint, &breakpoint);
+		idt[3] = bpoint;
+
+		idt_desc_t oflow = first;
+		SET_IDT_ENTRY(oflow, &overflow);
+		idt[4] = oflow;
+
+		idt_desc_t bound = first;
+		SET_IDT_ENTRY(bound, &bounds);
+		idt[5] = bound;
+
+		idt_desc_t opCode = first;
+		SET_IDT_ENTRY(opCode, &invalidOpCode);
+		idt[6] = opCode;
+
+		idt_desc_t coprocessorNA = first;
+		SET_IDT_ENTRY(coprocessorNA, &coprocessorNotAvailable);
+		idt[7] = coprocessorNA;
+
+		idt_desc_t dblFault = first;
+		SET_IDT_ENTRY(dblFault, &doubleFault);
+		idt[8] = dblFault;
+
+		idt_desc_t coprocessorSO = first;
+		SET_IDT_ENTRY(coprocessorSO, &coprocessorSegmentOverrun);
+		idt[9] = coprocessorSO;
+
+		idt_desc_t invalidTSS = first;
+		SET_IDT_ENTRY(invalidTSS, &invalidTaskStateSegment);
+		idt[10] = invalidTSS;
+
+		idt_desc_t segNotPresent = first;
+		SET_IDT_ENTRY(segNotPresent, &segmentNotPresent);
+		idt[11] = segNotPresent;
+
+		idt_desc_t stackF = first;
+		SET_IDT_ENTRY(stackF, &stackFault);
+		idt[12] = stackF;
+
+		idt_desc_t generalProtectFault = first;
+		SET_IDT_ENTRY(generalProtectFault, &generalProtectionFault);
+		idt[13] = generalProtectFault;
+
+		idt_desc_t pageF = first;
+		SET_IDT_ENTRY(pageF, &pageFault);
+		idt[14] = pageF;
+
+		idt_desc_t reserve = first;
+		SET_IDT_ENTRY(reserve, &reserved);
+		idt[15] = reserve;
+
+		idt_desc_t mathF = first;
+		SET_IDT_ENTRY(mathF, &mathFault);
+		idt[16] = mathF;
+
+		idt_desc_t alignCheck = first;
+		SET_IDT_ENTRY(alignCheck, &alignCheck);
+		idt[17] = alignCheck;
+
+		idt_desc_t machCheck = first;
+		SET_IDT_ENTRY(machCheck, &machineCheck);
+		idt[18] = machCheck;
+
+		idt_desc_t simdFPE = first;
+		SET_IDT_ENTRY(simdFPE, &simdFloatingPointException);
+		idt[19] = simdFPE;
+
+		idt_desc_t rtc = first;
+		SET_IDT_ENTRY(rtc, &test_interrupts);
+		idt[32] = rtc;
+
+		idt_desc_t kb = first;
+		SET_IDT_ENTRY(kb, &keyboard_handler);
+		idt[33] = kb;
+
+		first.reserved3 = 1;
+		first.dpl = 3;
+
+		idt_desc_t sys = first;
+		SET_IDT_ENTRY(sys, &dispatch);
+		idt[127] = sys;
 	}
 
 	/* Init the PIC */
@@ -177,7 +274,7 @@ entry (unsigned long magic, unsigned long addr)
 	 enable_irq(RTC_IRQ_NUM);
 	 // initialize keyboard
 	 if (keyboard_init()) {
-		 printf("ERROR: keyboard failed initialization.");
+		 printf("ERROR: keyboard failed initialization.\n");
 	 }
 	 enable_irq(KEYBOARD_IRQ_NUM);
 

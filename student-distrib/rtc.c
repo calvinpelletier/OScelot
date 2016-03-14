@@ -32,5 +32,6 @@ void rtc_init(void) {
     // NOTE: should we reenable NMIs?
 }
 
+
 // NOTE: it's important to read from register 0x0C (type of interrupt) on every interrupt
 //       even if we don't care about it, otherwise interrupts will stop being generated.
