@@ -33,23 +33,23 @@ i8259_init
 */
 void i8259_init(void) {
     // mask all interrupts
-    outb(MASTER_DATA, 0xFF);
-    outb(SLAVE_DATA, 0xFF);
+    outb(0xFF, MASTER_DATA);
+    outb(0xFF, SLAVE_DATA);
     master_mask = 0xFF;
     slave_mask = 0xFF;
 
     // NOTE: should we wait at all between commands?
     // initialize master
-    outb(MASTER_CMD, ICW1); // begin sequence
-    outb(MASTER_DATA, ICW2_MASTER); // specify port #
-    outb(MASTER_DATA, ICW3_MASTER); // info about slave (connected to line 4)
-    outb(MASTER_DATA, ICW4); // extra info
+    outb(ICW1, MASTER_CMD); // begin sequence
+    outb(ICW2_MASTER, MASTER_DATA); // specify port #
+    outb(ICW3_MASTER, MASTER_DATA); // info about slave (connected to line 4)
+    outb(ICW4, MASTER_DATA); // extra info
 
     // initialize slave
-    outb(SLAVE_CMD, ICW1);
-    outb(SLAVE_DATA, ICW2_SLAVE);
-    outb(SLAVE_DATA, ICW3_SLAVE); // cascade info
-    outb(SLAVE_DATA, ICW4); // extra info
+    outb(ICW1, SLAVE_CMD);
+    outb(ICW2_SLAVE, SLAVE_DATA);
+    outb(ICW3_SLAVE, SLAVE_DATA); // cascade info
+    outb(ICW4, SLAVE_DATA); // extra info
 
     // DEBUG: verify that all interrupts are indeed masked
     if (DEBUG) {
@@ -71,14 +71,14 @@ void enable_irq(unsigned int irq_num) {
     // check if irq is on master or slave
     if (irq_num < 8) { // master
         if (master_mask & (1 << irq_num)) { // not already enabled
-            outb(MASTER_DATA, inb(MASTER_DATA) & ~(1 << irq_num));
-            master_mask &= ~(1 << irq_num);
+        	master_mask &= ~(1 << irq_num);
+            outb(master_mask, MASTER_DATA);
         }
     } else if (irq_num < 16) { // slave
         irq_num -= 8;
         if (slave_mask & (1 << irq_num)) { // not already enabled
-            outb(SLAVE_DATA, inb(SLAVE_DATA) & ~(1 << irq_num));
-            slave_mask &= ~(1 << irq_num);
+        	slave_mask &= ~(1 << irq_num);
+            outb(slave_mask, SLAVE_DATA);
         }
     } else { // error
         printf("ERROR: invalid irq_num in enable_irq.");
@@ -97,14 +97,14 @@ void disable_irq(unsigned int irq_num) {
     // check if irq is on master or slave
     if (irq_num < 8) { // master
         if (!(master_mask & (1 << irq_num))) { // not already disabled
-            outb(MASTER_DATA, inb(MASTER_DATA) | (1 << irq_num));
-            master_mask |= ~(1 << irq_num);
+        	master_mask |= (1 << irq_num);	
+            outb(master_mask, MASTER_DATA);
         }
     } else if (irq_num < 16) { // slave
         irq_num -= 8;
         if (!(slave_mask & (1 << irq_num))) { // not already disabled
-            outb(SLAVE_DATA, inb(SLAVE_DATA) | (1 << irq_num));
-            slave_mask |= (1 << irq_num);
+        	slave_mask |= (1 << irq_num);
+            outb(slave_mask, SLAVE_DATA);
         }
     } else { // error
         printf("ERROR: invalid irq_num in disable_irq.");
@@ -121,19 +121,19 @@ send_eoi
 */
 void send_eoi(unsigned int irq_num) {
     if (irq_num > 15) {return;}
-
+    enable_irq(irq_num); // unmask irq
     // NOTE: not sure if I'm using EOI correctly... if it doesn't work try sending it over data line?
     if (irq_num < 8) { // master
-        outb(MASTER_CMD, EOI | (unsigned char)(irq_num));
+        outb(EOI | (unsigned char)(irq_num), MASTER_CMD);
     } else { // slave
-        outb(SLAVE_CMD, EOI | (unsigned char)(irq_num - 8));
-        // TODO: not sure if I should send master the exact irq num or the irq num for the connected slave (4) or not send anything at all
-        // outb(MASTER_CMD, EOI | (unsigned char)(irq_num)); // let master know as well
+    	enable_irq(2); // unmask master IRQ2, which slave PIC is connected to
+        outb(EOI | (unsigned char)(irq_num - 8), SLAVE_CMD);
+        outb(EOI | (unsigned char)(2), MASTER_CMD); // let master know as well
 
         // verify that no interrupts are being serviced
         if (DEBUG) {
-            outb(MASTER_CMD, 0x0B); // 0x0B tells the PIC to ready ISR for a read
-            outb(SLAVE_CMD, 0x0B);
+            outb(0x0B, MASTER_CMD); // 0x0B tells the PIC to ready ISR for a read
+            outb(0x0B, SLAVE_CMD);
             if (inb(MASTER_CMD) || inb(SLAVE_CMD)) {
                 printf("WARNING: ISR is not 0 after sending EOI. Either the EOI function is not working, or another interrupt was serviced immediately.");
             }
