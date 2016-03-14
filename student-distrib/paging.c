@@ -38,6 +38,13 @@ D: dirty (0 = hasn't been written to, 1 = has been written to)
 
 
 // GLOBAL FUNCTIONS
+/*
+paging_init
+    DESCRIPTION: initializes paging
+    INPUTS: none
+    OUTPUTS: none
+    RETURNS: 0 for success, -1 for fail
+*/
 int paging_init(void) {
     // initialize pageDir
     int i;
@@ -50,13 +57,16 @@ int paging_init(void) {
         // sanity check
         if (vidMemTable & 0xFFFFF000) {
             printf("ERROR: vidMemTable not aligned to 4KB.\n");
+            return -1;
         }
     }
     pageDir[0] = vidMemTable | 0x00000007; // sets flags to accessable-by-everyone, write-enabled, and present.
     for (i = 0; i < 1024; i++) {
-        vidMemTable[i] = (i << 12) | 0x00000107; // maps exactly to physical address (and sets same flags as above plus global flag)
+        vidMemTable[i] = (i << 12) | 0x00000107; // maps video memory to 0x0 (and sets same flags as above plus global flag)
     }
 
     // initialize kernel
     pageDir[1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
+
+    return 0;
 }
