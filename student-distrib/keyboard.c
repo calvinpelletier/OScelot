@@ -86,13 +86,26 @@ int keyboard_init(void) {
     return 0;
 }
 
-
+/*
+keyboard_handler
+    DESCRIPTION: called on keyboard interrupts
+    INPUT: none
+    OUTPUT: none
+    RETURNS: none
+*/
 void keyboard_handler(void) {
     unsigned char data = inb(KEYBOARD_DATA);
 }
 
 
 // LOCAL FUNCTIONS
+/*
+waitForOutput
+    DESCRIPTION: makes sure output buffer is full before returning
+    INPUT: none
+    OUTPUT: none
+    RETURNS: 0 for success, -1 for failure
+*/
 int waitForOutput(void) {
     unsigned char status;
     do {
@@ -105,6 +118,13 @@ int waitForOutput(void) {
     return 0;
 }
 
+/*
+waitForInput
+    DESCRIPTION: makes sure input buffer is empty before returning
+    INPUT: none
+    OUTPUT: none
+    RETURNS: 0 for success, -1 for failure
+*/
 int waitForInput(void) {
     unsigned char status;
     do {
