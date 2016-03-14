@@ -3,6 +3,7 @@
 #include "paging.h"
 #include "lib.h"
 
+
 // CONSTANTS
 #define DEBUG 1
 #define KERNEL_LOC 0x00400000
@@ -14,7 +15,7 @@ void * virt_to_phys(void *);
 
 
 // GLOBAL VARIABLES
-unsigned long pageDir[1024] __attribute__((aligned(4096)));
+static unsigned long pageDir[1024] __attribute__((aligned(4096)));
 static unsigned long vidMemTable[1024] __attribute__((aligned(4096)));
 
 
@@ -68,6 +69,10 @@ int paging_init(void) {
 
     // initialize kernel
     pageDir[1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
+
+    // enable paging
+    loadPageDir(pageDir);
+    enablePaging();
 
     return 0;
 }
