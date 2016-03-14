@@ -279,9 +279,15 @@ entry (unsigned long magic, unsigned long addr)
 	 enable_irq(KEYBOARD_IRQ_NUM);
 
 	 // setup paging
+<<<<<<< HEAD
 	 if (paging_init()) {
 		 printf("ERROR: Paging failed to initialize.");
 	 };
+=======
+	if (paging_init()) {
+		printf("ERROR: Paging failed to initialize.");
+	};
+>>>>>>> d8d0c3079ec2ced36454a0c22b2ee896da8ce37c
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -290,6 +296,10 @@ entry (unsigned long magic, unsigned long addr)
 	printf("Enabling Interrupts\n");
 	sti();
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d8d0c3079ec2ced36454a0c22b2ee896da8ce37c
 	/* Execute the first program (`shell') ... */
 
 	/* Spin (nicely, so we don't chew up cycles) */
