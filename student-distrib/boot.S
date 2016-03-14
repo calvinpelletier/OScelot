@@ -43,7 +43,7 @@ continue:
 	lgdt 	gdtr
 
 	# Load the IDT in a similar fashion as the GDT above
-	leal	ldt, %eax
+	leal	idt, %eax
 	movl	%eax, idtr+2
 	movw	idt_size, %ax
 	movw	%ax, idtr
