@@ -77,7 +77,7 @@ void i8259_init(void) {
         }
     }
 
-    enable_irq(2) // unmask slave line
+    enable_irq(2); // unmask slave line
 }
 
 

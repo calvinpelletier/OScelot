@@ -23,7 +23,7 @@
 
 // FUNCTION DECLARATIONS
 int keyboard_init(void);
-void keyboard_handler(void);
+void keyboardHandler(void);
 int waitForInput(void);
 int waitForOutput(void);
 
@@ -91,13 +91,13 @@ int keyboard_init(void) {
 }
 
 /*
-keyboard_handler
+keyboardHandler
     DESCRIPTION: called on keyboard interrupts
     INPUT: none
     OUTPUT: none
     RETURNS: none
 */
-void keyboard_handler(void) {
+void keyboardHandler(void) {
     unsigned char data = inb(KEYBOARD_DATA);
     printf("KEYBOARD: %02x\n", data);
     send_eoi(KEYBOARD_IRQ_NUM);

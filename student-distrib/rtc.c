@@ -14,7 +14,7 @@ static int count = 0;
 
 // FUNCTION DECLARATIONS
 void rtc_init(void);
-void rtc_handler(void);
+void rtcHandler(void);
 
 
 // GLOBAL FUNCTIONS
@@ -36,16 +36,14 @@ void rtc_init(void) {
 
 
 /*
-rtc_handler
+rtcHandler
     DESCRIPTION: called on RTC interrupts
     INPUTS: none
     OUTPUTS: none
     RETURNS: none
     NOTES: important that interrupts are disabled when calling this function
 */
-void rtc_handler(void) {
-    cli();
-
+void rtcHandler(void) {
     outb(0x0C, RTC_ADDR); // select register 0x0C
     inb(RTC_DATA); // throw away contents (important)
 
@@ -55,6 +53,4 @@ void rtc_handler(void) {
     }
 
     send_eoi(RTC_IRQ_NUM);
-
-    sti();
 }

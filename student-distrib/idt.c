@@ -33,7 +33,7 @@ void idt_init(void) {
     idt[0] = divZero;
 
     idt_desc_t dbug = first;
-    SET_IDT_ENTRY(dbug, debug_wrapper_wrapper);
+    SET_IDT_ENTRY(dbug, debug_wrapper);
     idt[1] = dbug;
 
     idt_desc_t nmi = first;
@@ -49,7 +49,7 @@ void idt_init(void) {
     idt[4] = oflow;
 
     idt_desc_t bound = first;
-    SET_IDT_ENTRY(bound, bounds_wrapper_wrapper);
+    SET_IDT_ENTRY(bound, bounds_wrapper);
     idt[5] = bound;
 
     idt_desc_t opCode = first;

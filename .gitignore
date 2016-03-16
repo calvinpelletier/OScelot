@@ -1,4 +1,4 @@
-student-distrib/*.o
-student-distrib/*.dep
-student-distrib/bootimg
-student-distrib/mp3.img
+*.o
+*.dep
+bootimg
+mp3.img
