@@ -73,7 +73,7 @@ int keyboard_init(void) {
     // enable device
     outb(ENABLE_PORT1, KEYBOARD_CMD);
     if (waitForInput()) {return -1;}
-    outb(READ_FROM_CONFIG, KEYBOARD_DATA);
+    outb(READ_FROM_CONFIG, KEYBOARD_CMD);
     if (waitForOutput()) {return -1;}
     config = inb(KEYBOARD_DATA);
     outb(WRITE_TO_CONFIG, KEYBOARD_CMD);
@@ -84,6 +84,12 @@ int keyboard_init(void) {
     // send reset byte
     if (waitForInput()) {return -1;}
     outb(0xFF, KEYBOARD_DATA);
+    if (waitForOutput()) {return -1;}
+    test_results = inb(KEYBOARD_DATA);
+    if (test_results != 0xFA) { // pass on 0xFA
+        printf("ERROR: keyboard failed device reset with reponse: %x\n", test_results);
+        return -1;
+    }
 
     enable_irq(KEYBOARD_IRQ_NUM);
 
@@ -98,8 +104,12 @@ keyboardHandler
     RETURNS: none
 */
 void keyboardHandler(void) {
-    unsigned char data = inb(KEYBOARD_DATA);
-    printf("KEYBOARD: %02x\n", data);
+    unsigned char data;
+    printf("~~~KEYBOARD~~~\n");
+    while (inb(KEYBOARD_STATUS) & 0x01) {
+        printf("%x\n", inb(KEYBOARD_DATA));
+    }
+    printf("~~~~~~~~~~~~~~\n");
     send_eoi(KEYBOARD_IRQ_NUM);
 }
 

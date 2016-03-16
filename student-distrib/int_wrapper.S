@@ -24,6 +24,7 @@
 
 divideByZero_wrapper:
 _divideByZero_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -43,10 +44,12 @@ _divideByZero_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 debug_wrapper:
 _debug_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -66,10 +69,12 @@ _debug_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 nonMaskableInterrupts_wrapper:
 _nonMaskableInterrupts_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -89,10 +94,12 @@ _nonMaskableInterrupts_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 breakpoint_wrapper:
 _breakpoint_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -112,10 +119,12 @@ _breakpoint_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 overflow_wrapper:
 _overflow_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -135,10 +144,12 @@ _overflow_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 bounds_wrapper:
 _bounds_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -158,10 +169,12 @@ _bounds_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 invalidOpCode_wrapper:
 _invalidOpCode_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -181,10 +194,12 @@ _invalidOpCode_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 coprocessorNotAvailable_wrapper:
 _coprocessorNotAvailable_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -204,10 +219,12 @@ _coprocessorNotAvailable_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 doubleFault_wrapper:
 _doubleFault_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -227,10 +244,12 @@ _doubleFault_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 coprocessorSegmentOverrun_wrapper:
 _coprocessorSegmentOverrun_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -250,10 +269,12 @@ _coprocessorSegmentOverrun_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 invalidTaskStateSegment_wrapper:
 _invalidTaskStateSegment_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -273,10 +294,12 @@ _invalidTaskStateSegment_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 segmentNotPresent_wrapper:
 _segmentNotPresent_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -296,10 +319,12 @@ _segmentNotPresent_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 stackFault_wrapper:
 _stackFault_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -319,10 +344,12 @@ _stackFault_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 generalProtectionFault_wrapper:
 _generalProtectionFault_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -342,10 +369,12 @@ _generalProtectionFault_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 pageFault_wrapper:
 _pageFault_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -365,10 +394,12 @@ _pageFault_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 reserved_wrapper:
 _reserved_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -388,10 +419,12 @@ _reserved_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 mathFault_wrapper:
 _mathFault_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -411,10 +444,12 @@ _mathFault_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 alignmentCheck_wrapper:
 _alignmentCheck_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -434,10 +469,12 @@ _alignmentCheck_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 machineCheck_wrapper:
 _machineCheck_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -457,10 +494,12 @@ _machineCheck_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 simdFloatingPointException_wrapper:
 _simdFloatingPointException_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -480,10 +519,12 @@ _simdFloatingPointException_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 rtcHandler_wrapper:
 _rtcHandler_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -503,10 +544,12 @@ _rtcHandler_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret
 
 keyboardHandler_wrapper:
 _keyboardHandler_wrapper:
+    cli
     pushl   %es
     pushl   %ds
     pushl   %eax
@@ -526,4 +569,5 @@ _keyboardHandler_wrapper:
     popl    %eax
     popl    %ds
     popl    %es
+    sti
     iret

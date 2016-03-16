@@ -5,7 +5,6 @@
 
 
 // CONSTANTS
-#define DEBUG 1
 #define KERNEL_LOC 0x00400000
 
 
@@ -54,17 +53,6 @@ int paging_init(void) {
         pageDir[i] = 0x00000002; // this sets the flags to kernel-only, write-enabled, and not-present
     }
 
-    // initialize first table
-    if (DEBUG) {
-        // sanity check
-        if ((unsigned long)(first_4MB) & 0x00000FFF) {
-            printf("ERROR: first_4MB table not aligned to 4KB.\n");
-            printf("Address: %x\n", (unsigned long)(first_4MB));
-            return -1;
-        }
-    }
-
-    
     pageDir[0] = (unsigned long)(first_4MB) | 0x00000003; // sets flags to accessable-by-kernel, write-enabled, and present.
     for (i = 0; i < 1024; i++) {
         first_4MB[i] = (i * 0x1000) | 0x00000003; // sets flags to kernel, write-enabled, and present

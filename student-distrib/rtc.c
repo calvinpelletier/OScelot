@@ -48,8 +48,9 @@ void rtcHandler(void) {
     inb(RTC_DATA); // throw away contents (important)
 
     if (DEBUG_ALL) {
-        printf("DEBUG: received RTC interrupt %d.\n", count);
-        count++;
+        //printf("DEBUG: received RTC interrupt %d.\n", count);
+        //count++;
+        test_interrupts();
     }
 
     send_eoi(RTC_IRQ_NUM);
