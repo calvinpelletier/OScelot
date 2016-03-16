@@ -5,7 +5,7 @@
 #ifndef _LIB_H
 #define _LIB_H
 
-#define DEBUG_ALL 1 // global debug flag
+#define DEBUG_ALL 0 // global debug flag
 
 #include "types.h"
 

@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "paging.h"
 #include "rtc.h"
-#include "keyboard.h"
+#include "terminal.h"
 #include "idt.h"
 
 /* Macros. */
@@ -149,23 +149,22 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
-	// init the IDT
+	/* Init the IDT */
 	idt_init();
-
-	/* Init the PIC */
-	i8259_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	// initialize RTC
+	
+	/* Init the PIC */
+	i8259_init();
+
+	/* Init RTC */
 	rtc_init();
 
-	// initialize keyboard
-	if (keyboard_init()) {
-		printf("ERROR: keyboard failed initialization.\n");
-	}
+	/* Init keyboard */
+	enable_irq(KEYBOARD_IRQ_NUM);
 
-	// setup paging
+	/* Init paging */
 	if (paging_init()) {
 		printf("ERROR: Paging failed to initialize.");
 	};
