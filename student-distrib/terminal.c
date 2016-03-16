@@ -6,9 +6,9 @@
 
 
 /* Local variables by group OScelot */
-static uint8_t caps = 0;
-static uint8_t ctrl = 0;
-static uint8_t shift = 0;
+static uint8_t caps_active = 0;
+static uint8_t ctrl_active = 0;
+static uint8_t shift_active = 0;
 static uint8_t buf_pos = 0;
 
 // FUNCTION DECLARATIONS
@@ -36,5 +36,35 @@ void keyboardHandler(void) {
 
     scancode = inb(KEYBOARD_DATA);
     key_released_code = scancode | 0x80;
+
+    switch (scancode) {
+        case BACKSPACE:
+            // TODO: write backspace function
+            break;
+        case CAPS_LOCK:
+            /* Toggles caps lock on and off */
+            if (caps_active) {
+                caps_active = 0;
+            } else {
+                caps_active = 1;
+            }
+
+            break;
+        case CTRL:
+            ctrl_active = 1;
+            break;
+        case ENTER:
+            // TODO: write enter function
+            break;
+        case LEFT_SHIFT:
+            shift_active = 1;
+            break;
+    }
+
+    if (scancode == key_released_code) {
+        // TODO: write special key actions
+    }
+
+    // TODO: write CTRL-L actions and normal character actions
 }
 

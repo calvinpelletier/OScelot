@@ -12,7 +12,6 @@
 #define CTRL        0x1D
 #define ENTER       0x1C
 #define SPACE       0x39
-#define RIGHT_SHIFT 0x36
 #define LEFT_SHIFT  0x2A
 #define L           0x26
 
