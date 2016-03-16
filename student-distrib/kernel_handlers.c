@@ -160,10 +160,3 @@ void simdFloatingPointException()
     printf("OScelot can't handle floats right now");
 	while(1);
 }
-
-void rtcTest()
-{
-    clear();
-    printf("Hello World\n");
-    while(1);
-}

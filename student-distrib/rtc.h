@@ -7,5 +7,6 @@
 #include "types.h"
 
 extern void rtc_init(void);
+extern void rtc_handler(void);
 
 #endif // RTC_H

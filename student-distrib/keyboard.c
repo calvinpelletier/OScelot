@@ -2,6 +2,7 @@
 
 #include "keyboard.h"
 #include "lib.h"
+#include "i8259.h"
 
 
 // CONSTANTS
@@ -84,6 +85,8 @@ int keyboard_init(void) {
     if (waitForInput()) {return -1;}
     outb(0xFF, KEYBOARD_DATA);
 
+    enable_irq(KEYBOARD_IRQ_NUM);
+
     return 0;
 }
 
@@ -96,6 +99,8 @@ keyboard_handler
 */
 void keyboard_handler(void) {
     unsigned char data = inb(KEYBOARD_DATA);
+    printf("KEYBOARD: %02x\n", data);
+    send_eoi(KEYBOARD_IRQ_NUM);
 }
 
 
