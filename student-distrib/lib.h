@@ -5,11 +5,18 @@
 #ifndef _LIB_H
 #define _LIB_H
 
-#define DEBUG_ALL 0 // global debug flag
 #define VIDEO    0xB8000
 #define NUM_COLS 80
 #define NUM_ROWS 25
 #define ATTRIB   0x7
+
+/* Custom defines by group OScelot */
+#define DEBUG_ALL 0
+
+#define CURSOR_LOW_REG  0x0F
+#define CURSOR_HIGH_REG 0x0E
+#define CRTC_ADDR_REG   0x3D4
+#define CRTC_DATA_REG   0x3D5
 
 #include "types.h"
 
@@ -46,6 +53,7 @@ typedef struct {
 void scroll(void);
 void set_pos(int x, int y);
 pos_t get_pos(void);
+void set_cursor(int x);
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

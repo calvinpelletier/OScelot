@@ -50,7 +50,7 @@ void keyboardHandler(void) {
 
     switch (scancode) {
         case BACKSPACE:
-            // TODO: write backspace function
+            do_spec(BACKSPACE);
             break;
         case CAPS_LOCK:
             /* Toggles caps lock on and off */
@@ -80,6 +80,8 @@ void keyboardHandler(void) {
     if (cur_buf_size < BUFFER_SIZE - 2) {
         do_self(scancode, cur_position);
     }
+
+    set_cursor(cur_buf_pos - cur_buf_size);
 
     send_eoi(KEYBOARD_IRQ_NUM);
     enable_irq(KEYBOARD_IRQ_NUM);
@@ -119,8 +121,10 @@ void do_self(unsigned char scancode, pos_t cur_position) {
 }
 
 void do_spec(unsigned char scancode) {
+    int i;
+
     if (scancode == ENTER) {
-        terminal_buffer[cur_buf_size] = '\n';
+        terminal_buffer[cur_buf_pos] = '\n';
 
         _print_to_terminal(buf_pos);
 
@@ -129,6 +133,35 @@ void do_spec(unsigned char scancode) {
 
         kbd_is_read = 1;
         buf_pos = 0;
+    } else {
+        if (cur_buf_pos > 0) {
+            pos_t prev_pos = get_pos();
+
+            cur_buf_pos--;
+            cur_buf_size--;
+
+            if (cur_buf_pos == (NUM_COLS - 1)) {
+                prev_pos.pos_x = NUM_COLS - 1;
+                prev_pos.pos_y--;
+                
+                buf_start.pos_y--;
+                
+                buf_pos = 0;
+            }
+
+            for (i = cur_buf_size + 1; i > cur_buf_pos; i--) {
+                terminal_buffer[i - 1] = terminal_buffer[i];
+            }
+
+            _print_to_terminal(buf_pos);
+            putc(' ');
+
+            if (prev_pos.pos_x <= 0) {
+                set_pos(NUM_COLS - 1, prev_pos.pos_y - 1);
+            } else {
+                set_pos(prev_pos.pos_x - 1, prev_pos.pos_y);
+            }
+        }
     }
 }
 
@@ -143,7 +176,7 @@ static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t c
     cur_buf_size++;
     cur_buf_pos++;
 
-    _print_to_terminal(buf_pos); // TODO: make this use terminal_write instead
+    _print_to_terminal(buf_pos);
     _update_buf_pos(cur_position);
 }
 
@@ -221,6 +254,6 @@ void buf_clear(void) {
         terminal_buffer[i] = NULL;
     }
 
-    cur_buf_pos = 0;
     cur_buf_size = 0;
+    cur_buf_pos = 0;
 }

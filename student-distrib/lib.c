@@ -655,3 +655,17 @@ pos_t get_pos(void) {
 
     return cur_pos;
 }
+
+void set_cursor(int x) {
+	int new_cursor;
+	pos_t cur_cursor;
+	
+	cur_cursor = get_pos();
+	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);
+
+	outb(CURSOR_LOW_REG, CRTC_ADDR_REG);
+	outb((uint8_t)new_cursor, CRTC_DATA_REG);
+
+	outb(CURSOR_HIGH_REG, CRTC_ADDR_REG);
+	outb((uint8_t)(new_cursor >> 8), CRTC_DATA_REG);
+}
