@@ -3,10 +3,6 @@
  */
 
 #include "lib.h"
-#define VIDEO    0xB8000
-#define NUM_COLS 80
-#define NUM_ROWS 25
-#define ATTRIB   0x7
 
 static int screen_x;
 static int screen_y;
@@ -182,7 +178,6 @@ puts(int8_t* s)
 *   Inputs: uint_8* c = character to print
 *   Return Value: void
 *	Function: Output a character to the console
-* apple
 */
 
 void
@@ -191,12 +186,17 @@ putc(uint8_t c)
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x=0;
+
+        /* If c is a newline or carriage return, scroll the screen */
         scroll();
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        // apple
+
+        /* Check if x is at the end of the line, if yes, go to the next row. 
+         * This allows for text wrapping.
+         */
         if (screen_x == NUM_COLS) {
             screen_y++;
         }
@@ -576,23 +576,64 @@ test_interrupts(void)
 	}
 }
 
+
 /* Custom functions written by group OScelot */
 
 /*
- * apple
+ * scroll
+ *   DESCRIPTION:  Scrolls the screen when the text has reached the end
+ *                 of the screen.
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   sIDE EFFECTS: Overwrites the video memory as it shifts the video memory
+ *                 data from the bottom line to the line above.
  */
 void scroll(void) {
     int32_t i;
 
+    /* If the y position of the text is in the last row, shift the data up */
 	if (screen_y == NUM_ROWS) {
 		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS), 
 			     2 * (NUM_ROWS - 1) * NUM_COLS);
 
         screen_y--;
 
+        /* Similar to clear(), but instead of clearing the whole video memory,
+         * this will only clear the last row of video memory.
+         */
         for (i = (NUM_ROWS - 1) * NUM_COLS; i < (NUM_ROWS * NUM_COLS); i++) {
             *(uint8_t *)(video_mem + (i << 1)) = ' ';
             *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
         }
 	}
+}
+
+void set_pos(int x, int y) {
+    // int offset;
+
+    while (x >= NUM_COLS) {
+        x -= NUM_COLS;
+        y++;
+    }
+
+    while (y >= NUM_ROWS) {
+        y--;
+    }
+
+    // apple
+    // offset = screen_x + screen_y * NUM_COLS;
+    // *(uint8_t *)(video_mem + 2 * offset + 1) = ATTRIB;
+
+    screen_x = x;
+    screen_y = y;
+}
+
+pos_t get_pos(void) {
+    pos_t cur_pos;
+
+    cur_pos.pos_x = screen_x;
+    cur_pos.pos_y = screen_y;
+
+    return cur_pos;
 }

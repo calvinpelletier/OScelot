@@ -6,6 +6,10 @@
 #define _LIB_H
 
 #define DEBUG_ALL 0 // global debug flag
+#define VIDEO    0xB8000
+#define NUM_COLS 80
+#define NUM_ROWS 25
+#define ATTRIB   0x7
 
 #include "types.h"
 
@@ -26,14 +30,22 @@ int32_t strncmp(const int8_t* s1, const int8_t* s2, uint32_t n);
 int8_t* strcpy(int8_t* dest, const int8_t*src);
 int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 
-/* Custom functions written by group OScelot */
-void scroll(void);
-
 /* Userspace address-check functions */
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 void test_interrupts();
+
+/* Custom struct by group OScelot */
+typedef struct {
+	int pos_x;
+	int pos_y;
+} pos_t;
+
+/* Custom functions written by group OScelot */
+void scroll(void);
+void set_pos(int x, int y);
+pos_t get_pos(void);
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
