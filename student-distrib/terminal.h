@@ -12,6 +12,7 @@
 #define CAPS_LOCK   0x3A
 #define CTRL        0x1D
 #define ENTER       0x1C
+#define RIGHT_SHIFT 0x36
 #define SPACE       0x39
 #define LEFT_SHIFT  0x2A
 #define L           0x26
@@ -21,6 +22,8 @@ extern void keyboardHandler(void);
 
 int32_t terminal_write(int32_t fd, const char * buf, int32_t nbytes);
 int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes);
+int32_t terminal_open(const uint8_t* filename, void* curr_pcb);
+int32_t terminal_close(int32_t fd, void* curr_pcb);
 void buf_clear(void);
 
 #endif

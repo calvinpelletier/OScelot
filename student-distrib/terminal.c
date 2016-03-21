@@ -23,6 +23,9 @@ pos_t buf_start;
 void keyboardHandler(void);
 void do_self(unsigned char scancode, pos_t cur_position);
 void do_spec(unsigned char scancode);
+void do_caps(unsigned char scancode, pos_t cur_position);
+void do_shift(unsigned char scancode, pos_t cur_position);
+void do_shiftcap(unsigned char scancode, pos_t cur_position);
 
 static void _do_key_press(unsigned char scanword, unsigned char chars[], pos_t cur_position);
 static void _update_buf_pos(pos_t cur_position);
@@ -53,13 +56,7 @@ void keyboardHandler(void) {
             do_spec(BACKSPACE);
             break;
         case CAPS_LOCK:
-            /* Toggles caps lock on and off */
-            if (caps_active) {
-                caps_active = 0;
-            } else {
-                caps_active = 1;
-            }
-
+            do_spec(CAPS_LOCK);
             break;
         case CTRL:
             ctrl_active = 1;
@@ -67,18 +64,44 @@ void keyboardHandler(void) {
         case ENTER:
             do_spec(ENTER);
             break;
+        case RIGHT_SHIFT:
+            shift_active = 1;
+            break;
         case LEFT_SHIFT:
             shift_active = 1;
             break;
     }
 
     if (scancode == key_released_code) {
-        // TODO: write special key actions
+        if (ctrl_active && ((scancode & ~(0x80)) == CTRL)) {
+            ctrl_active = 0;
+        } else if (shift_active && ((scancode & ~(0x80)) == LEFT_SHIFT || 
+                   (scancode & ~(0x80)) == RIGHT_SHIFT)) {
+            shift_active = 0;
+        }
     }
 
-    // TODO: write CTRL-L actions and normal character actions
-    if (cur_buf_size < BUFFER_SIZE - 2) {
-        do_self(scancode, cur_position);
+    if (ctrl_active && scancode == L) {
+        clear();
+        set_pos(0, 0);
+        set_cursor(0);
+
+        buf_start.pos_x = 0;
+        buf_start.pos_y = 0;
+
+        _print_to_terminal(0);
+
+    /* '\n' is 2 bytes so the buffer should stop at 126 instead of 128 */
+    } else if (cur_buf_size < BUFFER_SIZE - 2) {
+        if (!caps_active && !shift_active) {
+            do_self(scancode, cur_position);         
+        } else if (caps_active && shift_active) {
+            do_shiftcap(scancode, cur_position);
+        } else if (shift_active) {
+            do_shift(scancode, cur_position);
+        } else {
+            do_caps(scancode, cur_position);
+        }
     }
 
     set_cursor(cur_buf_pos - cur_buf_size);
@@ -120,49 +143,160 @@ void do_self(unsigned char scancode, pos_t cur_position) {
     }
 }
 
-void do_spec(unsigned char scancode) {
-    int i;
+/*
+ * do_caps
+ *   DESCRIPTION:  Helper function that handles CAPS keys.
+ *   INPUTS:       scancode     - scancode of key that has been pressed
+ *                 cur_position - current position on the screen
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the terminal buffer
+ */
+void do_caps(unsigned char scancode, pos_t cur_position) {
+    unsigned char caps_chars[64] = {
+        0, 0, '1', '2', '3', '4', '5', '6', 
+        '7', '8', '9', '0', '-', '=', 0, 0, 
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 
+        'O', 'P','[', ']', 0, 0, 'A', 'S', 
+        'D', 'F', 'G', 'H', 'J', 'K', 'L', ';',
+        '\'', '`', 0, '\\', 'Z', 'X', 'C', 'V', 
+        'B', 'N', 'M', ',', '.', '/', 0, 0, 
+        0,' ',0, 0, 0, 0, 0, 0
+    };
 
-    if (scancode == ENTER) {
-        terminal_buffer[cur_buf_pos] = '\n';
+    if (scancode <= SPACE) {
+        if (cur_buf_size == 0) {
+            buf_start = cur_position;
+        }
 
-        _print_to_terminal(buf_pos);
-
-        strncpy(terminal_rd, terminal_buffer, BUFFER_SIZE);
-        buf_clear();
-
-        kbd_is_read = 1;
-        buf_pos = 0;
-    } else {
-        if (cur_buf_pos > 0) {
-            pos_t prev_pos = get_pos();
-
-            cur_buf_pos--;
-            cur_buf_size--;
-
-            if (cur_buf_pos == (NUM_COLS - 1)) {
-                prev_pos.pos_x = NUM_COLS - 1;
-                prev_pos.pos_y--;
-                
-                buf_start.pos_y--;
-                
-                buf_pos = 0;
-            }
-
-            for (i = cur_buf_size + 1; i > cur_buf_pos; i--) {
-                terminal_buffer[i - 1] = terminal_buffer[i];
-            }
-
-            _print_to_terminal(buf_pos);
-            putc(' ');
-
-            if (prev_pos.pos_x <= 0) {
-                set_pos(NUM_COLS - 1, prev_pos.pos_y - 1);
-            } else {
-                set_pos(prev_pos.pos_x - 1, prev_pos.pos_y);
-            }
+        if (caps_chars[scancode] != NULL) {
+            _do_key_press(scancode, caps_chars, cur_position);
         }
     }
+}
+
+/*
+ * do_shift
+ *   DESCRIPTION:  Helper function that handles shift keys.
+ *   INPUTS:       scancode     - scancode of key that has been pressed
+ *                 cur_position - current position on the screen
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the terminal buffer
+ */
+void do_shift(unsigned char scancode, pos_t cur_position) {
+    unsigned char shift_chars[64] = {
+        0, 0, '!', '@', '#', '$', '%', '^', 
+        '&', '*', '(', ')', '_', '+', 0, 0, 
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 
+        'O', 'P','{', '}', 0, 0,  'A', 'S', 
+        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',
+        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V', 
+        'B', 'N', 'M', '<', '>', '?', 0, 0, 
+        0, ' ', 0, 0, 0, 0, 0, 0
+    };
+
+    if (scancode <= SPACE) {
+        if (cur_buf_size == 0) {
+            buf_start = cur_position;
+        }
+
+        if (shift_chars[scancode] != NULL) {
+            _do_key_press(scancode, shift_chars, cur_position);
+        }
+    }
+}
+
+/*
+ * do_shiftcap
+ *   DESCRIPTION:  Helper function that handles combination of SHIFT and CAPS
+ *   INPUTS:       scancode     - scancode of key that has been pressed
+ *                 cur_position - current position on the screen
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the terminal buffer
+ */
+void do_shiftcap(unsigned char scancode, pos_t cur_position) {
+    unsigned char combo_chars[64] = {
+        0, 0, '!', '@', '#', '$', '%', '^', 
+        '&', '*', '(', ')', '_', '+', 0, 0, 
+        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 
+        'o', 'p','{', '}', 0, 0, 'a', 's', 
+        'd', 'f', 'g', 'h', 'j', 'k', 'l', ':',
+        '\"', '~', 0, '|', 'z', 'x', 'c', 'v', 
+        'b', 'n', 'm', '<', '>', '?', 0, 0, 
+        0,' ',0, 0, 0, 0, 0, 0
+    };
+
+    if (scancode <= SPACE) {
+        if (cur_buf_size == 0) {
+            buf_start = cur_position;
+        }
+
+        if (combo_chars[scancode] != NULL) {
+            _do_key_press(scancode, combo_chars, cur_position);
+        }
+    }
+}
+
+void do_spec(unsigned char scancode) {
+    int i;
+    
+    switch (scancode) {
+        case ENTER:
+            terminal_buffer[cur_buf_pos] = '\n';
+
+            _print_to_terminal(buf_pos);
+
+            strncpy(terminal_rd, terminal_buffer, BUFFER_SIZE);
+            buf_clear();
+
+            kbd_is_read = 1;
+            buf_pos = 0;
+
+            break;
+        case BACKSPACE:
+            if (cur_buf_pos > 0) {
+                pos_t prev_pos = get_pos();
+
+                cur_buf_pos--;
+                cur_buf_size--;
+
+                if (cur_buf_pos == (NUM_COLS - 1)) {
+                    prev_pos.pos_x = NUM_COLS - 1;
+                    prev_pos.pos_y--;
+                
+                    buf_start.pos_y--;
+                
+                    buf_pos = 0;
+                }
+
+                for (i = cur_buf_size + 1; i > cur_buf_pos; i--) {
+                    terminal_buffer[i - 1] = terminal_buffer[i];
+                }
+
+                _print_to_terminal(buf_pos);
+                putc(' ');
+
+                if (prev_pos.pos_x <= 0) {
+                    set_pos(NUM_COLS - 1, prev_pos.pos_y - 1);
+                } else {
+                    set_pos(prev_pos.pos_x - 1, prev_pos.pos_y);
+                }
+            }
+
+            break;
+        case CAPS_LOCK:
+            if (caps_active) {
+                caps_active = 0;
+            } else {
+                caps_active = 1;
+            }
+
+            break;
+        default:
+            break;
+    } 
 }
 
 static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position) {
@@ -244,6 +378,14 @@ int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
     kbd_is_read = 0;
 
     return num_bytes;
+}
+
+int32_t terminal_open(const uint8_t* filename, void* curr_pcb) {
+    return 0;
+}
+
+int32_t terminal_close(int32_t fd, void* curr_pcb) {
+    return -1;
 }
 
 void buf_clear(void) {
