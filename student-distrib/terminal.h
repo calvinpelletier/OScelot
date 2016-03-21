@@ -19,4 +19,8 @@
 
 extern void keyboardHandler(void);
 
+int32_t terminal_write(int32_t fd, const char * buf, int32_t nbytes);
+int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes);
+void buf_clear(void);
+
 #endif

@@ -11,7 +11,9 @@ static uint8_t ctrl_active = 0;
 static uint8_t shift_active = 0;
 static int8_t buf_pos = 0;
 
+int8_t kbd_is_read = 0;
 int8_t terminal_buffer[BUFFER_SIZE];
+int8_t terminal_rd[BUFFER_SIZE];
 uint32_t cur_buf_pos = 0;
 uint32_t cur_buf_size = 0;
 pos_t buf_start;
@@ -20,27 +22,21 @@ pos_t buf_start;
 /* Function Declarations */
 void keyboardHandler(void);
 void do_self(unsigned char scancode, pos_t cur_position);
+void do_spec(unsigned char scancode);
 
 static void _do_key_press(unsigned char scanword, unsigned char chars[], pos_t cur_position);
 static void _update_buf_pos(pos_t cur_position);
 static void _print_to_terminal(int8_t buf_pos);
 
 /*
-keyboardHandler
-    DESCRIPTION: called on keyboard interrupts
-    INPUT: none
-    OUTPUT: none
-    RETURNS: none
-*/
+ * keyboardHandler
+ *   DESCRIPTION:  Handler for keyboard interrupts
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Writes to the terminal buffer
+ */
 void keyboardHandler(void) {
-    // printf("~~~KEYBOARD~~~\n");
-    // while (inb(0x64) & 0x01) {
-    //     printf("%x\n", inb(KEYBOARD_DATA));
-    // }
-    // printf("~~~~~~~~~~~~~~\n");
-    // scroll();
-    // send_eoi(KEYBOARD_IRQ_NUM);
-
     unsigned char scancode;
     unsigned char key_released_code;
     pos_t cur_position;
@@ -69,7 +65,7 @@ void keyboardHandler(void) {
             ctrl_active = 1;
             break;
         case ENTER:
-            // TODO: write enter function
+            do_spec(ENTER);
             break;
         case LEFT_SHIFT:
             shift_active = 1;
@@ -81,14 +77,25 @@ void keyboardHandler(void) {
     }
 
     // TODO: write CTRL-L actions and normal character actions
-    do_self(scancode, cur_position);
+    if (cur_buf_size < BUFFER_SIZE - 2) {
+        do_self(scancode, cur_position);
+    }
 
     send_eoi(KEYBOARD_IRQ_NUM);
     enable_irq(KEYBOARD_IRQ_NUM);
 }
 
+/*
+ * do_self
+ *   DESCRIPTION:  Helper function that handles regular keys (lowercase 
+ *                 characters).
+ *   INPUTS:       scancode     - scancode of key that has been pressed
+ *                 cur_position - current position on the screen
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the terminal buffer
+ */
 void do_self(unsigned char scancode, pos_t cur_position) {
-    // TODO: write this function
     unsigned char self_chars[64] = {
         0, 0, '1', '2', '3', '4', '5', '6', 
         '7', '8', '9', '0', '-', '=', 0, 0, 
@@ -111,6 +118,20 @@ void do_self(unsigned char scancode, pos_t cur_position) {
     }
 }
 
+void do_spec(unsigned char scancode) {
+    if (scancode == ENTER) {
+        terminal_buffer[cur_buf_size] = '\n';
+
+        _print_to_terminal(buf_pos);
+
+        strncpy(terminal_rd, terminal_buffer, BUFFER_SIZE);
+        buf_clear();
+
+        kbd_is_read = 1;
+        buf_pos = 0;
+    }
+}
+
 static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position) {
     int i;
 
@@ -122,23 +143,84 @@ static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t c
     cur_buf_size++;
     cur_buf_pos++;
 
-    _print_to_terminal(buf_pos);
+    _print_to_terminal(buf_pos); // TODO: make this use terminal_write instead
     _update_buf_pos(cur_position);
 }
 
-void _update_buf_pos(pos_t cur_position) {
+static void _update_buf_pos(pos_t cur_position) {
     if (cur_position.pos_x >= NUM_COLS - 1) {
         buf_start.pos_x = 0;
         buf_start.pos_y++;
         
         set_pos(buf_start.pos_x, buf_start.pos_y);
-        buf_pos = NUM_COLS - 9;
+        buf_pos = NUM_COLS;
     } else {
         set_pos(cur_position.pos_x + 1, cur_position.pos_y);
     }
 }
 
-void _print_to_terminal(int8_t buf_pos) {
+static void _print_to_terminal(int8_t buf_pos) {
     set_pos(buf_start.pos_x, buf_start.pos_y);
     puts(terminal_buffer + buf_pos);
+}
+
+int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
+    int i;
+    int num_bytes = 0;
+
+    if (buf != NULL) {
+        for (i = 0; i < nbytes; i++) {
+            putc(buf[i]);
+
+            buf_start.pos_x++;
+
+            if (buf[i] == '\n' || buf_start.pos_x == NUM_COLS) {
+                buf_start.pos_x = 0;
+                buf_start.pos_y++;
+
+                if (buf_start.pos_y >= NUM_ROWS) {
+                    buf_start.pos_y = NUM_ROWS - 1;
+                }
+            }
+
+            num_bytes++;
+        }
+    } else {
+        return -1;
+    }
+
+    return num_bytes++;
+}
+
+int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
+    int i;
+    int num_bytes = 0;
+
+    while (kbd_is_read == 0) {
+        sti();
+    }
+
+    while (i < nbytes && terminal_rd[i] != NULL) {
+        buf[i] = terminal_rd[i];
+        num_bytes++;
+        i++;
+    }
+
+    buf_clear();
+
+    kbd_is_read = 0;
+
+    return num_bytes;
+}
+
+void buf_clear(void) {
+    int i;
+
+    for (i = 0; i < BUFFER_SIZE; i++) {
+        terminal_rd[i] = NULL;
+        terminal_buffer[i] = NULL;
+    }
+
+    cur_buf_pos = 0;
+    cur_buf_size = 0;
 }

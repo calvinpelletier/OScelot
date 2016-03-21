@@ -593,7 +593,7 @@ void scroll(void) {
     int32_t i;
 
     /* If the y position of the text is in the last row, shift the data up */
-	if (screen_y == NUM_ROWS) {
+	if (screen_y >= NUM_ROWS) {
 		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS), 
 			     2 * (NUM_ROWS - 1) * NUM_COLS);
 
@@ -609,6 +609,15 @@ void scroll(void) {
 	}
 }
 
+/*
+ * set_pos
+ *   DESCRIPTION:  Updates the member variables pos_x and pos_y
+ *                 of the pos_t struct.
+ *   INPUTS:       (x, y) - New x and y values to update struct with
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the pos_t struct variables of pos_x and pos_y
+ */
 void set_pos(int x, int y) {
     // int offset;
 
@@ -629,6 +638,15 @@ void set_pos(int x, int y) {
     screen_y = y;
 }
 
+/*
+ * get_pos
+ *   DESCRIPTION:  Gets the current values of pos_x and pos_y variables in
+ *                 the pos_t struct.
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: a struct with screen_x and screen_y as the pos_x and pos_y values
+ *   SIDE EFFECTS: Creates a new pos_t struct
+ */
 pos_t get_pos(void) {
     pos_t cur_pos;
 
