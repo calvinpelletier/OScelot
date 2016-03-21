@@ -11,10 +11,12 @@ static uint8_t ctrl_active = 0;
 static uint8_t shift_active = 0;
 static uint8_t buf_pos = 0;
 
-// FUNCTION DECLARATIONS
-void keyboardHandler(void);
+uint8_t terminal_buffer[BUFFER_SIZE];
 
-// GLOBAL FUNCTIONS
+
+/* Function Declarations */
+void keyboardHandler(void);
+void do_self(void);
 
 /*
 keyboardHandler
@@ -25,10 +27,11 @@ keyboardHandler
 */
 void keyboardHandler(void) {
     // printf("~~~KEYBOARD~~~\n");
-    // while (inb(KEYBOARD_STATUS) & 0x01) {
+    // while (inb(0x64) & 0x01) {
     //     printf("%x\n", inb(KEYBOARD_DATA));
     // }
     // printf("~~~~~~~~~~~~~~\n");
+    // scroll();
     // send_eoi(KEYBOARD_IRQ_NUM);
 
     unsigned char scancode;
@@ -66,5 +69,10 @@ void keyboardHandler(void) {
     }
 
     // TODO: write CTRL-L actions and normal character actions
+}
+
+void do_self(void) {
+    // TODO: write this function
+
 }
 

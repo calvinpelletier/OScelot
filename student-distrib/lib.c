@@ -182,6 +182,7 @@ puts(int8_t* s)
 *   Inputs: uint_8* c = character to print
 *   Return Value: void
 *	Function: Output a character to the console
+* apple
 */
 
 void
@@ -190,10 +191,18 @@ putc(uint8_t c)
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x=0;
+        scroll();
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
+        // apple
+        if (screen_x == NUM_COLS) {
+            screen_y++;
+        }
+
+        scroll();
+
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
@@ -564,5 +573,26 @@ test_interrupts(void)
 	int32_t i;
 	for (i=0; i < NUM_ROWS*NUM_COLS; i++) {
 		video_mem[i<<1]++;
+	}
+}
+
+/* Custom functions written by group OScelot */
+
+/*
+ * apple
+ */
+void scroll(void) {
+    int32_t i;
+
+	if (screen_y == NUM_ROWS) {
+		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS), 
+			     2 * (NUM_ROWS - 1) * NUM_COLS);
+
+        screen_y--;
+
+        for (i = (NUM_ROWS - 1) * NUM_COLS; i < (NUM_ROWS * NUM_COLS); i++) {
+            *(uint8_t *)(video_mem + (i << 1)) = ' ';
+            *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+        }
 	}
 }
