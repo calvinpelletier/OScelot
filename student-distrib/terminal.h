@@ -8,6 +8,7 @@
 /* Custom defines added by group OScelot */
 #define KEYBOARD_DATA 0x60
 #define BUFFER_SIZE   128
+#define MAX_BUF_SIZE  256
 #define KEYBOARD_MASK 0x80
 
 #define BACKSPACE   0x0E

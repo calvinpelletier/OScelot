@@ -1,26 +1,26 @@
-// terminal.c
+/* terminal.c - Handles keyboard presses and prints to terminal. */
 
 #include "terminal.h"
 #include "i8259.h"
 
 
 /* Local variables by group OScelot */
-static uint8_t caps_active = 0; 
+static uint8_t caps_active = 0;              // Booleans for special keys
 static uint8_t ctrl_active = 0;
 static uint8_t shift_active = 0;
-static int8_t buf_pos = 0;                  // Position in buffer
+static uint8_t buf_pos = 0;                  // Position in buffer
 
-static int8_t kbd_is_read = 0;              // Boolean to determine if the keyboard has been read
-static int8_t terminal_buffer[BUFFER_SIZE]; // Terminal buffer
-static int8_t terminal_rd[BUFFER_SIZE];     // System call terminal read buffer
-static uint32_t cur_buf_pos = 0;            // Current buffer position
-static uint32_t cur_buf_size = 0;           // Current buffer size
-static pos_t buf_start;                     // pos_t struct to hold the coordinates of the buffer
+static int8_t kbd_is_read = 0;               // Boolean to determine if the keyboard has been read
+static int8_t terminal_buffer[MAX_BUF_SIZE]; // Terminal buffer
+static int8_t terminal_rd[BUFFER_SIZE];      // System call terminal read buffer
+static uint32_t cur_buf_pos = 0;             // Current buffer position
+static uint32_t cur_buf_size = 0;            // Current buffer size
+static pos_t buf_start;                      // pos_t struct to hold the coordinates of the buffer
 
 /* Local functions by group OScelot */
-static void _do_key_press(unsigned char scanword, unsigned char chars[], pos_t cur_position);
+static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position);
 static void _update_buf_pos(pos_t cur_position);
-static void _print_to_terminal(int8_t buf_pos);
+static void _print_to_terminal(uint8_t buf_pos);
 
 /*
  * keyboardHandler
@@ -37,11 +37,16 @@ void keyboardHandler(void) {
 
     disable_irq(KEYBOARD_IRQ_NUM);
 
+    /* Receive data from the keyboard */
     scancode = inb(KEYBOARD_DATA);
+
+    /* Calculate the release code by OR'ing with 0x80 */
     key_released_code = scancode | KEYBOARD_MASK;
 
+    /* Get the current position in the terminal */
     cur_position = get_pos();
 
+    /* Check for special keys and do the appropriate function call */
     switch (scancode) {
         case BACKSPACE:
             do_spec(BACKSPACE);
@@ -65,6 +70,10 @@ void keyboardHandler(void) {
             break;
     }
 
+    /* Since CTRL and SHIFT are not toggled keys, we need to turn them off 
+     * if they are released. If they are held down, we need to use a different
+     * character array.
+     */
     if (scancode == key_released_code) {
         if (ctrl_active && ((scancode & ~(KEYBOARD_MASK)) == CTRL)) {
             ctrl_active = 0;
@@ -74,6 +83,9 @@ void keyboardHandler(void) {
         }
     }
 
+    /* Handles the special key combo of CTRL-L which 
+     * clears the screen except for the terminal buffer.
+     */
     if (ctrl_active && scancode == L) {
         clear();
 
@@ -88,7 +100,7 @@ void keyboardHandler(void) {
         _print_to_terminal(0);
 
     /* '\n' is 2 bytes so the buffer should stop at 126 instead of 128 */
-    } else if (cur_buf_size < BUFFER_SIZE - 2) {
+    } else if (cur_buf_size < MAX_BUF_SIZE - 2) {
         if (!caps_active && !shift_active) {
             do_self(scancode, cur_position);         
         } else if (caps_active && shift_active) {
@@ -98,11 +110,12 @@ void keyboardHandler(void) {
         } else {
             do_caps(scancode, cur_position);
         }
-    }
+   }
 
     /* Move cursor to the right spot */
     set_cursor(cur_buf_pos - cur_buf_size);
 
+    /* Send EOI and enable the keyboard IRQ again so we keep getting keys */
     send_eoi(KEYBOARD_IRQ_NUM);
     enable_irq(KEYBOARD_IRQ_NUM);
 }
@@ -118,6 +131,7 @@ void keyboardHandler(void) {
  *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_self(unsigned char scancode, pos_t cur_position) {
+    /* Character array using scancode set 1 */
     unsigned char self_chars[64] = {
         0, 0, '1', '2', '3', '4', '5', '6', 
         '7', '8', '9', '0', '-', '=', 0, 0, 
@@ -129,6 +143,7 @@ void do_self(unsigned char scancode, pos_t cur_position) {
         0,' ',0, 0, 0, 0, 0, 0
     };
 
+    /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
         if (cur_buf_size == 0) {
             buf_start = cur_position;
@@ -150,6 +165,7 @@ void do_self(unsigned char scancode, pos_t cur_position) {
  *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_caps(unsigned char scancode, pos_t cur_position) {
+    /* CAPS character array using scancode set 1 */
     unsigned char caps_chars[64] = {
         0, 0, '1', '2', '3', '4', '5', '6', 
         '7', '8', '9', '0', '-', '=', 0, 0, 
@@ -161,6 +177,7 @@ void do_caps(unsigned char scancode, pos_t cur_position) {
         0,' ',0, 0, 0, 0, 0, 0
     };
 
+    /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
         if (cur_buf_size == 0) {
             buf_start = cur_position;
@@ -182,6 +199,7 @@ void do_caps(unsigned char scancode, pos_t cur_position) {
  *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_shift(unsigned char scancode, pos_t cur_position) {
+    /* SHIFT character array using scancode set 1 */
     unsigned char shift_chars[64] = {
         0, 0, '!', '@', '#', '$', '%', '^', 
         '&', '*', '(', ')', '_', '+', 0, 0, 
@@ -193,6 +211,7 @@ void do_shift(unsigned char scancode, pos_t cur_position) {
         0, ' ', 0, 0, 0, 0, 0, 0
     };
 
+    /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
         if (cur_buf_size == 0) {
             buf_start = cur_position;
@@ -214,6 +233,7 @@ void do_shift(unsigned char scancode, pos_t cur_position) {
  *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_shiftcap(unsigned char scancode, pos_t cur_position) {
+    /* SHIFT-CAP character array using scancode set 1 */
     unsigned char combo_chars[64] = {
         0, 0, '!', '@', '#', '$', '%', '^', 
         '&', '*', '(', ')', '_', '+', 0, 0, 
@@ -225,6 +245,7 @@ void do_shiftcap(unsigned char scancode, pos_t cur_position) {
         0,' ',0, 0, 0, 0, 0, 0
     };
 
+    /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
         if (cur_buf_size == 0) {
             buf_start = cur_position;
@@ -246,7 +267,7 @@ void do_shiftcap(unsigned char scancode, pos_t cur_position) {
  *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_spec(unsigned char scancode) {
-    int i;
+    int i;  /* Loop counter */
     
     /* Depending on the scancode, do the special action for each key */
     switch (scancode) {
@@ -270,6 +291,7 @@ void do_spec(unsigned char scancode) {
             if (cur_buf_pos > 0) {
                 pos_t prev_pos = get_pos();
 
+                /* Update the buffer position and size */
                 cur_buf_pos--;
                 cur_buf_size--;
 
@@ -321,7 +343,7 @@ void do_spec(unsigned char scancode) {
 void buf_clear(void) {
     int i;
 
-    for (i = 0; i < BUFFER_SIZE; i++) {
+    for (i = 0; i < MAX_BUF_SIZE; i++) {
         terminal_buffer[i] = NULL;
     }
 
@@ -462,7 +484,15 @@ static void _update_buf_pos(pos_t cur_position) {
         buf_start.pos_y++;
         
         set_pos(buf_start.pos_x, buf_start.pos_y);
-        buf_pos = NUM_COLS;
+        
+        if (cur_buf_pos >= NUM_COLS * 3) {
+            buf_pos = NUM_COLS * 3;
+        } else if (cur_buf_pos >= NUM_COLS * 2) {
+            buf_pos = NUM_COLS * 2;
+        } else if (cur_buf_pos >= NUM_COLS) {
+            buf_pos = NUM_COLS;
+        }
+            
     } else {
         set_pos(cur_position.pos_x + 1, cur_position.pos_y);
     }
@@ -477,7 +507,7 @@ static void _update_buf_pos(pos_t cur_position) {
  *   RETURN VALUE: none
  *   SIDE EFFECTS: Writes to the terminal buffer to video memory
  */
-static void _print_to_terminal(int8_t buf_pos) {
+static void _print_to_terminal(uint8_t buf_pos) {
     set_pos(buf_start.pos_x, buf_start.pos_y);
     puts(terminal_buffer + buf_pos);
 }

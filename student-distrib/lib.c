@@ -194,14 +194,15 @@ putc(uint8_t c)
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
 
+
+        
         /* Check if x is at the end of the line, if yes, go to the next row. 
          * This allows for text wrapping.
          */
         if (screen_x == NUM_COLS) {
             screen_y++;
+            scroll();
         }
-
-        scroll();
 
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
@@ -619,8 +620,6 @@ void scroll(void) {
  *   SIDE EFFECTS: Overwrites the pos_t struct variables of pos_x and pos_y
  */
 void set_pos(int x, int y) {
-    // int offset;
-
     while (x >= NUM_COLS) {
         x -= NUM_COLS;
         y++;
@@ -629,10 +628,6 @@ void set_pos(int x, int y) {
     while (y >= NUM_ROWS) {
         y--;
     }
-
-    // apple
-    // offset = screen_x + screen_y * NUM_COLS;
-    // *(uint8_t *)(video_mem + 2 * offset + 1) = ATTRIB;
 
     screen_x = x;
     screen_y = y;
