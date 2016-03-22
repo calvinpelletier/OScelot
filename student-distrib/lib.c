@@ -656,6 +656,14 @@ pos_t get_pos(void) {
     return cur_pos;
 }
 
+/*
+ * set_cursor
+ *   DESCRIPTION:  Changes the cursor to the requested x coordinate in the terminal.
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites video memory to move cursor.
+ */
 void set_cursor(int x) {
 	int new_cursor;
 	pos_t cur_cursor;

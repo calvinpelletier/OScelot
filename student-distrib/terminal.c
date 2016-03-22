@@ -1,32 +1,23 @@
 // terminal.c
 
 #include "terminal.h"
-#include "lib.h"
 #include "i8259.h"
 
 
 /* Local variables by group OScelot */
-static uint8_t caps_active = 0;
+static uint8_t caps_active = 0; 
 static uint8_t ctrl_active = 0;
 static uint8_t shift_active = 0;
-static int8_t buf_pos = 0;
+static int8_t buf_pos = 0;                  // Position in buffer
 
-int8_t kbd_is_read = 0;
-int8_t terminal_buffer[BUFFER_SIZE];
-int8_t terminal_rd[BUFFER_SIZE];
-uint32_t cur_buf_pos = 0;
-uint32_t cur_buf_size = 0;
-pos_t buf_start;
+static int8_t kbd_is_read = 0;              // Boolean to determine if the keyboard has been read
+static int8_t terminal_buffer[BUFFER_SIZE]; // Terminal buffer
+static int8_t terminal_rd[BUFFER_SIZE];     // System call terminal read buffer
+static uint32_t cur_buf_pos = 0;            // Current buffer position
+static uint32_t cur_buf_size = 0;           // Current buffer size
+static pos_t buf_start;                     // pos_t struct to hold the coordinates of the buffer
 
-
-/* Function Declarations */
-void keyboardHandler(void);
-void do_self(unsigned char scancode, pos_t cur_position);
-void do_spec(unsigned char scancode);
-void do_caps(unsigned char scancode, pos_t cur_position);
-void do_shift(unsigned char scancode, pos_t cur_position);
-void do_shiftcap(unsigned char scancode, pos_t cur_position);
-
+/* Local functions by group OScelot */
 static void _do_key_press(unsigned char scanword, unsigned char chars[], pos_t cur_position);
 static void _update_buf_pos(pos_t cur_position);
 static void _print_to_terminal(int8_t buf_pos);
@@ -47,7 +38,7 @@ void keyboardHandler(void) {
     disable_irq(KEYBOARD_IRQ_NUM);
 
     scancode = inb(KEYBOARD_DATA);
-    key_released_code = scancode | 0x80;
+    key_released_code = scancode | KEYBOARD_MASK;
 
     cur_position = get_pos();
 
@@ -70,25 +61,30 @@ void keyboardHandler(void) {
         case LEFT_SHIFT:
             shift_active = 1;
             break;
+        default:
+            break;
     }
 
     if (scancode == key_released_code) {
-        if (ctrl_active && ((scancode & ~(0x80)) == CTRL)) {
+        if (ctrl_active && ((scancode & ~(KEYBOARD_MASK)) == CTRL)) {
             ctrl_active = 0;
-        } else if (shift_active && ((scancode & ~(0x80)) == LEFT_SHIFT || 
-                   (scancode & ~(0x80)) == RIGHT_SHIFT)) {
+        } else if (shift_active && ((scancode & ~(KEYBOARD_MASK)) == LEFT_SHIFT || 
+                   (scancode & ~(KEYBOARD_MASK)) == RIGHT_SHIFT)) {
             shift_active = 0;
         }
     }
 
     if (ctrl_active && scancode == L) {
         clear();
+
+        /* Reset the cursor and buffer position to (0, 0) */
         set_pos(0, 0);
         set_cursor(0);
 
         buf_start.pos_x = 0;
         buf_start.pos_y = 0;
 
+        /* Print starting at the beginning of the buffer */
         _print_to_terminal(0);
 
     /* '\n' is 2 bytes so the buffer should stop at 126 instead of 128 */
@@ -104,6 +100,7 @@ void keyboardHandler(void) {
         }
     }
 
+    /* Move cursor to the right spot */
     set_cursor(cur_buf_pos - cur_buf_size);
 
     send_eoi(KEYBOARD_IRQ_NUM);
@@ -239,23 +236,37 @@ void do_shiftcap(unsigned char scancode, pos_t cur_position) {
     }
 }
 
+/*
+ * do_spec
+ *   DESCRIPTION:  Helper function that handles special keys: ENTER,
+ *                 BACKSPACE, and CAPS LOCK.
+ *   INPUTS:       scancode     - scancode of key that has been pressed
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the terminal buffer
+ */
 void do_spec(unsigned char scancode) {
     int i;
     
+    /* Depending on the scancode, do the special action for each key */
     switch (scancode) {
         case ENTER:
+            /* Append a newline to the terminal buffer */
             terminal_buffer[cur_buf_pos] = '\n';
 
             _print_to_terminal(buf_pos);
 
+            /* Copy the terminal buffer to the system buffer */
             strncpy(terminal_rd, terminal_buffer, BUFFER_SIZE);
             buf_clear();
 
+            /* Set kbd_is_read flag so we know it can be read */
             kbd_is_read = 1;
             buf_pos = 0;
 
             break;
         case BACKSPACE:
+            /* If we're not at the beginning of the buffer, we can delete */
             if (cur_buf_pos > 0) {
                 pos_t prev_pos = get_pos();
 
@@ -299,38 +310,35 @@ void do_spec(unsigned char scancode) {
     } 
 }
 
-static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position) {
+/*
+ * buf_clear
+ *   DESCRIPTION:  Helper function that clears terminal buffer.
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the terminal buffer
+ */
+void buf_clear(void) {
     int i;
 
-    for (i = cur_buf_size; i > cur_buf_pos; i--) {
-        terminal_buffer[i] = terminal_buffer[i - 1];
+    for (i = 0; i < BUFFER_SIZE; i++) {
+        terminal_buffer[i] = NULL;
     }
 
-    terminal_buffer[cur_buf_pos] = chars[scancode];
-    cur_buf_size++;
-    cur_buf_pos++;
-
-    _print_to_terminal(buf_pos);
-    _update_buf_pos(cur_position);
+    cur_buf_size = 0;
+    cur_buf_pos = 0;
 }
 
-static void _update_buf_pos(pos_t cur_position) {
-    if (cur_position.pos_x >= NUM_COLS - 1) {
-        buf_start.pos_x = 0;
-        buf_start.pos_y++;
-        
-        set_pos(buf_start.pos_x, buf_start.pos_y);
-        buf_pos = NUM_COLS;
-    } else {
-        set_pos(cur_position.pos_x + 1, cur_position.pos_y);
-    }
-}
-
-static void _print_to_terminal(int8_t buf_pos) {
-    set_pos(buf_start.pos_x, buf_start.pos_y);
-    puts(terminal_buffer + buf_pos);
-}
-
+/*
+ * terminal_write
+ *   DESCRIPTION:  System call that writes the terminal buffer to the screen.
+ *   INPUTS:       fd - not used
+ *                 buf - buffer from which to write data from
+ *                 nbytes - number of bytes to write
+ *   OUTPUTS:      none
+ *   RETURN VALUE: Number of bytes written
+ *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
+ */
 int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
     int i;
     int num_bytes = 0;
@@ -359,6 +367,16 @@ int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
     return num_bytes++;
 }
 
+/*
+ * terminal_read
+ *   DESCRIPTION:  System call that reads from the system call buffer
+ *   INPUTS:       fd - not used
+ *                 buf - buffer from which to read data from
+ *                 nbytes - number of bytes to read
+ *   OUTPUTS:      none
+ *   RETURN VALUE: Number of bytes read
+ *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
+ */
 int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
     int i;
     int num_bytes = 0;
@@ -380,22 +398,86 @@ int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
     return num_bytes;
 }
 
-int32_t terminal_open(const uint8_t* filename, void* curr_pcb) {
-    return 0;
-}
-
-int32_t terminal_close(int32_t fd, void* curr_pcb) {
+/*
+ * terminal_open
+ *   DESCRIPTION:  System call that opens the filename. Not used by terminal.
+ *   INPUTS:       filename - name of file to open
+ *   OUTPUTS:      none
+ *   RETURN VALUE: -1 if unsuccessful
+ *   SIDE EFFECTS: none
+ */
+int32_t terminal_open(const uint8_t* filename) {
     return -1;
 }
 
-void buf_clear(void) {
+/*
+ * terminal_close
+ *   DESCRIPTION:  System call that closes a file. Not used by terminal.
+ *   INPUTS:       fd - file descriptor of file to close
+ *   OUTPUTS:      none
+ *   RETURN VALUE: -1 if unsuccessful
+ *   SIDE EFFECTS: none
+ */
+int32_t terminal_close(int32_t fd) {
+    return -1;
+}
+
+/*
+ * _do_key_press
+ *   DESCRIPTION:  Helper function that handles the actual key press and updates
+ *                 the relevant variables.
+ *   INPUTS:       scancode - scancode of key that has been pressed
+ *                 chars    - array of characters to use for the scancodes
+ *                 cur_position - current position in the terminal buffer
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the terminal buffer and updates global variables
+ */
+static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position) {
     int i;
 
-    for (i = 0; i < BUFFER_SIZE; i++) {
-        terminal_rd[i] = NULL;
-        terminal_buffer[i] = NULL;
+    for (i = cur_buf_size; i > cur_buf_pos; i--) {
+        terminal_buffer[i] = terminal_buffer[i - 1];
     }
 
-    cur_buf_size = 0;
-    cur_buf_pos = 0;
+    terminal_buffer[cur_buf_pos] = chars[scancode];
+    cur_buf_size++;
+    cur_buf_pos++;
+
+    _print_to_terminal(buf_pos);
+    _update_buf_pos(cur_position);
+}
+
+/*
+ * _update_buf_pos
+ *   DESCRIPTION:  Helper function that to update the buffer position.
+ *   INPUTS:       cur_position - current position in the terminal buffer
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Updates th buffer position global variables
+ */
+static void _update_buf_pos(pos_t cur_position) {
+    if (cur_position.pos_x >= NUM_COLS - 1) {
+        buf_start.pos_x = 0;
+        buf_start.pos_y++;
+        
+        set_pos(buf_start.pos_x, buf_start.pos_y);
+        buf_pos = NUM_COLS;
+    } else {
+        set_pos(cur_position.pos_x + 1, cur_position.pos_y);
+    }
+}
+
+/*
+ * _print_to_terminal
+ *   DESCRIPTION:  Helper function that to print the terminal buffer 
+ *                 to the screen.
+ *   INPUTS:       buf_pos - current position in the terminal buffer
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Writes to the terminal buffer to video memory
+ */
+static void _print_to_terminal(int8_t buf_pos) {
+    set_pos(buf_start.pos_x, buf_start.pos_y);
+    puts(terminal_buffer + buf_pos);
 }
