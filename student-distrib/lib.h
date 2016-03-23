@@ -53,7 +53,7 @@ typedef struct {
 void scroll(void);
 void set_pos(int x, int y);
 pos_t get_pos(void);
-void set_cursor(int x);
+void set_cursor(void);
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

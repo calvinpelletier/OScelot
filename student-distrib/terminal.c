@@ -111,7 +111,7 @@ void keyboardHandler(void) {
    }
 
     /* Move cursor to the right spot */
-    set_cursor(0);
+    set_cursor();
 
     /* Send EOI and enable the keyboard IRQ again so we keep getting keys */
     send_eoi(KEYBOARD_IRQ_NUM);
