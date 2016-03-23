@@ -620,11 +620,16 @@ void scroll(void) {
  *   SIDE EFFECTS: Overwrites the pos_t struct variables of pos_x and pos_y
  */
 void set_pos(int x, int y) {
+
+	/* If we're past the end of the screen, go back
+	 * one column and get to the next row.
+	 */
     while (x >= NUM_COLS) {
         x -= NUM_COLS;
         y++;
     }
 
+    /* If we're below the bottom of the screen, reduce y */
     while (y >= NUM_ROWS) {
         y--;
     }
@@ -663,9 +668,11 @@ void set_cursor(int x) {
 	int new_cursor;
 	pos_t cur_cursor;
 	
+	/* Get the current cursor position and update the cursor with the offset */
 	cur_cursor = get_pos();
 	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);
 
+	/* Accessing the appropriate cursor registers in the VGA */
 	outb(CURSOR_LOW_REG, CRTC_ADDR_REG);
 	outb((uint8_t)new_cursor, CRTC_DATA_REG);
 

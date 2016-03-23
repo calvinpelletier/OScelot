@@ -14,7 +14,6 @@ static int8_t kbd_is_read = 0;               // Boolean to determine if the keyb
 static int8_t terminal_buffer[MAX_BUF_SIZE]; // Terminal buffer
 static int8_t terminal_rd[BUFFER_SIZE];      // System call terminal read buffer
 static uint32_t cur_buf_pos = 0;             // Current buffer position
-static uint32_t cur_buf_size = 0;            // Current buffer size
 static pos_t buf_start;                      // pos_t struct to hold the coordinates of the buffer
 
 /* Local functions by group OScelot */
@@ -89,18 +88,17 @@ void keyboardHandler(void) {
     if (ctrl_active && scancode == L) {
         clear();
 
-        /* Reset the cursor and buffer position to (0, 0) */
+        /* Reset buffer position to (0, 0) */
         set_pos(0, 0);
-        set_cursor(0);
 
         buf_start.pos_x = 0;
         buf_start.pos_y = 0;
 
-        /* Print starting at the beginning of the buffer */
-        _print_to_terminal(0);
+        /* Clear the whole terminal buffer */
+        buf_clear();
 
-    /* '\n' is 2 bytes so the buffer should stop at 126 instead of 128 */
-    } else if (cur_buf_size < MAX_BUF_SIZE - 2) {
+    /* '\n' is 2 bytes so the buffer should stop at 254 instead of 256 */
+    } else if (cur_buf_pos < MAX_BUF_SIZE - 2) { //apple
         if (!caps_active && !shift_active) {
             do_self(scancode, cur_position);         
         } else if (caps_active && shift_active) {
@@ -113,7 +111,7 @@ void keyboardHandler(void) {
    }
 
     /* Move cursor to the right spot */
-    set_cursor(cur_buf_pos - cur_buf_size);
+    set_cursor(0);
 
     /* Send EOI and enable the keyboard IRQ again so we keep getting keys */
     send_eoi(KEYBOARD_IRQ_NUM);
@@ -145,7 +143,7 @@ void do_self(unsigned char scancode, pos_t cur_position) {
 
     /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
-        if (cur_buf_size == 0) {
+        if (cur_buf_pos == 0) {
             buf_start = cur_position;
         }
 
@@ -179,7 +177,7 @@ void do_caps(unsigned char scancode, pos_t cur_position) {
 
     /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
-        if (cur_buf_size == 0) {
+        if (cur_buf_pos == 0) {
             buf_start = cur_position;
         }
 
@@ -213,7 +211,7 @@ void do_shift(unsigned char scancode, pos_t cur_position) {
 
     /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
-        if (cur_buf_size == 0) {
+        if (cur_buf_pos == 0) {
             buf_start = cur_position;
         }
 
@@ -247,7 +245,7 @@ void do_shiftcap(unsigned char scancode, pos_t cur_position) {
 
     /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
-        if (cur_buf_size == 0) {
+        if (cur_buf_pos == 0) {
             buf_start = cur_position;
         }
 
@@ -291,10 +289,10 @@ void do_spec(unsigned char scancode) {
             if (cur_buf_pos > 0) {
                 pos_t prev_pos = get_pos();
 
-                /* Update the buffer position and size */
+                /* Update the buffer position */
                 cur_buf_pos--;
-                cur_buf_size--;
 
+                /* Check if the current buffer position is at the end of the line */
                 if (cur_buf_pos == (NUM_COLS - 1)) {
                     prev_pos.pos_x = NUM_COLS - 1;
                     prev_pos.pos_y--;
@@ -304,22 +302,22 @@ void do_spec(unsigned char scancode) {
                     buf_pos = 0;
                 }
 
-                for (i = cur_buf_size + 1; i > cur_buf_pos; i--) {
+                /* Repopulate the terminal buffer with the appropriate characters */
+                for (i = cur_buf_pos + 1; i > cur_buf_pos; i--) {
                     terminal_buffer[i - 1] = terminal_buffer[i];
                 }
 
+                /* Print the buffer to the terminal plus an empty space for the deleted char */
                 _print_to_terminal(buf_pos);
                 putc(' ');
 
-                if (prev_pos.pos_x <= 0) {
-                    set_pos(NUM_COLS - 1, prev_pos.pos_y - 1);
-                } else {
-                    set_pos(prev_pos.pos_x - 1, prev_pos.pos_y);
-                }
+                /* Change the position to the previous position */
+                set_pos(prev_pos.pos_x - 1, prev_pos.pos_y);
             }
 
             break;
         case CAPS_LOCK:
+            /* Toggle the CAPS flag so we know which character array to use */
             if (caps_active) {
                 caps_active = 0;
             } else {
@@ -341,13 +339,14 @@ void do_spec(unsigned char scancode) {
  *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void buf_clear(void) {
-    int i;
+    int i; /* Loop counter */
 
+    /* Clear the whole terminal buffer */
     for (i = 0; i < MAX_BUF_SIZE; i++) {
         terminal_buffer[i] = NULL;
     }
 
-    cur_buf_size = 0;
+    /* Reset buffer position */
     cur_buf_pos = 0;
 }
 
@@ -362,19 +361,22 @@ void buf_clear(void) {
  *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
  */
 int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
-    int i;
-    int num_bytes = 0;
+    int i;              /* Loop counter                           */
+    int num_bytes = 0;  /* Number of bytes that have been written */
 
     if (buf != NULL) {
+        /* Print each character in the passed in buffer to the screen */
         for (i = 0; i < nbytes; i++) {
             putc(buf[i]);
 
             buf_start.pos_x++;
 
+            /* If there is a newline character or if we're at the end of the line, wrap */
             if (buf[i] == '\n' || buf_start.pos_x == NUM_COLS) {
                 buf_start.pos_x = 0;
                 buf_start.pos_y++;
 
+                /* If we're at the bottom of the screen, we're going to scroll so change pos_y */
                 if (buf_start.pos_y >= NUM_ROWS) {
                     buf_start.pos_y = NUM_ROWS - 1;
                 }
@@ -400,21 +402,25 @@ int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
  *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
  */
 int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
-    int i;
-    int num_bytes = 0;
+    int i;              /* Loop counter         */
+    int num_bytes = 0;  /* Number of bytes read */
 
+    /* Spin until ENTER is pressed or the buffer is filled to 128 */
     while (kbd_is_read == 0) {
         sti();
     }
 
+    /* Whatever is in the terminal_rd buffer goes into the input buffer */
     while (i < nbytes && terminal_rd[i] != NULL) {
         buf[i] = terminal_rd[i];
         num_bytes++;
         i++;
     }
 
+    /* Clear terminal buffer */
     buf_clear();
 
+    /* Turn kbd_is_read flag to accept more interrupts */
     kbd_is_read = 0;
 
     return num_bytes;
@@ -456,16 +462,12 @@ int32_t terminal_close(int32_t fd) {
  *   SIDE EFFECTS: Overwrites the terminal buffer and updates global variables
  */
 static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position) {
-    int i;
-
-    for (i = cur_buf_size; i > cur_buf_pos; i--) {
-        terminal_buffer[i] = terminal_buffer[i - 1];
-    }
-
+   /* Place the character into the terminal buffer */
     terminal_buffer[cur_buf_pos] = chars[scancode];
-    cur_buf_size++;
+
     cur_buf_pos++;
 
+    /* Print the terminal buffer to the screen and update the position */
     _print_to_terminal(buf_pos);
     _update_buf_pos(cur_position);
 }
@@ -476,15 +478,20 @@ static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t c
  *   INPUTS:       cur_position - current position in the terminal buffer
  *   OUTPUTS:      none
  *   RETURN VALUE: none
- *   SIDE EFFECTS: Updates th buffer position global variables
+ *   SIDE EFFECTS: Updates the buffer position global variables
  */
 static void _update_buf_pos(pos_t cur_position) {
+    /* If we're at the end of the line, update for scrolling and text wrapping */
     if (cur_position.pos_x >= NUM_COLS - 1) {
         buf_start.pos_x = 0;
         buf_start.pos_y++;
         
         set_pos(buf_start.pos_x, buf_start.pos_y);
         
+        /* Depending on the current size of the buffer, 
+         * we should copy from a different offset from
+         * the beginning of the terminal buffer.
+         */
         if (cur_buf_pos >= NUM_COLS * 3) {
             buf_pos = NUM_COLS * 3;
         } else if (cur_buf_pos >= NUM_COLS * 2) {
@@ -508,6 +515,11 @@ static void _update_buf_pos(pos_t cur_position) {
  *   SIDE EFFECTS: Writes to the terminal buffer to video memory
  */
 static void _print_to_terminal(uint8_t buf_pos) {
+    /* Update the position in the terminal so we don't overwrite anything */
     set_pos(buf_start.pos_x, buf_start.pos_y);
+
+    /* Print to the screen with the buf_pos offset so we 
+     * don't copy multiple lines when we're calling scroll().
+     */
     puts(terminal_buffer + buf_pos);
 }
