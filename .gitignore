@@ -1,4 +1,4 @@
 *.o
 *.dep
 bootimg
-mp3.img
+compile
