@@ -5,7 +5,18 @@
 #ifndef _LIB_H
 #define _LIB_H
 
-#define DEBUG_ALL 1 // global debug flag
+#define VIDEO    0xB8000
+#define NUM_COLS 80
+#define NUM_ROWS 25
+#define ATTRIB   0x7
+
+/* Custom defines by group OScelot */
+#define DEBUG_ALL 0
+
+#define CURSOR_LOW_REG  0x0F
+#define CURSOR_HIGH_REG 0x0E
+#define CRTC_ADDR_REG   0x3D4
+#define CRTC_DATA_REG   0x3D5
 
 #include "types.h"
 
@@ -31,6 +42,18 @@ int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 void test_interrupts();
+
+/* Custom struct by group OScelot */
+typedef struct {
+	int pos_x;
+	int pos_y;
+} pos_t;
+
+/* Custom functions written by group OScelot */
+void scroll(void);
+void set_pos(int x, int y);
+pos_t get_pos(void);
+void set_cursor(void);
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

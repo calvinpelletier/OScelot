@@ -10,13 +10,13 @@
 /* Ports that each PIC sits on */
 #define MASTER_CMD    0x20
 #define MASTER_DATA   0x21
-#define SLAVE_CMD    0xA0
-#define SLAVE_DATA   0xA1
+#define SLAVE_CMD     0xA0
+#define SLAVE_DATA    0xA1
 
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
  * of each word */
-#define ICW1    0x11
+#define ICW1          0x11
 #define ICW2_MASTER   0x20
 #define ICW2_SLAVE    0x28
 #define ICW3_MASTER   0x04
@@ -77,7 +77,7 @@ void i8259_init(void) {
         }
     }
 
-    enable_irq(2); // unmask slave line
+    enable_irq(SLAVE_IRQ_NUM); // unmask slave line
 }
 
 
@@ -140,7 +140,7 @@ void send_eoi(unsigned char irq_num) {
     if (irq_num < 8) { // master
         outb(EOI | irq_num, MASTER_CMD);
     } else { // slave
-        outb(EOI | (irq_num - 8), SLAVE_CMD);
-        outb(EOI | 2, MASTER_CMD); // let master know as well
+        outb(EOI | (irq_num - 8), SLAVE_CMD); // Subtract 8 to get IRQ on slave PIC
+        outb(EOI | SLAVE_IRQ_NUM, MASTER_CMD); // let master know as well
     }
 }
