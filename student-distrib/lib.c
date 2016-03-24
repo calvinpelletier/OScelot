@@ -664,13 +664,13 @@ pos_t get_pos(void) {
  *   RETURN VALUE: none
  *   SIDE EFFECTS: Overwrites video memory to move cursor.
  */
-void set_cursor(void) {
+void set_cursor(int x) {
 	int new_cursor;
 	pos_t cur_cursor;
 	
 	/* Get the current cursor position and update the cursor with the offset */
 	cur_cursor = get_pos();
-	new_cursor = cur_cursor.pos_x + (cur_cursor.pos_y * NUM_COLS);
+	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);
 
 	/* Accessing the appropriate cursor registers in the VGA */
 	outb(CURSOR_LOW_REG, CRTC_ADDR_REG);

@@ -19,6 +19,8 @@
 #define SPACE       0x39
 #define LEFT_SHIFT  0x2A
 #define L           0x26
+#define LEFT_ARROW  0xCB
+#define LEFT_ARROW2 0x6B
 
 /* Function Declarations */
 void keyboardHandler(void);

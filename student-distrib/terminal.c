@@ -111,7 +111,11 @@ void keyboardHandler(void) {
    }
 
     /* Move cursor to the right spot */
-    set_cursor();
+    //set_cursor(0);
+
+    while (scancode == LEFT_ARROW || scancode == 0x4B) {
+        set_cursor(-1);
+    } 
 
     /* Send EOI and enable the keyboard IRQ again so we keep getting keys */
     send_eoi(KEYBOARD_IRQ_NUM);
@@ -149,6 +153,7 @@ void do_self(unsigned char scancode, pos_t cur_position) {
 
         if (self_chars[scancode] != NULL) {
             _do_key_press(scancode, self_chars, cur_position);
+            set_cursor(0);
         }
     }
 }
