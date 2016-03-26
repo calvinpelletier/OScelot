@@ -7,6 +7,6 @@
 
 
 // GLOBAL FUNCTIONS
-
+extern int filesys_init(void* start, void* end);
 
 #endif

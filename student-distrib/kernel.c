@@ -11,6 +11,7 @@
 #include "rtc.h"
 #include "terminal.h"
 #include "idt.h"
+#include "filesys.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -154,7 +155,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	
+
 	/* Init the PIC */
 	i8259_init();
 
@@ -166,8 +167,13 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Init paging */
 	if (paging_init()) {
-		printf("ERROR: Paging failed to initialize.");
-	};
+		printf("ERROR: Paging failed to initialize.\n");
+	}
+
+	/* Init file system */
+	if (filesys_init()) {
+		printf("ERROR: File system failed to initialize.\n");
+	}
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
@@ -175,7 +181,7 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
-	
+
 	/* Execute the first program (`shell') ... */
 
 	/* Spin (nicely, so we don't chew up cycles) */
