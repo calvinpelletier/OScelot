@@ -171,7 +171,8 @@ entry (unsigned long magic, unsigned long addr)
 	}
 
 	/* Init file system */
-	if (filesys_init()) {
+	module_t* filesys_img = (module_t*)mbi->mods_addr;
+	if (filesys_init((void *)filesys_img->mod_start, (void *)filesys_img->mod_end)) {
 		printf("ERROR: File system failed to initialize.\n");
 	}
 
