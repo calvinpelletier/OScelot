@@ -672,6 +672,12 @@ void set_cursor(int x) {
 	cur_cursor = get_pos();
 	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);
 
+	if (x == -1) {
+		set_pos(cur_cursor.pos_x - 1, cur_cursor.pos_y);
+	} else if (x == 1) {
+		set_pos(cur_cursor.pos_x + 1, cur_cursor.pos_y);
+	}
+
 	/* Accessing the appropriate cursor registers in the VGA */
 	outb(CURSOR_LOW_REG, CRTC_ADDR_REG);
 	outb((uint8_t)new_cursor, CRTC_DATA_REG);
