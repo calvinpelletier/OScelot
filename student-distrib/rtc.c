@@ -53,7 +53,7 @@ void rtcHandler(void) {
     if (DEBUG_ALL) {
         // printf("DEBUG: received RTC interrupt %d.\n", count);
         // count++;
-        test_interrupts();
+        //test_interrupts();
     }
 
     send_eoi(RTC_IRQ_NUM);
