@@ -10,6 +10,7 @@
 #define MAX_DENTRIES 63
 #define DATABLOCKS_PER_INODE 1023
 #define FILEARRAY_SIZE 8
+#define FS_BLOCK_SIZE 4096
 
 // STRUCTS
 typedef struct {
@@ -59,6 +60,8 @@ static void* FILESYS_START;
 static void* FILESYS_END;
 static file_t filearray[FILEARRAY_SIZE]; // 0 = stdin, 1 = stdout, 2-7 = free to use
 static bootblock_t bootblock;
+static inode_t* inodes;
+static void* FS_DATA_START;
 
 
 // FUNCTION DECLARATIONS
@@ -77,6 +80,12 @@ int filesys_init(void* start, void* end) {
     // populate bootblock
     bootblock = *((bootblock_t*)start);
 
+    // initialize base of array of inodes (starts at absolute block number 1)
+    inodes = (inode_t *)(FILESYS_START + FS_BLOCK_SIZE);
+
+    // initialize start of data blocks (starts after boot block and inode blocks)
+    FS_DATA_START = FILESYS_START + FS_BLOCK_SIZE + (bootblock.n_inodes) * FS_BLOCK_SIZE;
+
     if (DEBUG_ALL) {
         test();
     }
@@ -94,7 +103,7 @@ int read_dentry_by_name(const unsigned char* fname, dentry_t* dentry) {
 
     int i = 0;
     while (i < bootblock.n_dentries && i < MAX_DENTRIES) {
-        if (!strncmp(fname, bootblock.dentries[i].name, len)) {
+        if (!strncmp( (int8_t*) fname, (int8_t *) bootblock.dentries[i].name, len)) {
             // found match
             *dentry = bootblock.dentries[i];
             return 0;
@@ -117,7 +126,46 @@ int read_dentry_by_index(unsigned int index, dentry_t* dentry) {
 }
 
 int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length) {
-    return 0;
+	// Initialize local variables
+	unsigned int bytes_read = 0; 								// current number of bytes read
+	unsigned int file_data_block = offset/FS_BLOCK_SIZE;		// current data block within inode (indexes into inode's array of data block numbers)
+	unsigned int block_offset = offset % FS_BLOCK_SIZE;			// offset into the current data block
+	unsigned int fs_data_block = inodes[inode].datablocks[file_data_block];										  	// current filesytem data block number 
+	unsigned char * curr_data_loc = (unsigned char *)(FS_DATA_START + fs_data_block*FS_BLOCK_SIZE + block_offset); // ptr to current byte to be read
+
+	// Error checking
+    if (inode >= bootblock.n_inodes) 
+    	return -1; 	// inode out of range
+    if (offset >= inodes[inode].length)
+    	return 0; 	// offset past file length, end of file reached
+    if (fs_data_block >= bootblock.n_datablocks)
+    	return -1;	// data block number out of range 
+
+    while (bytes_read < length) {
+
+    	// end of file reached
+    	if (offset + bytes_read >= inodes[inode].length)
+    		return bytes_read;
+
+    	// end of current data block reached 
+    	if (block_offset + bytes_read >= FS_BLOCK_SIZE) {
+    		file_data_block++; // increment to next data block in inode's data block array
+    		fs_data_block = inodes[inode].datablocks[file_data_block]; 	// update actual filesystem datablock number
+    		block_offset = 0;  // reset offset into block to start of new data block
+
+    		if (fs_data_block >= bootblock.n_datablocks)
+    			return -1; 	 	// new data block number out of range
+
+    		curr_data_loc = (unsigned char *)(FS_DATA_START + fs_data_block*FS_BLOCK_SIZE + block_offset); // update current byte ptr to start of new block
+    	}
+
+    	// else, read current byte into buf
+    	buf[bytes_read] = *curr_data_loc;
+    	bytes_read++;
+    	curr_data_loc++;
+    }
+
+    return bytes_read;
 }
 
 
@@ -138,15 +186,30 @@ int test(void) {
 	        ret = -1;
 	    } else {
 	        printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-	        result = read_dentry_by_name(temp.name, &temp);
-	        if (result) {
-        		printf("FAIL: did not find %s directory entry\n", temp.name);
-       			ret = -1;
-    		} else {
-        		printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-   			}
+	     //    result = read_dentry_by_name(temp.name, &temp);
+	     //    if (result) {
+      //   		printf("FAIL: did not find %s directory entry\n", temp.name);
+      //  			ret = -1;
+    		// } else {
+      //   		printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
+   			// }
 	    }
 	}
+
+	// tested with inode 16, 13
+	int bytes_read;
+	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
+	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
+	if (bytes_read == -1) {
+		printf("Read_data returned an error\n");
+		ret = -1;
+	}
+	else {
+		for (i = 0; i < bytes_read; i++)
+			printf("%c", buf[i]);
+		printf("\n");
+	}
+
     printf("~~~~~~\n");
     return ret;
 }
