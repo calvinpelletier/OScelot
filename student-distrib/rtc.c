@@ -55,3 +55,55 @@ void rtcHandler(void) {
 
     send_eoi(RTC_IRQ_NUM);
 }
+
+/*
+ * open
+ * DESCRIPTION:
+ * INPUTS:
+ * OUTPUTS:
+ * RETURNS:
+ * NOTES:
+ */
+void open()
+{
+    
+}
+
+/*
+ * read
+ * DESCRIPTION:
+ * INPUTS:
+ * OUTPUTS:
+ * RETURNS:
+ * NOTES:
+ */
+void read()
+{
+
+}
+
+/*
+ * write
+ * DESCRIPTION:
+ * INPUTS:
+ * OUTPUTS:
+ * RETURNS:
+ * NOTES:
+ */
+void write()
+{
+
+}
+
+/*
+ * close
+ * DESCRIPTION:
+ * INPUTS:
+ * OUTPUTS:
+ * RETURNS:
+ * NOTES:
+ */
+void close()
+{
+
+}

@@ -9,4 +9,9 @@
 extern void rtc_init(void);
 extern void rtcHandler(void);
 
+extern void open();
+extern void read();
+extern void write();
+extern void close();
+
 #endif // RTC_H
