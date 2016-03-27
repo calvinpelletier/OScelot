@@ -3,55 +3,7 @@
 #include "filesys.h"
 #include "lib.h"
 
-// CONSTANTS
-#define MAX_FNAME_LEN 32
-#define DENTRY_RESERVED 24
-#define BOOTBLOCK_RESERVED 52
-#define MAX_DENTRIES 63
-#define DATABLOCKS_PER_INODE 1023
-#define FILEARRAY_SIZE 8
-#define FS_BLOCK_SIZE 4096
 
-// STRUCTS
-typedef struct {
-    unsigned char name[MAX_FNAME_LEN];
-    int type;
-    unsigned int inode;
-    unsigned char reserved[DENTRY_RESERVED];
-} dentry_t;
-
-typedef struct {
-    unsigned int n_dentries;
-    unsigned int n_inodes;
-    unsigned int n_datablocks;
-    unsigned char reserved[BOOTBLOCK_RESERVED];
-    dentry_t dentries[MAX_DENTRIES];
-} bootblock_t;
-
-typedef struct {
-    unsigned int length; // in bytes
-    unsigned int datablocks[DATABLOCKS_PER_INODE];
-} inode_t;
-
-typedef struct {
-    int (*open)(unsigned char*);
-    int (*read)(int, unsigned char*, int);
-    int (*write)(int, unsigned char*, int);
-    void (*close)(int);
-} fileops_t;
-
-typedef struct {
-    unsigned int in_use : 1;
-    unsigned int read_only : 1;
-    unsigned int write_only : 1;
-} fileflags_t;
-
-typedef struct {
-    fileops_t jumptable;
-    inode_t inode;
-    unsigned int position;
-    fileflags_t flags;
-} file_t;
 
 
 // GLOBAL VARIABLES
@@ -62,6 +14,7 @@ static file_t filearray[FILEARRAY_SIZE]; // 0 = stdin, 1 = stdout, 2-7 = free to
 static bootblock_t bootblock;
 static inode_t* inodes;
 static void* FS_DATA_START;
+static unsigned int dirs_read;
 
 
 // FUNCTION DECLARATIONS
@@ -69,13 +22,30 @@ int filesys_init(void* start, void* end);
 int read_dentry_by_name(const unsigned char* fname, dentry_t* dentry);
 int read_dentry_by_index(unsigned int index, dentry_t* dentry);
 int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length);
+int fs_copy(const unsigned char* fname, unsigned char * mem_location); 
+int fs_open (const unsigned char* filename);
+int fs_close(int fd);
+int fs_read (int fd, unsigned char * buf, int nbytes);
+int fs_write (int fd, unsigned char * buf, int nbytes);
+int file_read (int fd, unsigned char * buf, int nbytes);
+int dir_read (int fd, unsigned char * buf, int nbytes);
 int test(void);
 
+static fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
 // EXTERNAL FUNCTIONS
 int filesys_init(void* start, void* end) {
     FILESYS_START = start;
     FILESYS_END = end;
+
+    // initialize internal fd (for testing purposes)
+    int i;
+    for (i = 0; i < FILEARRAY_SIZE; i++) {
+    	if (i < 2) 
+    		filearray[i].flags.in_use = 1;
+    	else
+    		filearray[i].flags.in_use = 0;
+    }
 
     // populate bootblock
     bootblock = *((bootblock_t*)start);
@@ -196,6 +166,72 @@ int fs_copy(const unsigned char* fname, unsigned char * mem_location) {
 	return 0;
 }
 
+int fs_open (const unsigned char* filename) {
+	dentry_t dentry;
+	if (read_dentry_by_name(filename, &dentry))
+		return -1;
+
+	int i;
+	for (i = 0; i < FILEARRAY_SIZE; i++) {
+		if (filearray[i].flags.in_use == 0) {
+			filearray[i].jumptable = fs_jumptable;
+			filearray[i].inode = dentry.inode;
+			filearray[i].position = 0;
+			filearray[i].filetype = dentry.type;
+			filearray[i].flags.read_only = 1;
+			filearray[i].flags.write_only = 0;
+			filearray[i].flags.in_use = 1;
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+
+int fs_close(int fd) {
+	if (fd == 0 || fd == 1)
+		return -1;
+	filearray[fd].flags.in_use = 0;
+	if (filearray[fd].filetype == 1)
+		dirs_read = 0;
+	return 0;
+}
+
+
+int fs_read (int fd, unsigned char * buf, int nbytes) {
+	if (fd < 0 || fd >= FILEARRAY_SIZE)
+		return -1;
+	if (filearray[fd].filetype == 2) // regular file
+		return file_read (fd, buf, nbytes);
+	else if (filearray[fd].filetype == 1) // dir
+		return dir_read(fd, buf, nbytes);
+	else // RTC
+		return -1;
+}
+
+int fs_write (int fd, unsigned char * buf, int nbytes) {
+	return -1; // file system is read only
+}
+
+
+int file_read (int fd, unsigned char * buf, int nbytes) {
+	int bytes_read = read_data(filearray[fd].inode, filearray[fd].position, buf, nbytes);
+	if (bytes_read != -1)
+		filearray[fd].position += bytes_read;
+	return bytes_read;
+}
+
+
+int dir_read (int fd, unsigned char * buf, int nbytes) {
+	if (dirs_read >= bootblock.n_dentries) 
+		return 0;
+
+	strncpy( (char *) buf, (char *) bootblock.dentries[dirs_read].name, MAX_FNAME_LEN); // copy full 32 bytes of filename into buf
+	dirs_read++;
+
+	return MAX_FNAME_LEN; 
+}
 
 // TESTING FUNCTIONS
 int test(void) {
@@ -216,13 +252,13 @@ int test(void) {
 	        ret = -1;
 	    } else {
 	        printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-	     //    result = read_dentry_by_name(temp.name, &temp);
-	     //    if (result) {
+	  //    result = read_dentry_by_name(temp.name, &temp);
+	  //    if (result) {
       //   		printf("FAIL: did not find %s directory entry\n", temp.name);
-      //  			ret = -1;
-    		// } else {
-      //   		printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-   			// }
+     //  		ret = -1;
+     //     } else {
+     //   		printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
+   	// 		}
 	    }
 	}
 
@@ -255,6 +291,43 @@ int test(void) {
 	// 	printf("%c", mem_location[i]);
 	// 	printf("\n");
 	// }
+
+	// test OCRW
+	// int bytes_read;
+	// unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
+	// int fd = fs_open("frame1.txt");
+	// if (fd == -1) {
+	// 	printf("fs_open has failed.\n");
+	// 	return -1;
+	// }
+	// bytes_read = fs_read(fd, buf, inodes[filearray[fd].inode].length);
+	// if (bytes_read == -1) {
+	// 	printf("fs_read has failed.\n");
+	// 	return -1;
+	// }
+	// for (i = 0; i < bytes_read; i++)
+	// 	printf("%c", buf[i]);
+	// printf("\n");
+	// if(fs_close(fd))
+	// 	printf("fs_close has failed.\n");
+	// printf("%d\n", filearray[fd].flags.in_use);
+
+	// test printing dirs
+	// unsigned char buf[32];
+	// int fd = fs_open(".");
+	// int j;
+	// if (fd == -1) {
+	// 	printf("fs_open has failed.\n");
+	// 	return -1;
+	// }
+	// for (i = 0; i < bootblock.n_dentries; i++) {
+	// 	fs_read(fd, buf, 0);
+	// 	for (j = 0; j < 32; j++) {
+	// 		printf("%c", buf[j]);
+	// 	}
+	// 	printf("\n");
+	// }
+	// fs_close(fd);
 
     printf("~~~~~~\n");
     return ret;
