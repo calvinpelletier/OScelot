@@ -8,7 +8,6 @@
 /* Custom defines added by group OScelot */
 #define KEYBOARD_DATA 0x60
 #define BUFFER_SIZE   128
-#define MAX_BUF_SIZE  256
 #define KEYBOARD_MASK 0x80
 
 #define BACKSPACE   0x0E
@@ -19,6 +18,8 @@
 #define SPACE       0x39
 #define LEFT_SHIFT  0x2A
 #define L           0x26
+#define LEFT_ARROW  0x4B
+#define RIGHT_ARROW 0x4D
 
 /* Function Declarations */
 void keyboardHandler(void);

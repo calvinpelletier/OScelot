@@ -8,10 +8,12 @@
 static uint8_t caps_active = 0;              // Booleans for special keys
 static uint8_t ctrl_active = 0;
 static uint8_t shift_active = 0;
-static uint8_t buf_pos = 0;                  // Position in buffer
+static uint8_t t_buf_offset = 0;             /* Offset to determine from where in the terminal 
+                                              * to start printing from
+                                              */
 
 static int8_t kbd_is_read = 0;               // Boolean to determine if the keyboard has been read
-static int8_t terminal_buffer[MAX_BUF_SIZE]; // Terminal buffer
+static int8_t terminal_buffer[BUFFER_SIZE];  // Terminal buffer
 static int8_t terminal_rd[BUFFER_SIZE];      // System call terminal read buffer
 static uint32_t cur_buf_pos = 0;             // Current buffer position
 static pos_t buf_start;                      // pos_t struct to hold the coordinates of the buffer
@@ -19,7 +21,7 @@ static pos_t buf_start;                      // pos_t struct to hold the coordin
 /* Local functions by group OScelot */
 static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position);
 static void _update_buf_pos(pos_t cur_position);
-static void _print_to_terminal(uint8_t buf_pos);
+static void _print_to_terminal(uint8_t t_buf_offset);
 
 /*
  * keyboardHandler
@@ -97,8 +99,8 @@ void keyboardHandler(void) {
         /* Clear the whole terminal buffer */
         buf_clear();
 
-    /* '\n' is 2 bytes so the buffer should stop at 254 instead of 256 */
-    } else if (cur_buf_pos < MAX_BUF_SIZE - 2) { //apple
+    /* '\n' is 1 byte so the buffer should stop at 127 instead of 128 */
+    } else if (cur_buf_pos < BUFFER_SIZE - 1) { 
         if (!caps_active && !shift_active) {
             do_self(scancode, cur_position);         
         } else if (caps_active && shift_active) {
@@ -108,10 +110,18 @@ void keyboardHandler(void) {
         } else {
             do_caps(scancode, cur_position);
         }
-   }
+    }
 
     /* Move cursor to the right spot */
-    set_cursor();
+    set_cursor(0);
+
+    // if (scancode == LEFT_ARROW) {
+    //     set_cursor(-1);
+    //     buf_offset++;
+    // } else if (scancode == RIGHT_ARROW) {
+    //     set_cursor(1);
+    //     buf_offset--;
+    // }
 
     /* Send EOI and enable the keyboard IRQ again so we keep getting keys */
     send_eoi(KEYBOARD_IRQ_NUM);
@@ -259,7 +269,7 @@ void do_shiftcap(unsigned char scancode, pos_t cur_position) {
  * do_spec
  *   DESCRIPTION:  Helper function that handles special keys: ENTER,
  *                 BACKSPACE, and CAPS LOCK.
- *   INPUTS:       scancode     - scancode of key that has been pressed
+ *   INPUTS:       scancode - scancode of key that has been pressed
  *   OUTPUTS:      none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: Overwrites the terminal buffer
@@ -273,7 +283,7 @@ void do_spec(unsigned char scancode) {
             /* Append a newline to the terminal buffer */
             terminal_buffer[cur_buf_pos] = '\n';
 
-            _print_to_terminal(buf_pos);
+            _print_to_terminal(t_buf_offset);
 
             /* Copy the terminal buffer to the system buffer */
             strncpy(terminal_rd, terminal_buffer, BUFFER_SIZE);
@@ -281,7 +291,7 @@ void do_spec(unsigned char scancode) {
 
             /* Set kbd_is_read flag so we know it can be read */
             kbd_is_read = 1;
-            buf_pos = 0;
+            t_buf_offset = 0;
 
             break;
         case BACKSPACE:
@@ -299,7 +309,7 @@ void do_spec(unsigned char scancode) {
                 
                     buf_start.pos_y--;
                 
-                    buf_pos = 0;
+                    t_buf_offset = 0;
                 }
 
                 /* Repopulate the terminal buffer with the appropriate characters */
@@ -308,7 +318,7 @@ void do_spec(unsigned char scancode) {
                 }
 
                 /* Print the buffer to the terminal plus an empty space for the deleted char */
-                _print_to_terminal(buf_pos);
+                _print_to_terminal(t_buf_offset);
                 putc(' ');
 
                 /* Change the position to the previous position */
@@ -342,7 +352,7 @@ void buf_clear(void) {
     int i; /* Loop counter */
 
     /* Clear the whole terminal buffer */
-    for (i = 0; i < MAX_BUF_SIZE; i++) {
+    for (i = 0; i < BUFFER_SIZE; i++) {
         terminal_buffer[i] = NULL;
     }
 
@@ -353,8 +363,8 @@ void buf_clear(void) {
 /*
  * terminal_write
  *   DESCRIPTION:  System call that writes the terminal buffer to the screen.
- *   INPUTS:       fd - not used
- *                 buf - buffer from which to write data from
+ *   INPUTS:       fd     - not used
+ *                 buf    - buffer from which to write data from
  *                 nbytes - number of bytes to write
  *   OUTPUTS:      none
  *   RETURN VALUE: Number of bytes written
@@ -394,27 +404,36 @@ int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
 /*
  * terminal_read
  *   DESCRIPTION:  System call that reads from the system call buffer
- *   INPUTS:       fd - not used
- *                 buf - buffer from which to read data from
+ *   INPUTS:       fd     - not used
+ *                 buf    - buffer from which to read data to
  *                 nbytes - number of bytes to read
  *   OUTPUTS:      none
  *   RETURN VALUE: Number of bytes read
  *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
  */
 int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
-    int i;              /* Loop counter         */
+    int i = 0;          /* Loop counter         */
     int num_bytes = 0;  /* Number of bytes read */
 
-    /* Spin until ENTER is pressed or the buffer is filled to 128 */
+    /* Spin until ENTER is pressed */
     while (kbd_is_read == 0) {
         sti();
     }
 
-    /* Whatever is in the terminal_rd buffer goes into the input buffer */
-    while (i < nbytes && terminal_rd[i] != NULL) {
-        buf[i] = terminal_rd[i];
-        num_bytes++;
-        i++;
+    if (nbytes < BUFFER_SIZE) {
+        /* Whatever is in the terminal_rd buffer goes into the input buffer */
+        while (i < nbytes && terminal_rd[i] != NULL) {
+            buf[i] = terminal_rd[i];
+            num_bytes++;
+            i++;
+        }
+    } else {
+        /* If nbytes is greater than 128, we only want to copy 128 bytes */
+        while (i < BUFFER_SIZE && terminal_rd[i] != NULL) {
+            buf[i] = terminal_rd[i];
+            num_bytes++;
+            i++;
+        }
     }
 
     /* Clear terminal buffer */
@@ -468,7 +487,7 @@ static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t c
     cur_buf_pos++;
 
     /* Print the terminal buffer to the screen and update the position */
-    _print_to_terminal(buf_pos);
+    _print_to_terminal(t_buf_offset);
     _update_buf_pos(cur_position);
 }
 
@@ -493,11 +512,11 @@ static void _update_buf_pos(pos_t cur_position) {
          * the beginning of the terminal buffer.
          */
         if (cur_buf_pos >= NUM_COLS * 3) {
-            buf_pos = NUM_COLS * 3;
+            t_buf_offset = NUM_COLS * 3;
         } else if (cur_buf_pos >= NUM_COLS * 2) {
-            buf_pos = NUM_COLS * 2;
+            t_buf_offset = NUM_COLS * 2;
         } else if (cur_buf_pos >= NUM_COLS) {
-            buf_pos = NUM_COLS;
+            t_buf_offset = NUM_COLS;
         }
             
     } else {
@@ -509,17 +528,17 @@ static void _update_buf_pos(pos_t cur_position) {
  * _print_to_terminal
  *   DESCRIPTION:  Helper function that to print the terminal buffer 
  *                 to the screen.
- *   INPUTS:       buf_pos - current position in the terminal buffer
+ *   INPUTS:       t_buf_offset - current position in the terminal buffer
  *   OUTPUTS:      none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: Writes to the terminal buffer to video memory
  */
-static void _print_to_terminal(uint8_t buf_pos) {
+static void _print_to_terminal(uint8_t t_buf_offset) {
     /* Update the position in the terminal so we don't overwrite anything */
     set_pos(buf_start.pos_x, buf_start.pos_y);
 
-    /* Print to the screen with the buf_pos offset so we 
+    /* Print to the screen with the t_buf_offset offset so we 
      * don't copy multiple lines when we're calling scroll().
      */
-    puts(terminal_buffer + buf_pos);
+    puts(terminal_buffer + t_buf_offset);
 }

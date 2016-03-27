@@ -16,6 +16,8 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
+/* Custom definitions by group OScelot */
+#define DEBUG_TERMINAL 1
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -166,7 +168,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Init paging */
 	if (paging_init()) {
-		printf("ERROR: Paging failed to initialize.");
+		printf("ERROR: Paging failed to initialize.\n");
 	};
 
 	/* Enable interrupts */
@@ -176,6 +178,17 @@ entry (unsigned long magic, unsigned long addr)
 	printf("Enabling Interrupts\n");
 	sti();
 	
+	/* Terminal Driver Tests */
+	if (DEBUG_TERMINAL) {
+		clear();
+		printf("\nTesting terminal_read and terminal_write.\n");
+		printf("Start typing and press ENTER.\n");
+		char test_buf1[256];
+		terminal_read(0, test_buf1, 128);
+		terminal_write(0, test_buf1, 128);
+		printf("terminal_read and terminal_write tested!\n");
+	}
+
 	/* Execute the first program (`shell') ... */
 
 	/* Spin (nicely, so we don't chew up cycles) */
