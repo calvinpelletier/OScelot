@@ -99,6 +99,7 @@ int read_dentry_by_name(const unsigned char* fname, dentry_t* dentry) {
             *dentry = bootblock.dentries[i];
             return 0;
         }
+        i++;
     }
 
     return -1;
@@ -128,21 +129,22 @@ int test(void) {
     printf("n_inodes: %d\n", bootblock.n_inodes);
     printf("n_datablocks: %d\n", bootblock.n_datablocks);
     dentry_t temp;
-    int result = read_dentry_by_name(".", &temp);
-    if (result) {
-        printf("FAIL: did not find '.' directory entry\n");
-        ret = -1;
-    } else {
-        printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-    }
+    int result;
     int i;
     for (i = 0; i < bootblock.n_dentries; i++) {
 	    result = read_dentry_by_index(i, &temp);
 	    if (result) {
-	        printf("FAIL: did not find 0th inode directory entry\n");
+	        printf("FAIL: did not find the %d directory entry\n", i);
 	        ret = -1;
 	    } else {
 	        printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
+	        result = read_dentry_by_name(temp.name, &temp);
+	        if (result) {
+        		printf("FAIL: did not find %s directory entry\n", temp.name);
+       			ret = -1;
+    		} else {
+        		printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
+   			}
 	    }
 	}
     printf("~~~~~~\n");
