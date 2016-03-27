@@ -168,6 +168,34 @@ int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsig
     return bytes_read;
 }
 
+int fs_copy(const unsigned char* fname, unsigned char * mem_location) {
+	dentry_t file_dentry;
+	unsigned int inode;
+	int bytes_read;
+	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE]; //maximum file size - if 1 file used all available datablocks
+
+	if (!fname)
+		return -1; // invalid file name
+
+	// get dentry for filename
+	if (read_dentry_by_name(fname, &file_dentry))
+		return -1; // function returned -1
+
+	// read file data into buf
+	inode = file_dentry.inode;
+	bytes_read = read_data(inode, 0, buf, inodes[inode].length);
+	if (bytes_read == -1)
+		return -1; 
+
+	// write the file into physical memory
+	int i;
+	for (i = 0; i < bytes_read; i++) {
+		mem_location[i] = buf[i];
+	}
+
+	return 0;
+}
+
 
 // TESTING FUNCTIONS
 int test(void) {
@@ -176,6 +204,8 @@ int test(void) {
     printf("n_dentries: %d\n", bootblock.n_dentries);
     printf("n_inodes: %d\n", bootblock.n_inodes);
     printf("n_datablocks: %d\n", bootblock.n_datablocks);
+
+    // test read_dentry_by_index, read_dentry_by_name too (if it isn't commented out)
     dentry_t temp;
     int result;
     int i;
@@ -196,19 +226,35 @@ int test(void) {
 	    }
 	}
 
+	// test read_data
 	// tested with inode 16, 13
-	int bytes_read;
-	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
-	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
-	if (bytes_read == -1) {
-		printf("Read_data returned an error\n");
-		ret = -1;
-	}
-	else {
-		for (i = 0; i < bytes_read; i++)
-			printf("%c", buf[i]);
-		printf("\n");
-	}
+	// int bytes_read;
+	// unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
+	// bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
+	// if (bytes_read == -1) {
+	// 	printf("Read_data returned an error\n");
+	// 	ret = -1;
+	// }
+	// else {
+	// 	for (i = 0; i < bytes_read; i++)
+	// 		printf("%c", buf[i]);
+	// 	printf("\n");
+	// }
+
+	// test fs_copy by writing frame1.txt to memory and printing from this location
+	// int bytes_read;
+	// unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
+	// bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
+	// unsigned char * mem_location = 0x8000;
+	// if (fs_copy("frame1.txt", mem_location)) {
+	// 	printf("fs_copy returned an error\n");
+	// 	ret = -1;
+	// }
+	// else {
+	// 	for (i = 0; i < bytes_read; i++)
+	// 	printf("%c", mem_location[i]);
+	// 	printf("\n");
+	// }
 
     printf("~~~~~~\n");
     return ret;
