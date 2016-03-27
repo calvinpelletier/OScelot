@@ -153,9 +153,6 @@ entry (unsigned long magic, unsigned long addr)
 	/* Init the IDT */
 	idt_init();
 
-	/* Initialize devices, memory, filesystem, enable device interrupts on the
-	 * PIC, any other initialization stuff... */
-
 	/* Init the PIC */
 	i8259_init();
 
@@ -172,7 +169,7 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Init file system */
 	module_t* filesys_img = (module_t*)mbi->mods_addr;
-	if (filesys_init((void *)filesys_img->mod_start, (void *)filesys_img->mod_end)) {
+	if (fs_init((void *)filesys_img->mod_start, (void *)filesys_img->mod_end)) {
 		printf("ERROR: File system failed to initialize.\n");
 	}
 

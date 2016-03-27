@@ -43,7 +43,7 @@ typedef struct {
 } fileops_t;
 
 typedef struct {
-    unsigned int in_use : 1;
+    unsigned int in_use : 1; // occupies 1 bit (total struct size 4 bytes)
     unsigned int read_only : 1;
     unsigned int write_only : 1;
 } fileflags_t;
@@ -58,6 +58,6 @@ typedef struct {
 
 
 // GLOBAL FUNCTIONS
-extern int filesys_init(void* start, void* end);
+extern int fs_init(void* start, void* end);
 
 #endif
