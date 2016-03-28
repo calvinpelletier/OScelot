@@ -420,11 +420,20 @@ int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
         sti();
     }
 
-    /* Whatever is in the terminal_rd buffer goes into the input buffer */
-    while (i < nbytes && terminal_rd[i] != NULL) {
-        buf[i] = terminal_rd[i];
-        num_bytes++;
-        i++;
+    if (nbytes < BUFFER_SIZE) {
+        /* Whatever is in the terminal_rd buffer goes into the input buffer */
+        while (i < nbytes && terminal_rd[i] != NULL) {
+            buf[i] = terminal_rd[i];
+            num_bytes++;
+            i++;
+        }
+    } else {
+        /* If nbytes is greater than 128, we only want to copy 128 bytes */
+        while (i < BUFFER_SIZE && terminal_rd[i] != NULL) {
+            buf[i] = terminal_rd[i];
+            num_bytes++;
+            i++;
+        }
     }
 
     /* Clear terminal buffer */
