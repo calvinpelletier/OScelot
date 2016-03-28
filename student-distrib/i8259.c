@@ -71,11 +71,11 @@ void i8259_init(void) {
     outb(ICW4, SLAVE_DATA); // extra info
 
     // DEBUG: verify that all interrupts are indeed masked
-    if (DEBUG_ALL) {
-        if (inb(MASTER_DATA) != 0xFF || inb(SLAVE_DATA) != 0xFF) {
-            printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.\n");
-        }
-    }
+    // if (DEBUG_ALL) {
+    //     if (inb(MASTER_DATA) != 0xFF || inb(SLAVE_DATA) != 0xFF) {
+    //         printf("ERROR: master and/or slave interrupts are not all masked after PIC initialization.\n");
+    //     }
+    // }
 
     enable_irq(SLAVE_IRQ_NUM); // unmask slave line
 }

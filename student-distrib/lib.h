@@ -11,7 +11,7 @@
 #define ATTRIB   0x7
 
 /* Custom defines by group OScelot */
-#define DEBUG_ALL 0
+#define DEBUG_ALL 1
 
 #define CURSOR_LOW_REG  0x0F
 #define CURSOR_HIGH_REG 0x0E
