@@ -64,9 +64,9 @@ void rtcHandler(void) {
  * RETURNS:
  * NOTES:
  */
-void open()
+int32_t void open(const uint8_t *filename)
 {
-    
+
 }
 
 /*
@@ -77,22 +77,29 @@ void open()
  * RETURNS:
  * NOTES:
  */
-void read()
+int32_t void read(int32_t fd, void *buf, int32_t nbytes)
 {
 
 }
 
 /*
  * write
- * DESCRIPTION:
+ * DESCRIPTION: Changes RTC interrupt frequency by a specified rate
  * INPUTS:
  * OUTPUTS:
  * RETURNS:
  * NOTES:
  */
-void write()
+int32_t write(int32_t fd, const void *buf, int32_t nbytes)
 {
-
+    char rate = (char) buf;
+    rate &= 0x0F;
+    outb(0x70, 0x8A);
+    char prev=inb(0x7a);
+    outb(0x70, 0x8A);
+    outb(0x71, (prev & 0xF0) | rate);
+    printf("rate changeed");
+    return 0;
 }
 
 /*
@@ -103,7 +110,7 @@ void write()
  * RETURNS:
  * NOTES:
  */
-void close()
+int32_t void close(int32_t fd)
 {
 
 }
