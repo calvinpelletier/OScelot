@@ -9,13 +9,15 @@
 #include "debug.h"
 #include "paging.h"
 #include "rtc.h"
-#include "keyboard.h"
+#include "terminal.h"
 #include "idt.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
+/* Custom definitions by group OScelot */
+#define DEBUG_TERMINAL 1
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -149,25 +151,24 @@ entry (unsigned long magic, unsigned long addr)
 		ltr(KERNEL_TSS);
 	}
 
-	// init the IDT
+	/* Init the IDT */
 	idt_init();
-
-	/* Init the PIC */
-	i8259_init();
 
 	/* Initialize devices, memory, filesystem, enable device interrupts on the
 	 * PIC, any other initialization stuff... */
-	// initialize RTC
+	
+	/* Init the PIC */
+	i8259_init();
+
+	/* Init RTC */
 	rtc_init();
 
-	// initialize keyboard
-	if (keyboard_init()) {
-		printf("ERROR: keyboard failed initialization.\n");
-	}
+	/* Init keyboard */
+	enable_irq(KEYBOARD_IRQ_NUM);
 
-	// setup paging
+	/* Init paging */
 	if (paging_init()) {
-		printf("ERROR: Paging failed to initialize.");
+		printf("ERROR: Paging failed to initialize.\n");
 	};
 
 	/* Enable interrupts */
@@ -176,6 +177,17 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
+	
+	/* Terminal Driver Tests */
+	if (DEBUG_TERMINAL) {
+		clear();
+		printf("\nTesting terminal_read and terminal_write.\n");
+		printf("Start typing and press ENTER.\n");
+		char test_buf1[256];
+		terminal_read(0, test_buf1, 128);
+		terminal_write(0, test_buf1, 128);
+		printf("terminal_read and terminal_write tested!\n");
+	}
 
 	/* Execute the first program (`shell') ... */
 

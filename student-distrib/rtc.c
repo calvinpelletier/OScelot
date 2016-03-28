@@ -9,7 +9,10 @@
 // CONSTANTS
 #define RTC_ADDR 0x70 // port for addressing RTC registers and enabling/disabling NMIs
 #define RTC_DATA 0x71 // port for writing data to RTC registers
+
+#if (DEBUG_ALL)
 static int count = 0;
+#endif
 
 
 // FUNCTION DECLARATIONS
@@ -48,8 +51,8 @@ void rtcHandler(void) {
     inb(RTC_DATA); // throw away contents (important)
 
     if (DEBUG_ALL) {
-        //printf("DEBUG: received RTC interrupt %d.\n", count);
-        //count++;
+        // printf("DEBUG: received RTC interrupt %d.\n", count);
+        // count++;
         test_interrupts();
     }
 
