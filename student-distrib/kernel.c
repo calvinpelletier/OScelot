@@ -190,7 +190,7 @@ entry (unsigned long magic, unsigned long addr)
 
 		printf("Testing terminal_read and terminal_write...\n");
 		printf("Start typing and press ENTER.\n");
-		
+
 		t_read_value = terminal_read(0, test_buf1, 128);
 		printf("terminal_read read %d bytes.\n", t_read_value);
 
