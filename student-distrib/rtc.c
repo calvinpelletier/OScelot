@@ -10,9 +10,9 @@
 #define RTC_ADDR 0x70 // port for addressing RTC registers and enabling/disabling NMIs
 #define RTC_DATA 0x71 // port for writing data to RTC registers
 
-#if (DEBUG_ALL)
-static int count = 0;
-#endif
+// #if (DEBUG_ALL)
+// static int count = 0;
+// #endif
 
 // FUNCTION DECLARATIONS
 void rtc_init(void);
@@ -121,7 +121,6 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
     if (rtc_in_use != 1)
         return -1;
 
-    int i;
     int num_bytes = 0;
 
     if (buf != NULL) {
@@ -146,7 +145,7 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
         cli();
         outb(RTC_ADDR, 0x8A);
         num_bytes++;
-        char prev = inb(RTC_DATA);
+        inb(RTC_DATA);
         outb(RTC_ADDR, 0x8A);
         num_bytes++;
         outb(RTC_DATA, rate);
