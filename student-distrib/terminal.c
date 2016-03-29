@@ -13,8 +13,8 @@ static uint8_t t_buf_offset = 0;             /* Offset to determine from where i
                                               */
 
 static int8_t kbd_is_read = 0;               // Boolean to determine if the keyboard has been read
-static int8_t terminal_buffer[BUFFER_SIZE];  // Terminal buffer
-static int8_t terminal_rd[BUFFER_SIZE];      // System call terminal read buffer
+static int8_t keyboard_buffer[BUFFER_SIZE];  // Keyboard buffer
+static int8_t terminal_buffer[BUFFER_SIZE];  // System call terminal buffer
 static uint32_t cur_buf_pos = 0;             // Current buffer position
 static pos_t buf_start;                      // pos_t struct to hold the coordinates of the buffer
 
@@ -280,13 +280,13 @@ void do_spec(unsigned char scancode) {
     /* Depending on the scancode, do the special action for each key */
     switch (scancode) {
         case ENTER:
-            /* Append a newline to the terminal buffer */
-            terminal_buffer[cur_buf_pos] = '\n';
+            /* Append a newline to the keyboard buffer */
+            keyboard_buffer[cur_buf_pos] = '\n';
 
             _print_to_terminal(t_buf_offset);
 
-            /* Copy the terminal buffer to the system buffer */
-            strncpy(terminal_rd, terminal_buffer, BUFFER_SIZE);
+            /* Copy the keyboard buffer to the terminal buffer */
+            strncpy(terminal_buffer, keyboard_buffer, BUFFER_SIZE);
             buf_clear();
 
             /* Set kbd_is_read flag so we know it can be read */
@@ -312,9 +312,9 @@ void do_spec(unsigned char scancode) {
                     t_buf_offset = 0;
                 }
 
-                /* Repopulate the terminal buffer with the appropriate characters */
+                /* Repopulate the keyboard buffer with the appropriate characters */
                 for (i = cur_buf_pos + 1; i > cur_buf_pos; i--) {
-                    terminal_buffer[i - 1] = terminal_buffer[i];
+                    keyboard_buffer[i - 1] = keyboard_buffer[i];
                 }
 
                 /* Print the buffer to the terminal plus an empty space for the deleted char */
@@ -342,18 +342,18 @@ void do_spec(unsigned char scancode) {
 
 /*
  * buf_clear
- *   DESCRIPTION:  Helper function that clears terminal buffer.
+ *   DESCRIPTION:  Helper function that clears keyboard buffer.
  *   INPUTS:       none
  *   OUTPUTS:      none
  *   RETURN VALUE: none
- *   SIDE EFFECTS: Overwrites the terminal buffer
+ *   SIDE EFFECTS: Overwrites the keyboard buffer
  */
 void buf_clear(void) {
     int i; /* Loop counter */
 
-    /* Clear the whole terminal buffer */
+    /* Clear the whole keyboard buffer */
     for (i = 0; i < BUFFER_SIZE; i++) {
-        terminal_buffer[i] = NULL;
+        keyboard_buffer[i] = NULL;
     }
 
     /* Reset buffer position */
@@ -403,13 +403,13 @@ int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
 
 /*
  * terminal_read
- *   DESCRIPTION:  System call that reads from the system call buffer
+ *   DESCRIPTION:  System call that reads from the terminal buffer
  *   INPUTS:       fd     - not used
  *                 buf    - buffer from which to read data to
  *                 nbytes - number of bytes to read
  *   OUTPUTS:      none
  *   RETURN VALUE: Number of bytes read
- *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
+ *   SIDE EFFECTS: Overwrites the terminal buffer and keyboard buffer
  */
 int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
     int i = 0;          /* Loop counter         */
@@ -420,24 +420,12 @@ int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
         sti();
     }
 
-    if (nbytes < BUFFER_SIZE) {
-        /* Whatever is in the terminal_rd buffer goes into the input buffer */
-        while (i < nbytes && terminal_rd[i] != NULL) {
-            buf[i] = terminal_rd[i];
-            num_bytes++;
-            i++;
-        }
-    } else {
-        /* If nbytes is greater than 128, we only want to copy 128 bytes */
-        while (i < BUFFER_SIZE && terminal_rd[i] != NULL) {
-            buf[i] = terminal_rd[i];
-            num_bytes++;
-            i++;
-        }
+    /* Whatever is in the terminal_buffer buffer goes into the input buffer */
+    while (i < nbytes && terminal_buffer[i] != NULL) {
+        buf[i] = terminal_buffer[i];
+        num_bytes++;
+        i++;
     }
-
-    /* Clear terminal buffer */
-    buf_clear();
 
     /* Turn kbd_is_read flag to accept more interrupts */
     kbd_is_read = 0;
@@ -473,20 +461,20 @@ int32_t terminal_close(int32_t fd) {
  * _do_key_press
  *   DESCRIPTION:  Helper function that handles the actual key press and updates
  *                 the relevant variables.
- *   INPUTS:       scancode - scancode of key that has been pressed
- *                 chars    - array of characters to use for the scancodes
+ *   INPUTS:       scancode     - scancode of key that has been pressed
+ *                 chars        - array of characters to use for the scancodes
  *                 cur_position - current position in the terminal buffer
  *   OUTPUTS:      none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: Overwrites the terminal buffer and updates global variables
  */
 static void _do_key_press(unsigned char scancode, unsigned char chars[], pos_t cur_position) {
-   /* Place the character into the terminal buffer */
-    terminal_buffer[cur_buf_pos] = chars[scancode];
+    /* Place the character into the keyboard buffer */
+    keyboard_buffer[cur_buf_pos] = chars[scancode];
 
     cur_buf_pos++;
 
-    /* Print the terminal buffer to the screen and update the position */
+    /* Print the keyboard buffer to the screen and update the position */
     _print_to_terminal(t_buf_offset);
     _update_buf_pos(cur_position);
 }
@@ -540,5 +528,5 @@ static void _print_to_terminal(uint8_t t_buf_offset) {
     /* Print to the screen with the t_buf_offset offset so we 
      * don't copy multiple lines when we're calling scroll().
      */
-    puts(terminal_buffer + t_buf_offset);
+    puts(keyboard_buffer + t_buf_offset);
 }
