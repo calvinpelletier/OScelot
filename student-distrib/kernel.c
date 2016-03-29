@@ -20,6 +20,7 @@
 /* Custom definitions by group OScelot */
 #define DEBUG_TERMINAL 1
 #define DEBUG_RTC 1
+#define MAXIMUM_RTC_RATE 1024
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -217,19 +218,29 @@ entry (unsigned long magic, unsigned long addr)
 
 	if (DEBUG_RTC) {
 		clear();
-		printf("Testing RTC stuffi\n");
+		int count = 0;
+		printf("Testing RTC stuff\n");
 		const char *file = "rtc.h";
 		int tmp_fd = rtc_open(file);
-		printf("%d\n", tmp_fd);
-		int rate = 512;
-		int *newRate = &rate;
-		int tmp = rtc_write(tmp_fd, newRate, 0);
-		printf("%d\n", tmp);
-		tmp = rtc_read(tmp_fd, newRate, 0);
-		printf("%d\n", tmp);
+		int rate = 2;
+		int tmp;
+		while (rate <= MAXIMUM_RTC_RATE) {
+			tmp = rate;
+			int *newRate = &tmp;
+			tmp = rtc_write(tmp_fd, newRate, 0);
+			while (count < (rate * 4)) {
+				tmp = rtc_read(tmp_fd, newRate, 0);
+				printf("current rate is %d interrupts per second: count is %d\n", rate, count);
+				count++;
+			}
+			rate = rate << 1;
+			count = 0;
+		}
 		tmp = rtc_close(tmp_fd);
 		if (tmp == 0)
 			printf("Closed correctly \n");
+		else
+			printf("ERROR");
 	}
 
 	/* Execute the first program (`shell') ... */

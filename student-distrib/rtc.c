@@ -9,18 +9,20 @@
 // CONSTANTS
 #define RTC_ADDR 0x70 // port for addressing RTC registers and enabling/disabling NMIs
 #define RTC_DATA 0x71 // port for writing data to RTC registers
+#define TEST_RTC_RTC 1
 
-// #if (DEBUG_ALL)
-// static int count = 0;
-// #endif
+#if (TEST_RTC_RTC)
+volatile int count = 0;
+#endif
 
 // FUNCTION DECLARATIONS
 void rtc_init(void);
 void rtcHandler(void);
 
-// Flag for rtc_read
+// Flags for rtc_read
 volatile char rtc_interrupt_flag;
-int rtc_in_use;
+static int rtc_in_use;
+int freq;
 
 // GLOBAL FUNCTIONS
 /*
@@ -53,10 +55,10 @@ void rtcHandler(void) {
     outb(0x0C, RTC_ADDR); // select register 0x0C
     inb(RTC_DATA); // throw away contents (important)
 
-    if (DEBUG_ALL) {
+    if (TEST_RTC_RTC) {
         // printf("DEBUG: received RTC interrupt %d.\n", count);
         // count++;
-        //test_interrupts();
+        // test_interrupts();
     }
 
     send_eoi(RTC_IRQ_NUM);
@@ -78,11 +80,15 @@ int32_t rtc_open(const int8_t *filename)
 
     rtc_in_use = 1;
 
-    int open_hertz = 2;
-    int *pass;
-    pass = &open_hertz;
+    cli();
+    unsigned char rate = 0x0F;
+    outb(0x8A, RTC_ADDR);
+    unsigned char prev = inb(RTC_DATA);
+    unsigned char newRate = (prev & 0xF0) | rate;
+    outb(0x8A, RTC_ADDR);
+    outb(newRate, RTC_DATA);
+    sti();
 
-    rtc_write(0, pass, 4);
     return -1;
 }
 
@@ -103,6 +109,7 @@ int32_t rtc_read(int32_t fd, void *buf, int32_t nbytes)
     while(rtc_interrupt_flag != 1) {
         // wait for rtc_interrupt_flag to be set to one.
     }
+    count = 0;
     return 0;
 }
 
@@ -124,31 +131,43 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
     int num_bytes = 0;
 
     if (buf != NULL) {
-        int rate = *(int*)buf;
-        int check = *(int*)buf;
-        int flag = 1;
-
-        while (check != 1) {
-            if (check%2 != 0)
-                flag = 0;
-            check /= 2;
-        }
+        int frequency = *(int*)buf;
 
         /*
-         * If the rate is not a power of two
-         * or the rate is greater than 1024,
+         * If the rate is not in the range of acceptable values,
          * fail gracefully
          */
-        if (!flag || rate > 1024)
+        if (frequency < 2 || frequency  > 1024)
+            return -1;
+
+        /*
+         * If the rate is not a power of two,
+         * fail gracefully
+         */
+        int rate = 1;
+        while ((1 << rate) < frequency)
+            rate++;
+
+        if (frequency != 1 << rate)
             return -1;
 
         cli();
-        outb(RTC_ADDR, 0x8A);
+        /*
+         * get the value of the old frequency
+         */
+        outb(0x8A, RTC_ADDR);
         num_bytes++;
-        inb(RTC_DATA);
-        outb(RTC_ADDR, 0x8A);
+        unsigned char newRate = inb(RTC_DATA);
+
+        /*
+         * set the value of the new frequency
+         */
+
+        newRate = (newRate & 0xF0) | (16 - rate);
+
+        outb(0x8A, RTC_ADDR);
         num_bytes++;
-        outb(RTC_DATA, rate);
+        outb(newRate, RTC_DATA);
         num_bytes++;
         sti();
     } else {
