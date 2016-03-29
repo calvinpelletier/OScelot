@@ -216,32 +216,20 @@ entry (unsigned long magic, unsigned long addr)
 		printf("\nterminal_open and terminal_close tested!\n");
 	}
 
-	if (DEBUG_RTC) {
-		clear();
-		int count = 0;
-		printf("Testing RTC stuff\n");
-		const char *file = "rtc.h";
-		int tmp_fd = rtc_open(file);
-		int rate = 2;
-		int tmp;
-		while (rate <= MAXIMUM_RTC_RATE) {
-			tmp = rate;
-			int *newRate = &tmp;
-			tmp = rtc_write(tmp_fd, newRate, 0);
-			while (count < (rate * 4)) {
-				tmp = rtc_read(tmp_fd, newRate, 0);
-				printf("current rate is %d interrupts per second: count is %d\n", rate, count);
-				count++;
-			}
-			rate = rate << 1;
-			count = 0;
-		}
-		tmp = rtc_close(tmp_fd);
-		if (tmp == 0)
-			printf("Closed correctly \n");
-		else
-			printf("ERROR");
-	}
+	/*
+	 * RTC Driver tests
+	 * Code is located in rtc.c
+	 */
+
+	/*
+	clear();
+	rtc_test1();
+	*/
+
+	/*
+	clear();
+	rtc_test2();
+	*/
 
 	/* Execute the first program (`shell') ... */
 

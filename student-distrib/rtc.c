@@ -10,6 +10,7 @@
 #define RTC_ADDR 0x70 // port for addressing RTC registers and enabling/disabling NMIs
 #define RTC_DATA 0x71 // port for writing data to RTC registers
 #define TEST_RTC_RTC 1
+#define MAXIMUM_RTC_RATE 1024
 
 #if (TEST_RTC_RTC)
 volatile int count = 0;
@@ -70,7 +71,7 @@ void rtcHandler(void) {
  * DESCRIPTION: Opens the RTC driver stream
  * INPUTS: filename - the pointer to the filename, not used
  * OUTPUTS: none
- * RETURNS: -1 always, file descriptor not used
+ * RETURNS: 0 on successful open, -1 if failed to open
  * NOTES:
  */
 int32_t rtc_open(const int8_t *filename)
@@ -89,15 +90,17 @@ int32_t rtc_open(const int8_t *filename)
     outb(newRate, RTC_DATA);
     sti();
 
-    return -1;
+    return 0;
 }
 
 /*
  * rtc_read
- * DESCRIPTION:
- * INPUTS:
- * OUTPUTS:
- * RETURNS:
+ * DESCRIPTION: Reads from the RTC driver
+ * INPUTS: fd     - not used
+ *         buf    - not used
+ *         nbytes - not used
+ * OUTPUTS: none
+ * RETURNS: The number of bytes written, -1 if read not successful.
  * NOTES:
  */
 int32_t rtc_read(int32_t fd, void *buf, int32_t nbytes)
@@ -109,18 +112,18 @@ int32_t rtc_read(int32_t fd, void *buf, int32_t nbytes)
     while(rtc_interrupt_flag != 1) {
         // wait for rtc_interrupt_flag to be set to one.
     }
-    count = 0;
+    // count = 0;
     return 0;
 }
 
 /*
  * rtc_write
- * DESCRIPTION: Changes RTC interrupt frequency by a specified rate
+ * DESCRIPTION: Sets the RTC interrupt frequency to a specified rate
  * INPUTS: fd     - not used
- *         buf    -
- *         nbytes -
+ *         buf    - The new rate to set the RTC Periodic Interrupt to
+ *         nbytes - The number of bytes to write, not used.
  * OUTPUTS: none
- * RETURNS: The number of bytes written.
+ * RETURNS: The number of bytes written. -1 if it fails.
  * NOTES:
  */
 int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
@@ -178,16 +181,55 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
 
 /*
  * rtc_close
- * DESCRIPTION:
- * INPUTS:
- * OUTPUTS:
- * RETURNS:
+ * DESCRIPTION: Closes the RTC driver stream thing
+ * INPUTS: fd - not used
+ * OUTPUTS: non
+ * RETURNS: 0 if the driver is closed properly, -1 otherwise.
  * NOTES:
  */
 int32_t rtc_close(int32_t fd)
 {
     if (rtc_in_use == 0)
         return -1;
+
     rtc_in_use = 0;
     return 0;
+}
+
+void rtc_test1() {
+    int fd = rtc_open("rtc.c");
+    if (fd == 0)
+        printf("successful open");
+    else
+        printf("failed to open");
+
+    fd = rtc_close(fd);
+    if (fd == 0)
+        printf("successful close");
+    else
+        printf("failed to close");
+}
+
+void rtc_test2() {
+    int count = 0;
+    int tmp_fd = rtc_open("rtc.c");
+    int rate = 2;
+    int tmp;
+    while (rate <= MAXIMUM_RTC_RATE) {
+        tmp = rate;
+        int *newRate = &tmp;
+        tmp = rtc_write(tmp_fd, newRate, 0);
+        while (count < (rate * 4)) {
+            tmp = rtc_read(tmp_fd, newRate, 0);
+            printf("current rate is %d interrupts per second: count is %d\n", rate, count);
+            count++;
+        }
+        rate = rate << 1;
+        count = 0;
+    }
+    tmp = rtc_close(tmp_fd);
+    if (tmp == 0)
+        printf("Closed correctly \n");
+    else
+        printf("ERROR");
 }
