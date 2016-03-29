@@ -151,6 +151,9 @@ format_char_switch:
 		buf++;
 	}
 
+	/* Set cursor properly after printf to screen */
+	set_cursor(0);
+
 	return (buf - format);
 }
 
@@ -658,8 +661,8 @@ pos_t get_pos(void) {
 
 /*
  * set_cursor
- *   DESCRIPTION:  Changes the cursor to the requested x coordinate in the terminal.
- *   INPUTS:       none
+ *   DESCRIPTION:  Changes the cursor by the requested x offset in the terminal.
+ *   INPUTS:       x - offset from current cursor position in which to put cursor
  *   OUTPUTS:      none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: Overwrites video memory to move cursor.
@@ -672,11 +675,11 @@ void set_cursor(int x) {
 	cur_cursor = get_pos();
 	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);
 
-	if (x == -1) {
-		set_pos(cur_cursor.pos_x - 1, cur_cursor.pos_y);
-	} else if (x == 1) {
-		set_pos(cur_cursor.pos_x + 1, cur_cursor.pos_y);
-	}
+	// if (x == -1) {
+	// 	set_pos(cur_cursor.pos_x - 1, cur_cursor.pos_y);
+	// } else if (x == 1) {
+	// 	set_pos(cur_cursor.pos_x + 1, cur_cursor.pos_y);
+	// }
 
 	/* Accessing the appropriate cursor registers in the VGA */
 	outb(CURSOR_LOW_REG, CRTC_ADDR_REG);

@@ -185,13 +185,34 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Terminal Driver Tests */
 	if (DEBUG_TERMINAL) {
+		char test_buf1[128];
+		char test_buf2[116] = "\nThis is another test for terminal_write. All of this should be printed to the screen.\nThis line should not be seen.";
+		int32_t t_read_value;
+		int32_t t_write_value;
+		
 		clear();
-		printf("\nTesting terminal_read and terminal_write.\n");
+		set_pos(0, 0);
+
+		printf("Testing terminal_read and terminal_write...\n");
 		printf("Start typing and press ENTER.\n");
-		char test_buf1[256];
-		terminal_read(0, test_buf1, 128);
-		terminal_write(0, test_buf1, 128);
-		printf("terminal_read and terminal_write tested!\n");
+
+		t_read_value = terminal_read(0, test_buf1, 128);
+		printf("terminal_read read %d bytes.\n", t_read_value);
+
+		t_write_value = terminal_write(0, test_buf1, 128);
+		printf("\nterminal_write wrote %d/128 bytes.\n", t_write_value);
+ 
+		t_write_value = terminal_write(0, test_buf2, 87);
+		printf("terminal_write wrote %d/87 bytes.\n", t_write_value);
+		
+		printf("\nterminal_read and terminal_write tested!\n");
+
+		printf("\nTesting terminal_open and terminal_close...\n");
+		
+		printf("terminal_open returned %d.\n", terminal_open(0));
+		printf("terminal_close returned %d.\n", terminal_close(0));
+
+		printf("\nterminal_open and terminal_close tested!\n");
 	}
 
 	if (DEBUG_RTC) {
