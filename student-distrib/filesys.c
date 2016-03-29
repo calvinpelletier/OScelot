@@ -36,6 +36,13 @@ int test_demo3(void);
 static fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
 // EXTERNAL FUNCTIONS
+/*
+fs_init
+    DESCRIPTION: initializes the file system
+    INPUTS: the start and end locations of the filesystem img in memory
+    OUTPUTS: none
+    RETURNS: 0 for success, -1 for fail
+*/
 int fs_init(void* start, void* end) {
     FILESYS_START = start;
     FILESYS_END = end;
@@ -92,6 +99,13 @@ int fs_init(void* start, void* end) {
 
 
 // HELPER FUNCTIONS
+/*
+read_dentry_by_name
+    DESCRIPTION: populates a dentry struct given a file name
+    INPUTS: file name
+    OUTPUTS: dentry struct
+    RETURNS: 0 for success, -1 for fail
+*/
 int read_dentry_by_name(const char* fname, dentry_t* dentry) {
     int len = 0;
     while (len <= MAX_FNAME_LEN && fname[len]) {
@@ -111,6 +125,13 @@ int read_dentry_by_name(const char* fname, dentry_t* dentry) {
     return -1;
 }
 
+/*
+read_dentry_by_index
+    DESCRIPTION: populates a dentry struct given an index
+    INPUTS: index
+    OUTPUTS: dentry struct
+    RETURNS: 0 for success, -1 for fail
+*/
 int read_dentry_by_index(unsigned int index, dentry_t* dentry) {
 
 	// Return error if invalid index
@@ -122,6 +143,13 @@ int read_dentry_by_index(unsigned int index, dentry_t* dentry) {
     return 0;
 }
 
+/*
+read_data
+    DESCRIPTION: reads data from the filesystem
+    INPUTS: inode that points to the data, offset to start at, number of bytes to read
+    OUTPUTS: bytes read
+    RETURNS: number of bytes read successfully, -1 for failure
+*/
 int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length) {
 	// Initialize local variables
 	unsigned int bytes_read = 0; 								// current number of bytes read
@@ -165,6 +193,13 @@ int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsig
     return bytes_read;
 }
 
+/*
+fs_copy
+    DESCRIPTION: writes file into a specified location in memory
+    INPUTS: file name, memory location
+    OUTPUTS: file at memory location
+    RETURNS: 0 for success, -1 for fail
+*/
 int fs_copy(const char* fname, unsigned char * mem_location) {
 	dentry_t file_dentry;
 	unsigned int inode;
@@ -193,6 +228,13 @@ int fs_copy(const char* fname, unsigned char * mem_location) {
 	return 0;
 }
 
+/*
+fs_open
+    DESCRIPTION: opens a file
+    INPUTS: file name
+    OUTPUTS: none
+    RETURNS: file descriptor on success, -1 on fail
+*/
 int fs_open (const char* filename) {
 	dentry_t dentry;
 	if (read_dentry_by_name(filename, &dentry))
@@ -215,7 +257,13 @@ int fs_open (const char* filename) {
 	return -1;
 }
 
-
+/*
+fs_close
+    DESCRIPTION: closes a file
+    INPUTS: file descriptor
+    OUTPUTS: none
+    RETURNS: 0 for success, -1 for fail
+*/
 int fs_close(int fd) {
 	if (fd == 0 || fd == 1)
 		return -1;
@@ -225,7 +273,13 @@ int fs_close(int fd) {
 	return 0;
 }
 
-
+/*
+fs_read
+    DESCRIPTION: reads from a file starting at the last read location and ending at the target number of bytes
+    INPUTS: file descriptor, number of bytes
+    OUTPUTS: bytes read
+    RETURNS: number of bytes read on success, -1 for fail
+*/
 int fs_read (int fd, unsigned char * buf, int nbytes) {
 	if (fd < 0 || fd >= FILEARRAY_SIZE)
 		return -1;
@@ -237,11 +291,24 @@ int fs_read (int fd, unsigned char * buf, int nbytes) {
 		return -1;
 }
 
+/*
+fs_write
+    DESCRIPTION: does nothing
+    INPUTS: file descriptor, data, number of bytes
+    OUTPUTS: none
+    RETURNS: -1
+*/
 int fs_write (int fd, unsigned char * buf, int nbytes) {
 	return -1; // file system is read only
 }
 
-
+/*
+file_read
+    DESCRIPTION: helper function for reading files
+    INPUTS: file descriptor, number of bytes
+    OUTPUTS: read bytes
+    RETURNS: number of bytes read on success, -1 for fail
+*/
 int file_read (int fd, unsigned char * buf, int nbytes) {
 	int bytes_read = read_data(filearray[fd].inode, filearray[fd].position, buf, nbytes);
 	if (bytes_read != -1)
@@ -249,7 +316,13 @@ int file_read (int fd, unsigned char * buf, int nbytes) {
 	return bytes_read;
 }
 
-
+/*
+dir_read
+    DESCRIPTION: helper function for reading directories
+    INPUTS: file descriptor
+    OUTPUTS: directory name
+    RETURNS: directory name length on success, 0 for fail
+*/
 int dir_read (int fd, unsigned char * buf, int nbytes) {
 	if (dirs_read >= bootblock.n_dentries)
 		return 0;
