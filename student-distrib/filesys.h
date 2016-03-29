@@ -59,5 +59,9 @@ typedef struct {
 
 // GLOBAL FUNCTIONS
 extern int fs_init(void* start, void* end);
+extern int test_demo1(char* filename);
+extern int test_demo2(char* filename);
+extern int test_demo3(void);
+
 
 #endif

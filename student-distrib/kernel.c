@@ -231,6 +231,34 @@ entry (unsigned long magic, unsigned long addr)
 	rtc_test2();
 	*/
 
+
+	/*****FILE SYSTEM TESTS*****/
+	// printf("~~~FILE SYSTEM DEMO~~~\n");
+	// int result;
+
+	// DEMO TEST 1
+	// result = test_demo1("frame0.txt");
+	// if (result) {
+	//     printf("DEMO TEST 1 FAIL\n");
+	// }
+
+	// DEMO TEST 2
+	// result = test_demo2("frame0.txt");
+	// if (result == -1) {
+	//     printf("DEMO TEST 2 FAIL\n");
+	// } else {
+	//     printf("Size: %d\n", result); // compare to actual size using 'stat --printf="%s\n" frame0.txt' command
+	// }
+
+	// DEMO TEST 3
+	// result = test_demo3();
+	// if (result) {
+	//     printf("DEMO TEST 3 FAIL\n");
+	// }
+
+	// printf("~~~~~~\n");
+	/************************/
+
 	/* Execute the first program (`shell') ... */
 
 	/* Spin (nicely, so we don't chew up cycles) */

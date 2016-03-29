@@ -69,7 +69,7 @@ int fs_init(void* start, void* end) {
         // test_debug();
 
         // int result;
-        printf("~~~FILE SYSTEM DEMO~~~\n");
+        // printf("~~~FILE SYSTEM DEMO~~~\n");
 
         // DEMO TEST 1
         // result = test_demo1("frame0.txt");
@@ -91,7 +91,7 @@ int fs_init(void* start, void* end) {
         //     printf("DEMO TEST 3 FAIL\n");
         // }
 
-        printf("~~~~~~\n");
+        // printf("~~~~~~\n");
     }
 
     return 0;
