@@ -19,6 +19,7 @@
 
 /* Custom definitions by group OScelot */
 #define DEBUG_TERMINAL 1
+#define DEBUG_RTC 1
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -191,6 +192,22 @@ entry (unsigned long magic, unsigned long addr)
 		terminal_read(0, test_buf1, 128);
 		terminal_write(0, test_buf1, 128);
 		printf("terminal_read and terminal_write tested!\n");
+	}
+
+	if (DEBUG_RTC) {
+		clear();
+		printf("Testing RTC stuffi\n");
+		int tmp_fd = rtc_open("/dev/rtc");
+		printf("%d\n", tmp_fd);
+		int rate = 512;
+		int *newRate = &rate;
+		int tmp = rtc_write(tmp_fd, newRate, 0);
+		printf("%d\n", tmp);
+		tmp = rtc_read(tmp_fd, newRate, 0);
+		printf("%d\n", tmp);
+		tmp = rtc_close(tmp_fd);
+		if (tmp == 0)
+			printf("Closed correctly \n");
 	}
 
 	/* Execute the first program (`shell') ... */

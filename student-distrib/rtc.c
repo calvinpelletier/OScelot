@@ -4,7 +4,7 @@
 #include "rtc.h"
 #include "lib.h"
 #include "i8259.h"
-
+#include "filesys.h"
 
 // CONSTANTS
 #define RTC_ADDR 0x70 // port for addressing RTC registers and enabling/disabling NMIs
@@ -20,6 +20,7 @@ void rtcHandler(void);
 
 // Flag for rtc_read
 volatile char rtc_interrupt_flag;
+int rtc_in_use;
 
 // GLOBAL FUNCTIONS
 /*
@@ -28,7 +29,7 @@ rtc_init
     INPUTS: none
     OUTPUTS: none
     RETURNS: none
-    NOTES: important that interrupts are disabled when calling this function
+NOTES: important that interrupts are disabled when calling this function
 */
 void rtc_init(void) {
     outb(0x8B, RTC_ADDR); // address register 0x0B and disable NMIs (0x80)
@@ -36,6 +37,7 @@ void rtc_init(void) {
     outb(0x8B, RTC_ADDR); // address register again because apparently reading resets this
     outb(temp | 0x40, RTC_DATA); // turns on periodic interrupts
     enable_irq(RTC_IRQ_NUM);
+    rtc_in_use = 0;
 }
 
 
@@ -63,19 +65,25 @@ void rtcHandler(void) {
 
 /*
  * rtc_open
- * DESCRIPTION:
- * INPUTS:
- * OUTPUTS:
- * RETURNS:
+ * DESCRIPTION: Opens the RTC driver stream
+ * INPUTS: filename - the pointer to the filename, not used
+ * OUTPUTS: none
+ * RETURNS: -1 always, file descriptor not used
  * NOTES:
  */
 int32_t rtc_open(const uint8_t *filename)
 {
+    if(rtc_in_use == 1)
+        return -1;
+
+    rtc_in_use = 1;
+
     int open_hertz = 2;
     int *pass;
     pass = &open_hertz;
 
     rtc_write(0, pass, 4);
+    return -1;
 }
 
 /*
@@ -88,6 +96,10 @@ int32_t rtc_open(const uint8_t *filename)
  */
 int32_t rtc_read(int32_t fd, void *buf, int32_t nbytes)
 {
+    if (rtc_in_use != 1)
+        return -1;
+
+    rtc_interrupt_flag = 0;
     while(rtc_interrupt_flag != 1) {
         // wait for rtc_interrupt_flag to be set to one.
     }
@@ -106,6 +118,9 @@ int32_t rtc_read(int32_t fd, void *buf, int32_t nbytes)
  */
 int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
 {
+    if (rtc_in_use != 1)
+        return -1;
+
     int i;
     int num_bytes = 0;
 
@@ -153,5 +168,8 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
  */
 int32_t rtc_close(int32_t fd)
 {
-    return -1;
+    if (rtc_in_use == 0)
+        return -1;
+    rtc_in_use = 0;
+    return 0;
 }
