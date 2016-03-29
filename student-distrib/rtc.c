@@ -71,7 +71,7 @@ void rtcHandler(void) {
  * RETURNS: -1 always, file descriptor not used
  * NOTES:
  */
-int32_t rtc_open(const uint8_t *filename)
+int32_t rtc_open(const int8_t *filename)
 {
     if(rtc_in_use == 1)
         return -1;

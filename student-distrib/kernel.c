@@ -218,7 +218,7 @@ entry (unsigned long magic, unsigned long addr)
 	if (DEBUG_RTC) {
 		clear();
 		printf("Testing RTC stuffi\n");
-		uint8_t *file = "rtc.h";
+		const char *file = "rtc.h";
 		int tmp_fd = rtc_open(file);
 		printf("%d\n", tmp_fd);
 		int rate = 512;
