@@ -18,19 +18,19 @@ static file_t filearray[FILEARRAY_SIZE]; // 0 = stdin, 1 = stdout, 2-7 = free to
 
 // FUNCTION DECLARATIONS
 int fs_init(void* start, void* end);
-int read_dentry_by_name(const unsigned char* fname, dentry_t* dentry);
+int read_dentry_by_name(const char* fname, dentry_t* dentry);
 int read_dentry_by_index(unsigned int index, dentry_t* dentry);
 int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length);
-int fs_copy(const unsigned char* fname, unsigned char * mem_location);
-int fs_open (const unsigned char* filename);
+int fs_copy(const char* fname, unsigned char * mem_location);
+int fs_open (const char* filename);
 int fs_close(int fd);
 int fs_read (int fd, unsigned char * buf, int nbytes);
 int fs_write (int fd, unsigned char * buf, int nbytes);
 int file_read (int fd, unsigned char * buf, int nbytes);
 int dir_read (int fd, unsigned char * buf, int nbytes);
 int test_debug(void);
-int test_demo1(unsigned char* filename);
-int test_demo2(unsigned char* filename);
+int test_demo1(char* filename);
+int test_demo2(char* filename);
 int test_demo3(void);
 
 static fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
@@ -61,7 +61,7 @@ int fs_init(void* start, void* end) {
     if (DEBUG_ALL) {
         // test_debug();
 
-        int result;
+        // int result;
         printf("~~~FILE SYSTEM DEMO~~~\n");
 
         // DEMO TEST 1
@@ -92,7 +92,7 @@ int fs_init(void* start, void* end) {
 
 
 // HELPER FUNCTIONS
-int read_dentry_by_name(const unsigned char* fname, dentry_t* dentry) {
+int read_dentry_by_name(const char* fname, dentry_t* dentry) {
     int len = 0;
     while (len <= MAX_FNAME_LEN && fname[len]) {
         len++;
@@ -165,7 +165,7 @@ int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsig
     return bytes_read;
 }
 
-int fs_copy(const unsigned char* fname, unsigned char * mem_location) {
+int fs_copy(const char* fname, unsigned char * mem_location) {
 	dentry_t file_dentry;
 	unsigned int inode;
 	int bytes_read;
@@ -193,7 +193,7 @@ int fs_copy(const unsigned char* fname, unsigned char * mem_location) {
 	return 0;
 }
 
-int fs_open (const unsigned char* filename) {
+int fs_open (const char* filename) {
 	dentry_t dentry;
 	if (read_dentry_by_name(filename, &dentry))
 		return -1;
@@ -279,7 +279,8 @@ int test_debug(void) {
 	        ret = -1;
 	    } else {
 	        printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-    	    result = read_dentry_by_name(temp.name, &temp);
+            char* tmp = temp.name;
+    	    result = read_dentry_by_name(tmp, &temp);
     	    if (result) {
                 printf("FAIL: did not find %s directory entry\n", temp.name);
           	    ret = -1;
@@ -306,7 +307,7 @@ int test_debug(void) {
 
 	// test fs_copy by writing frame1.txt to memory and printing from this location
 	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
-	unsigned char * mem_location = 0x8000;
+	unsigned char *mem_location = (unsigned char *)0x8000;
 	if (fs_copy("frame1.txt", mem_location)) {
 		printf("fs_copy returned an error\n");
 		ret = -1;
@@ -356,7 +357,7 @@ int test_debug(void) {
     return ret;
 }
 
-int test_demo1(unsigned char* filename) {
+int test_demo1(char* filename) {
     int fd, bytes_read;
     unsigned char buf[bootblock.n_datablocks * FS_BLOCK_SIZE];
 
@@ -377,7 +378,7 @@ int test_demo1(unsigned char* filename) {
     return 0;
 }
 
-int test_demo2(unsigned char* filename) {
+int test_demo2(char* filename) {
     int fd;
     if ((fd = fs_open(filename)) == -1) {
         return -1;
@@ -392,7 +393,7 @@ int test_demo3(void) {
     unsigned char buf[MAX_FNAME_LEN];
     int fd, count;
 
-    if ((fd = fs_open((unsigned char*)".")) == -1) {
+    if ((fd = fs_open((char*)".")) == -1) {
         return -1;
     }
 
@@ -405,19 +406,3 @@ int test_demo3(void) {
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// asdf

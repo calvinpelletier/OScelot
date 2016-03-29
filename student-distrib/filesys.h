@@ -16,7 +16,7 @@
 
 // STRUCTS
 typedef struct {
-    unsigned char name[MAX_FNAME_LEN];
+    char name[MAX_FNAME_LEN];
     int type;
     unsigned int inode;
     unsigned char reserved[DENTRY_RESERVED];
@@ -36,7 +36,7 @@ typedef struct {
 } inode_t;
 
 typedef struct {
-    int (*open)(const unsigned char*);
+    int (*open)(const char*);
     int (*read)(int, unsigned char*, int);
     int (*write)(int, unsigned char*, int);
     int (*close)(int);
