@@ -17,6 +17,7 @@ typedef struct {
 } file_t;
 
 void fd_init ();
-uint32_t get_fd();
+int32_t get_fd ();
+void remove_fd (int32_t);
 
 #endif
