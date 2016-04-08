@@ -1,15 +1,15 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
-int32_t halt (uint8_t status);
-int32_t execute (const uint8_t *command);
-int32_t read (int32_t fd, void *buf, int32_t nbytes);
-int32_t write (int32_t fd, const void *buf, int32_t nbytes);
-int32_t open (const uint8_t *filename);
-int32_t close (int32_t fd);
-int32_t getargs (uint8_t *buf, int32_t nbytes);
-int32_t vidmap (uint8_t **screenstart);
-int32_t set_handler (int32_t signum, void *handler_address);
-int32_t sigreturn (void);
+extern int halt_helper (unsigned char status);
+extern int execute_helper (unsigned char* command);
+extern int read_helper (int fd, void* buf, int nbytes);
+extern int write_helper (int fd, const void* buf, int nbytes);
+extern int open_helper (const unsigned char* filename);
+extern int close_helper (int fd);
+extern int getargs_helper (unsigned char* buf, int nbytes);
+extern int vidmap_helper (unsigned char** screenstart);
+extern int set_handler_helper (int signum, void* handler_address);
+extern int sigreturn_helper (void);
 
 #endif
