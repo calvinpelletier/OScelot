@@ -213,11 +213,7 @@ fs_open
     OUTPUTS: none
     RETURNS: 0 on success, -1 on fail
 */
-int fs_open (const char* filename) {
-	dentry_t dentry;
-	if (read_dentry_by_name(filename, &dentry))
-		return -1;
-
+int fs_open () {
 	return 0;
 }
 
@@ -228,14 +224,13 @@ fs_close
     OUTPUTS: none
     RETURNS: 0 for success, -1 for fail
 */
-// int fs_close(int fd) {
-// 	if (fd == 0 || fd == 1)
-// 		return -1;
-// 	filearray[fd].flags.in_use = 0;
-// 	if (filearray[fd].filetype == 1)
-// 		dirs_read = 0;
-// 	return 0;
-// }
+
+int fs_close(file_t * file) {
+	if (file-filetype == 1)
+		dirs_read = 0;
+	return 0;
+}
+
 
 /*
 fs_read
@@ -244,16 +239,15 @@ fs_read
     OUTPUTS: bytes read
     RETURNS: number of bytes read on success, -1 for fail
 */
-// int fs_read (int fd, unsigned char * buf, int nbytes) {
-// 	if (fd < 0 || fd >= FILEARRAY_SIZE)
-// 		return -1;
-// 	if (filearray[fd].filetype == 2) // regular file
-// 		return file_read (fd, buf, nbytes);
-// 	else if (filearray[fd].filetype == 1) // dir
-// 		return dir_read(fd, buf, nbytes);
-// 	else // RTC
-// 		return -1;
-// }
+int fs_read (file_t* file, unsigned char * buf, int nbytes) {
+	if (file->filetype == 2) // regular file
+		return file_read (file, buf, nbytes);
+	else if (file->filetype == 1) // dir
+		return dir_read(file, buf, nbytes);
+	else // RTC
+		return -1;
+}
+
 
 /*
 fs_write

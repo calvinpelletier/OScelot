@@ -11,7 +11,6 @@
 #define BOOTBLOCK_RESERVED 52
 #define MAX_DENTRIES 63
 #define DATABLOCKS_PER_INODE 1023
-#define FILEARRAY_SIZE 8
 #define FS_BLOCK_SIZE 4096
 
 // STRUCTS
@@ -36,13 +35,6 @@ typedef struct {
 } inode_t;
 
 typedef struct {
-    int (*open)(const char*);
-    int (*read)(int, unsigned char*, int);
-    int (*write)(int, unsigned char*, int);
-    int (*close)(int);
-} fileops_t;
-
-typedef struct {
     unsigned int in_use : 1; // occupies 1 bit (total struct size 4 bytes)
     unsigned int read_only : 1;
     unsigned int write_only : 1;
@@ -55,6 +47,13 @@ typedef struct {
     unsigned int filetype;
     fileflags_t flags;
 } file_t;
+
+typedef struct {
+    int (*open)();
+    int (*read)(file_t*, unsigned char*, int);
+    int (*write)(file_t*, unsigned char*, int);
+    int (*close)(file_t*);
+} fileops_t;
 
 
 // GLOBAL FUNCTIONS
