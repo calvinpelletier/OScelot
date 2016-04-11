@@ -40,28 +40,34 @@ typedef struct {
     unsigned int write_only : 1;
 } fileflags_t;
 
-typedef struct {
-    fileops_t jumptable;
+struct file;
+struct fileops;
+typedef struct file file_t ;
+typedef struct fileops fileops_t;
+
+struct file {
+    fileops_t * jumptable;
     unsigned int inode;
     unsigned int position;
     unsigned int filetype;
     fileflags_t flags;
-} file_t;
+};
 
-typedef struct {
+struct fileops {
     int (*open)();
     int (*read)(file_t*, unsigned char*, int);
     int (*write)(file_t*, unsigned char*, int);
     int (*close)(file_t*);
-} fileops_t;
+};
 
 
 // GLOBAL FUNCTIONS
 extern int fs_init(void* start, void* end);
 extern int fs_copy(const char* fname, unsigned char * mem_location);
-extern int fs_open (const char* filename);
-extern int fs_close(int fd);
-extern int fs_read (int fd, unsigned char * buf, int nbytes);
+extern int fs_open ();
+extern int fs_close(file_t* file);
+extern int fs_read (file_t* file, unsigned char * buf, int nbytes);
+extern int fs_write (file_t* file, unsigned char * buf, int nbytes);
 extern int test_demo1(char* filename);
 extern int test_demo2(char* filename);
 extern int test_demo3(void);

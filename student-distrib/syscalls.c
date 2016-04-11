@@ -161,13 +161,13 @@ int execute (unsigned char* command) {
 int read (int fd, void* buf, int nbytes) {
     if (fd < 0 || fd > MAX_FD)
         return -1;
-    return processes[CPID].fd_array[fd].jumptable.read((file_t *) processes[CPID].fd_array[i], buf, nbytes);
+    return processes[CPID].fd_array[fd].jumptable->read((file_t *) processes[CPID].fd_array[i], buf, nbytes);
 }
 
 int write (int fd, const void* buf, int nbytes) {
     if (fd < 0 || fd > MAX_FD)
         return -1;
-    return processes[CPID].fd_array[fd].jumptable.write((file_t *) processes[CPID].fd_array[i], buf, nbytes);
+    return processes[CPID].fd_array[fd].jumptable->write((file_t *) processes[CPID].fd_array[i], buf, nbytes);
 }
 
 int open (const unsigned char* filename) {
@@ -184,7 +184,7 @@ int open (const unsigned char* filename) {
             else {
                 processes[CPID].fd_array[i].jumptable = fs_jumptable;
             } 
-            if (processes[CPID].fd_array[i].jumptable.open())
+            if (processes[CPID].fd_array[i].jumptable->open())
                 return -1;
             processes[CPID].fd_array[i].inode = dentry.inode;
             processes[CPID].fd_array[i].position = 0;
@@ -203,7 +203,7 @@ int close (int fd) {
     if (fd < 2 || fd > 7)
         return -1;
     processes[CPID].fd_array[fd].flags.in_use = 0;
-    return processes[CPID].fd_array[fd].jumptable.close((file_t *) processes[CPID].fd_array[i]);
+    return processes[CPID].fd_array[fd].jumptable->close((file_t *) processes[CPID].fd_array[i]);
 }
 
 int getargs (unsigned char* buf, int nbytes) {

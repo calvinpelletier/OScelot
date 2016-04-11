@@ -16,9 +16,8 @@ static unsigned int dirs_read;
 int read_dentry_by_name(const char* fname, dentry_t* dentry);
 int read_dentry_by_index(unsigned int index, dentry_t* dentry);
 int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length);
-int fs_write (int fd, unsigned char * buf, int nbytes);
-int file_read (int fd, unsigned char * buf, int nbytes);
-int dir_read (int fd, unsigned char * buf, int nbytes);
+int file_read (file_t * file, unsigned char * buf, int nbytes);
+int dir_read (file_t* file, unsigned char * buf, int nbytes);
 int test_debug(void);
 
 
@@ -226,7 +225,7 @@ fs_close
 */
 
 int fs_close(file_t * file) {
-	if (file-filetype == 1)
+	if (file->filetype == 1)
 		dirs_read = 0;
 	return 0;
 }
@@ -256,7 +255,7 @@ fs_write
     OUTPUTS: none
     RETURNS: -1
 */
-int fs_write (int fd, unsigned char * buf, int nbytes) {
+int fs_write (file_t * file, unsigned char * buf, int nbytes) {
 	return -1; // file system is read only
 }
 
@@ -267,12 +266,12 @@ file_read
     OUTPUTS: read bytes
     RETURNS: number of bytes read on success, -1 for fail
 */
-// int file_read (int fd, unsigned char * buf, int nbytes) {
-// 	int bytes_read = read_data(filearray[fd].inode, filearray[fd].position, buf, nbytes);
-// 	if (bytes_read != -1)
-// 		filearray[fd].position += bytes_read;
-// 	return bytes_read;
-// }
+int file_read (file_t * file, unsigned char * buf, int nbytes) {
+	int bytes_read = read_data(file->inode, file->position, buf, nbytes);
+	if (bytes_read != -1)
+		file->position += bytes_read;
+	return bytes_read;
+}
 
 /*
 dir_read
@@ -281,7 +280,7 @@ dir_read
     OUTPUTS: directory name
     RETURNS: directory name length on success, 0 for fail
 */
-int dir_read (int fd, unsigned char * buf, int nbytes) {
+int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 	if (dirs_read >= bootblock.n_dentries)
 		return 0;
 
