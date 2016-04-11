@@ -14,8 +14,8 @@ void * virt_to_phys(void *);
 
 
 // GLOBAL VARIABLES
-static unsigned long pageDir[1024] __attribute__((aligned(4096)));
-static unsigned long first_4MB[1024] __attribute__((aligned(4096)));
+static unsigned long pageDir[2][1024] __attribute__((aligned(4096)));
+static unsigned long first_4MB[2][1024] __attribute__((aligned(4096)));
 
 
 /*
@@ -49,18 +49,30 @@ paging_init
 int paging_init(void) {
     // initialize pageDir
     int i;
-    for (i = 0; i < 1024; i++) {
-        pageDir[i] = 0x00000002; // this sets the flags to kernel-only, write-enabled, and not-present
-    }
+    int j;
 
-    pageDir[0] = (unsigned long)(first_4MB) | 0x00000003; // sets flags to accessable-by-kernel, write-enabled, and present.
-    for (i = 0; i < 1024; i++) {
-        first_4MB[i] = (i * 0x1000) | 0x00000003; // sets flags to kernel, write-enabled, and present
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 1024; j++) {
+            pageDir[i][j] = 0x00000002; // this sets the flags to kernel-only, write-enabled, and not-present
+        }
     }
-    first_4MB[0] &= ~0x00000003; // make first 4kB not present and not writable
+    
+
+    pageDir[0][0] = (unsigned long)(first_4MB) | 0x00000003; // sets flags to accessable-by-kernel, write-enabled, and present.
+    pageDir[1][0] = (unsigned long)(first_4MB) | 0x00000003;
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 1024; j++) {
+            first_4MB[i][j] = (j * 0x1000) | 0x00000003; // sets flags to kernel, write-enabled, and present
+        }
+    }
+    
+    first_4MB[0][0] &= ~0x00000003; // make first 4kB not present and not writable
+    first_4MB[1][0] &= ~0x00000003;
 
     // initialize kernel 4 MB
-    pageDir[1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
+    pageDir[0][1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
+    pageDir[1][1] = KERNEL_LOC | 0x00000083;
 
     // enable paging
     loadPageDir(pageDir);
@@ -70,9 +82,14 @@ int paging_init(void) {
     return 0;
 }
 
-/*
-void * virt_to_phys(void * addr) {
-    int pageDirIdx = (int)(addr >> 22);
-    int pageTblIdx = (int)((addr >> 12) & 0x000003FF);
-    if ()
-}*/
+void _new_page(void* physical, void* virtual, int32_t process_ID) {
+    uint32_t dir;
+
+    dir = ((uint32_t) virtual / FOUR_MB);
+
+    pageDir[process_ID][dir] = (uint32_t) physical | 0x0000009F;
+}
+
+void new_page(uint32_t physical, int32_t process_ID) {
+    _new_page((void*) physical, (void*) VIRT_ADDR, process_ID);
+}
