@@ -15,7 +15,7 @@ unsigned int CPID = 0;
 pcb_t processes[7];
 
 // File Ops Tables
-fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
+// fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
 // FUNCTION DECLARATIONS
 void syscalls_init(void);
@@ -31,6 +31,7 @@ int set_handler (int signum, void* handler_address);
 int sigreturn (void);
 
 void syscalls_init(void) {
+    int i;
     for (i = 0; i < MAX_FD; i++) {
         processes[CPID].fd_array[i].flags.in_use = 0;
     }
@@ -51,12 +52,12 @@ int halt (unsigned char status) {
 
     __asm__("movl %0, %%ebp"
             :
-            : "r" (processes[CPID].ebp))
+            : "r" (processes[CPID].ebp)
             : "memory");
 
     __asm__("movl %0, %%esp"
             :
-            : "r" (processes[CPID].esp))
+            : "r" (processes[CPID].esp)
             : "memory");
 
     __asm__("jmp end_execute");
@@ -80,7 +81,7 @@ int execute (unsigned char* command) {
     // fetch file
     unsigned char buf[MAX_FNAME_LEN];
     int fd, count;
-    if ((fd = fs_open(exename) == -1) {
+    if ((fd = fs_open(exename)) == -1) {
         return -1;
     }
 
@@ -124,11 +125,8 @@ int execute (unsigned char* command) {
 
     // save current esp ebp or anything you need in pcb
     int old_esp, old_ebp;
-    __asm__("mv %%esp, %0;
-             mv %%ebp, %1;"
-             :"=r"(old_esp), "=r"(old_ebp) // outputs (%0 and %1 respectively)
-             :
-             :
+    __asm__("mv %%esp, %0; mv %%ebp, %1"
+             :"=r"(old_esp), "=r"(old_ebp) /* outputs (%0 and %1 respectively) */
             );
     processes[old_CPID].esp = old_esp;
     processes[old_CPID].ebp = old_ebp;
@@ -140,26 +138,23 @@ int execute (unsigned char* command) {
     // push artificial iret context onto stack
     __asm__("pushf"); // push FLAGS
 
-    __asm__("push %0;"
+    __asm__("push %0"
            : // nothing here
            : "r"(USER_CS)
-           : // nothing here
            ); // push CS
 
-    __asm__("push %0;"
+    __asm__("push %0"
            : // nothing here
            : "r"(EXE_ENTRY_POINT)
-           : // nothing here
            ); // push EIP
 
     // iret
-    __asm__("iret;
-            end_execute:"
-            :
+    __asm__("iret; end_execute:"
             ); //  most likely incorrect
 
     return 0;
 }
+
 
 int read (int fd, void* buf, int nbytes) {
     return -1;
@@ -170,31 +165,31 @@ int write (int fd, const void* buf, int nbytes) {
 }
 
 int open (const unsigned char* filename) {
-    int i;
-    for (i = 0; i < MAX_FD; i++) {
-        if (processes[CPID].fd_array[i].flags.in_use == 0) {
-            processes[CPID].fd_array[i].jumptable = fs_jumptable;
-            if (fs_jumptable.open(filename))
-                return -1;
-            processes[CPID].fd_array[i].inode = dentry.inode;
-            processes[CPID].fd_array[i].position = 0;
-            processes[CPID].fd_array[i].filetype = dentry.type;
-            processes[CPID].fd_array[i].flags.read_only = 1;
-            processes[CPID].fd_array[i].flags.write_only = 0;
-            processes[CPID].fd_array[i].flags.in_use = 1;
-            return i;
-        }
-    }
+    // int i;
+    // for (i = 0; i < MAX_FD; i++) {
+    //     if (processes[CPID].fd_array[i].flags.in_use == 0) {
+    //         processes[CPID].fd_array[i].jumptable = fs_jumptable;
+    //         if (fs_jumptable.open(filename))
+    //             return -1;
+    //         processes[CPID].fd_array[i].inode = dentry.inode;
+    //         processes[CPID].fd_array[i].position = 0;
+    //         processes[CPID].fd_array[i].filetype = dentry.type;
+    //         processes[CPID].fd_array[i].flags.read_only = 1;
+    //         processes[CPID].fd_array[i].flags.write_only = 0;
+    //         processes[CPID].fd_array[i].flags.in_use = 1;
+    //         return i;
+    //     }
+    // }
 
     return -1;
 }
 
 int close (int fd) {
-    if (fd == 0 || fd == 1)
-        return -1;
-    processes[CPID}.fd_array[fd].flags.in_use = 0;
-    if (processes[CPID}.fd_array[fd].filetype == 1)
-        dirs_read = 0;
+    // if (fd == 0 || fd == 1)
+    //     return -1;
+    // processes[CPID}.fd_array[fd].flags.in_use = 0;
+    // if (processes[CPID}.fd_array[fd].filetype == 1)
+    //     dirs_read = 0;
     return -1;
 }
 
@@ -221,8 +216,8 @@ void fd_init ()
     int i;
     for (i = 0; i < MAX_FD; i++) {
         if (i < 2)
-            fd_array[i].flags.in_use = 1;
+            processes[CPID].fd_array[i].flags.in_use = 1;
         else
-            fd_array[i].flags.in_use = 0;
+            processes[CPID].fd_array[i].flags.in_use = 0;
     }
 }
