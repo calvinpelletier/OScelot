@@ -12,28 +12,15 @@ static inode_t* inodes;
 static void* FS_DATA_START;
 static unsigned int dirs_read;
 
-// each process will have its own filearray when we implement that
-static file_t filearray[FILEARRAY_SIZE]; // 0 = stdin, 1 = stdout, 2-7 = free to use
-
-
 // FUNCTION DECLARATIONS
-int fs_init(void* start, void* end);
 int read_dentry_by_name(const char* fname, dentry_t* dentry);
 int read_dentry_by_index(unsigned int index, dentry_t* dentry);
 int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length);
-int fs_copy(const char* fname, unsigned char * mem_location);
-int fs_open (const char* filename);
-int fs_close(int fd);
-int fs_read (int fd, unsigned char * buf, int nbytes);
 int fs_write (int fd, unsigned char * buf, int nbytes);
 int file_read (int fd, unsigned char * buf, int nbytes);
 int dir_read (int fd, unsigned char * buf, int nbytes);
 int test_debug(void);
-int test_demo1(char* filename);
-int test_demo2(char* filename);
-int test_demo3(void);
 
-static fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
 // EXTERNAL FUNCTIONS
 /*
@@ -46,15 +33,6 @@ fs_init
 int fs_init(void* start, void* end) {
     FILESYS_START = start;
     FILESYS_END = end;
-
-    // initialize internal fd (for testing purposes)
-    int i;
-    for (i = 0; i < FILEARRAY_SIZE; i++) {
-    	if (i < 2)
-    		filearray[i].flags.in_use = 1;
-    	else
-    		filearray[i].flags.in_use = 0;
-    }
 
     // populate bootblock
     bootblock = *((bootblock_t*)start);
@@ -233,28 +211,14 @@ fs_open
     DESCRIPTION: opens a file
     INPUTS: file name
     OUTPUTS: none
-    RETURNS: file descriptor on success, -1 on fail
+    RETURNS: 0 on success, -1 on fail
 */
 int fs_open (const char* filename) {
 	dentry_t dentry;
 	if (read_dentry_by_name(filename, &dentry))
 		return -1;
 
-	int i;
-	for (i = 0; i < FILEARRAY_SIZE; i++) {
-		if (filearray[i].flags.in_use == 0) {
-			filearray[i].jumptable = fs_jumptable;
-			filearray[i].inode = dentry.inode;
-			filearray[i].position = 0;
-			filearray[i].filetype = dentry.type;
-			filearray[i].flags.read_only = 1;
-			filearray[i].flags.write_only = 0;
-			filearray[i].flags.in_use = 1;
-			return i;
-		}
-	}
-
-	return -1;
+	return 0;
 }
 
 /*

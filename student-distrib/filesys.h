@@ -59,6 +59,10 @@ typedef struct {
 
 // GLOBAL FUNCTIONS
 extern int fs_init(void* start, void* end);
+extern int fs_copy(const char* fname, unsigned char * mem_location);
+extern int fs_open (const char* filename);
+extern int fs_close(int fd);
+extern int fs_read (int fd, unsigned char * buf, int nbytes);
 extern int test_demo1(char* filename);
 extern int test_demo2(char* filename);
 extern int test_demo3(void);
