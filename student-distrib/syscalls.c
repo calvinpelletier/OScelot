@@ -94,7 +94,7 @@ int execute (unsigned char* command) {
 
     // exe check
     unsigned char first_bytes[4];
-    if (read(fd, first_bytes, 4)) {
+    if (read(fd, first_bytes, 4) == -1) {
         return -1;
     }
 
