@@ -59,9 +59,25 @@ int execute (unsigned char* command) {
     // set up paging
     // file loader
     // new pcb
-    // write tss esp0 ebp0 with new kernel stack
+
     // save current esp ebp or anything you need in pcb
+    int old_esp, old_ebp;
+    __asm__("mv %%esp, %0;
+             mv %%ebp, %1;"
+             :"=r"(old_esp), "=r"(old_ebp) // outputs (%0 and %1 respectively)
+             :
+             :
+            );
+    // TODO store old esp and ebp
+
+    // write tss.esp0/ss0 with new process kernel stack
+    tss.ss0 = USER_DS;
+    // TODO: tss.esp0 = ;
+
     // push artificial iret context onto stack
+    __asm__("pushf"); // push FLAGS
+    __asm__("push "); // push CS
+    __asm__("push "); // push EIP
     // iret
     // halt_ret_label
     // ret
