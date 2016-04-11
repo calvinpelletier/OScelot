@@ -2,11 +2,16 @@
 
 #include "syscalls.h"
 #include "lib.h"
-#include "filesys.h"
 
 // CONSTANTS
-#define MAX_FNAME_LEN 32;
 unsigned char MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
+
+// Global Variables
+unsigned int current_PID;
+pcb_t processes[6];
+
+// File Ops Tables
+fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
 
 // FUNCTION DECLARATIONS
@@ -101,10 +106,31 @@ int write (int fd, const void* buf, int nbytes) {
 }
 
 int open (const unsigned char* filename) {
+    int i;
+    for (i = 0; i < MAX_FD; i++) {
+        if (processes[CPID].fd_array[i].flags.in_use == 0) {
+            processes[CPID].fd_array[i].jumptable = fs_jumptable;
+            if (fs_jumptable.open(filename))
+                return -1;
+            processes[CPID].fd_array[i].inode = dentry.inode;
+            processes[CPID].fd_array[i].position = 0;
+            processes[CPID].fd_array[i].filetype = dentry.type;
+            processes[CPID].fd_array[i].flags.read_only = 1;
+            processes[CPID].fd_array[i].flags.write_only = 0;
+            processes[CPID].fd_array[i].flags.in_use = 1;
+            return i;
+        }
+    }
+
     return -1;
 }
 
 int close (int fd) {
+    if (fd == 0 || fd == 1)
+        return -1;
+    processes[CPID}.fd_array[fd].flags.in_use = 0;
+    if (processes[CPID}.fd_array[fd].filetype == 1)
+        dirs_read = 0;
     return -1;
 }
 
@@ -122,4 +148,17 @@ int set_handler (int signum, void* handler_address) {
 
 int sigreturn (void) {
     return -1;
+}
+
+
+void fd_init ()
+{
+    // initialize file descriptor array
+    int i;
+    for (i = 0; i < MAX_FD; i++) {
+        if (i < 2)
+            fd_array[i].flags.in_use = 1;
+        else
+            fd_array[i].flags.in_use = 0;
+    }
 }
