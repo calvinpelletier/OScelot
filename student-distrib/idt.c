@@ -12,7 +12,7 @@ void idt_init(void);
 // GLOBAL FUNCTIONS
 void idt_init(void) {
     idt_desc_t the_idt_desc;
-    
+
     the_idt_desc.dpl = 0;
     the_idt_desc.size = 1;
     the_idt_desc.reserved0 = 0;
@@ -112,10 +112,10 @@ void idt_init(void) {
     SET_IDT_ENTRY(kb, keyboardHandler_wrapper);
     idt[33] = kb;
 
-    // the_idt_desc.reserved3 = 1;
-    // the_idt_desc.dpl = 3;
-    //
-    // idt_desc_t sys = the_idt_desc;
-    // SET_IDT_ENTRY(sys, dispatch);
-    // idt[127] = sys;
+    the_idt_desc.reserved3 = 1;
+    the_idt_desc.dpl = 3;
+
+    idt_desc_t sys = the_idt_desc;
+    SET_IDT_ENTRY(sys, dispatch);
+    idt[127] = sys;
 }
