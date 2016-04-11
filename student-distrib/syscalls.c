@@ -17,7 +17,6 @@ pcb_t processes[7];
 // File Ops Tables
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
-
 // FUNCTION DECLARATIONS
 int halt (unsigned char status);
 int execute (unsigned char* command);
@@ -30,9 +29,26 @@ int vidmap (unsigned char** screenstart);
 int set_handler (int signum, void* handler_address);
 int sigreturn (void);
 
-
 int halt (unsigned char status) {
-    return -1;
+    int i;
+
+    for (i = 0; i < MAX_FD; i++) {
+        close(i);
+    }
+
+    __asm__("movl %0, %%ebp"
+            :
+            : "r" (processes[CPID].ebp))
+            : "memory");
+
+    __asm__("movl %0, %%esp"
+            :
+            : "r" (processes[CPID].esp))
+            : "memory");
+
+    __asm__("jmp end_execute");
+
+    return 0;
 }
 
 
@@ -107,11 +123,13 @@ int execute (unsigned char* command) {
 
     // push artificial iret context onto stack
     __asm__("pushf"); // push FLAGS
+
     __asm__("push %0;"
            : // nothing here
            : "r"(USER_CS)
            : // nothing here
            ); // push CS
+
     __asm__("push %0;"
            : // nothing here
            : "r"(EXE_ENTRY_POINT)
@@ -119,7 +137,10 @@ int execute (unsigned char* command) {
            ); // push EIP
 
     // iret
-    __asm__("iret"); //  most likely incorrect
+    __asm__("iret;
+            end_execute:"
+            :
+            ); //  most likely incorrect
 
     return 0;
 }
