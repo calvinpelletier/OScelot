@@ -14,7 +14,6 @@ pcb_t processes[7];
 // File Ops Tables
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
-
 // FUNCTION DECLARATIONS
 int halt (unsigned char status);
 int execute (unsigned char* command);
@@ -26,7 +25,6 @@ int getargs (unsigned char* buf, int nbytes);
 int vidmap (unsigned char** screenstart);
 int set_handler (int signum, void* handler_address);
 int sigreturn (void);
-
 
 int halt (unsigned char status) {
     int i;
