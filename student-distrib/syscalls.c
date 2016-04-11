@@ -5,7 +5,7 @@
 
 // CONSTANTS
 unsigned char MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
-int
+unsigned int PROCESS_KERNEL_STACK_ADDR = 0x80000000;
 
 // GLOBAL VARIABLES
 unsigned int CPID = 0;
@@ -78,8 +78,8 @@ int execute (unsigned char* command) {
     processes[CPID].ebp = old_ebp;
 
     // write tss.esp0/ss0 with new process kernel stack
-    tss.ss0 = USER_DS;
-    tss.esp0 = ;
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
 
     // push artificial iret context onto stack
     __asm__("pushf"); // push FLAGS
@@ -93,10 +93,11 @@ int execute (unsigned char* command) {
            : /* the address we need to push */
            : // nothing here
            ); // push EIP
+
     // iret
     __asm__("iret"); //  most likely incorrect
-    // halt_ret_label
-    // ret
+
+    return 0;
 }
 
 int read (int fd, void* buf, int nbytes) {
