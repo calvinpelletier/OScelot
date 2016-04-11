@@ -26,7 +26,6 @@ int halt (unsigned char status) {
     return -1;
 }
 
-
 int execute (unsigned char* command) {
     unsigned char exename[MAX_FNAME_LEN];
     int i;
@@ -67,15 +66,15 @@ int execute (unsigned char* command) {
     // ret
 }
 
-int read (int fd, void* buf, int nbytes) {
+int read (int fd, void *buf, int nbytes) {
     return -1;
 }
 
-int write (int fd, const void* buf, int nbytes) {
+int write (int fd, const void *buf, int nbytes) {
     return -1;
 }
 
-int open (const unsigned char* filename) {
+int open (const unsigned char *filename) {
     return -1;
 }
 
@@ -83,15 +82,15 @@ int close (int fd) {
     return -1;
 }
 
-int getargs (unsigned char* buf, int nbytes) {
+int getargs (unsigned char *buf, int nbytes) {
     return -1;
 }
 
-int vidmap (unsigned char** screenstart) {
+int vidmap (unsigned char **screenstart) {
     return -1;
 }
 
-int set_handler (int signum, void* handler_address) {
+int set_handler (int signum, void *handler_address) {
     return -1;
 }
 

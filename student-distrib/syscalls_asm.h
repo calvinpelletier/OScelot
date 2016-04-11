@@ -5,5 +5,4 @@
 
 extern void syscall_wrapper();
 
-
 #endif
