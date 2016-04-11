@@ -24,7 +24,7 @@ void syscalls_init(void);
 int halt (unsigned char status);
 int execute (unsigned char* command);
 int read (int fd, void* buf, int nbytes);
-int write (int fd, const void* buf, int nbytes);
+int write (int fd, void* buf, int nbytes);
 int open (const char* filename);
 int close (int fd);
 int getargs (unsigned char* buf, int nbytes);
@@ -164,7 +164,7 @@ int read (int fd, void* buf, int nbytes) {
     return processes[CPID].fd_array[fd].jumptable->read(&processes[CPID].fd_array[fd], buf, nbytes);
 }
 
-int write (int fd, const void* buf, int nbytes) {
+int write (int fd, void* buf, int nbytes) {
     if (fd < 0 || fd > MAX_FD)
         return -1;
     return processes[CPID].fd_array[fd].jumptable->write(&processes[CPID].fd_array[fd], buf, nbytes);

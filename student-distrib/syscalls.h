@@ -31,7 +31,7 @@ typedef struct {
 extern int halt (unsigned char status);
 extern int execute (unsigned char* command);
 extern int read (int fd, void* buf, int nbytes);
-extern int write (int fd, const void* buf, int nbytes);
+extern int write (int fd, void* buf, int nbytes);
 extern int open (const char* filename);
 extern int close (int fd);
 extern int getargs (unsigned char* buf, int nbytes);
