@@ -56,7 +56,7 @@ int paging_init(void) {
             pageDir[i][j] = 0x00000002; // this sets the flags to kernel-only, write-enabled, and not-present
         }
     }
-    
+
 
     pageDir[0][0] = (unsigned long)(first_4MB) | 0x00000003; // sets flags to accessable-by-kernel, write-enabled, and present.
     pageDir[1][0] = (unsigned long)(first_4MB) | 0x00000003;
@@ -66,7 +66,7 @@ int paging_init(void) {
             first_4MB[i][j] = (j * 0x1000) | 0x00000003; // sets flags to kernel, write-enabled, and present
         }
     }
-    
+
     first_4MB[0][0] &= ~0x00000003; // make first 4kB not present and not writable
     first_4MB[1][0] &= ~0x00000003;
 
@@ -82,14 +82,14 @@ int paging_init(void) {
     return 0;
 }
 
-void _new_page(void* physical, void* virtual, int32_t process_ID) {
-    uint32_t dir;
+void _new_page(void* physical, void* virtual, unsigned int process_ID) {
+    unsigned int dir;
 
-    dir = ((uint32_t) virtual / FOUR_MB);
+    dir = ((unsigned int) virtual / FOUR_MB);
 
-    pageDir[process_ID][dir] = (uint32_t) physical | 0x0000009F;
+    pageDir[process_ID][dir] = (unsigned int) physical | 0x0000009F;
 }
 
-void new_page(uint32_t physical, int32_t process_ID) {
+void new_page(unsigned int physical, unsigned int process_ID) {
     _new_page((void*) physical, (void*) VIRT_ADDR, process_ID);
 }

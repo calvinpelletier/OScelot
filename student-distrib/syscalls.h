@@ -1,6 +1,7 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
+#include "types.h"
 #include "filesys.h"
 #define MAX_FD 8
 
@@ -18,8 +19,8 @@
 
 typedef struct {
 	file_t fd_array[MAX_FD];
-	unsigned char PID;
-	unsigned char PPID;
+	unsigned int PID;
+	unsigned int PPID;
 	int esp;
 	int ebp;
 	unsigned char running; // 0 for no, 1 for yes

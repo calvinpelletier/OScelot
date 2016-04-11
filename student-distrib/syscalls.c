@@ -2,10 +2,13 @@
 
 #include "syscalls.h"
 #include "lib.h"
+#include "x86_desc.h"
+#include "paging.h"
 
 // CONSTANTS
+#define PROCESS_KERNEL_STACK_ADDR 0x08000000
+#define EXE_ENTRY_POINT 0x08048000
 unsigned char MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
-unsigned int PROCESS_KERNEL_STACK_ADDR = 0x80000000;
 
 // GLOBAL VARIABLES
 unsigned int CPID = 0;
@@ -61,10 +64,31 @@ int execute (unsigned char* command) {
         return -1;
     }
 
+    // new pcb
+    int old_CPID = CPID;
+    CPID = 0;
+    while (processes[CPID].running) {
+        CPID++;
+        if (CPID > 6) {
+            return -1;
+        }
+    }
+    for (i = 0; i < MAX_FD; i++) {
+        if (i == 0 || i == 1) {
+            processes[CPID].fd_array[i].flags.in_use = 1;
+        } else {
+            processes[CPID].fd_array[i].flags.in_use = 0;
+        }
+    }
+    processes[CPID].PID = CPID;
+    processes[CPID].PPID = old_CPID;
+    processes[CPID].running = 1;
 
     // set up paging
+    unsigned int phys_addr = FOUR_MB * (CPID + 1);
+    new_page(phys_addr, CPID);
+
     // file loader
-    // new pcb
 
     // save current esp ebp or anything you need in pcb
     int old_esp, old_ebp;
@@ -74,8 +98,8 @@ int execute (unsigned char* command) {
              :
              :
             );
-    processes[CPID].esp = old_esp;
-    processes[CPID].ebp = old_ebp;
+    processes[old_CPID].esp = old_esp;
+    processes[old_CPID].ebp = old_ebp;
 
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = KERNEL_DS;
@@ -90,7 +114,7 @@ int execute (unsigned char* command) {
            ); // push CS
     __asm__("push %0;"
            : // nothing here
-           : /* the address we need to push */
+           : "r"(EXE_ENTRY_POINT)
            : // nothing here
            ); // push EIP
 
