@@ -125,7 +125,7 @@ int execute (unsigned char* command) {
 
     // save current esp ebp or anything you need in pcb
     int old_esp, old_ebp;
-    __asm__("mv %%esp, %0; mv %%ebp, %1"
+    __asm__("movl %%esp, %0; movl %%ebp, %1"
              :"=r"(old_esp), "=r"(old_ebp) /* outputs (%0 and %1 respectively) */
             );
     processes[old_CPID].esp = old_esp;
