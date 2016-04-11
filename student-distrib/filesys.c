@@ -13,8 +13,6 @@ static void* FS_DATA_START;
 static unsigned int dirs_read;
 
 // FUNCTION DECLARATIONS
-int read_dentry_by_name(const char* fname, dentry_t* dentry);
-int read_dentry_by_index(unsigned int index, dentry_t* dentry);
 int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length);
 int file_read (file_t * file, unsigned char * buf, int nbytes);
 int dir_read (file_t* file, unsigned char * buf, int nbytes);

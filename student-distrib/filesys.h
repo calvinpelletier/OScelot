@@ -68,6 +68,8 @@ extern int fs_open ();
 extern int fs_close(file_t* file);
 extern int fs_read (file_t* file, unsigned char * buf, int nbytes);
 extern int fs_write (file_t* file, unsigned char * buf, int nbytes);
+extern int read_dentry_by_name(const char* fname, dentry_t* dentry);
+extern int read_dentry_by_index(unsigned int index, dentry_t* dentry);
 extern int test_demo1(char* filename);
 extern int test_demo2(char* filename);
 extern int test_demo3(void);

@@ -16,7 +16,7 @@ pcb_t processes[7];
 
 // File Ops Tables
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
-fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
+//fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
 
 // FUNCTION DECLARATIONS
@@ -25,7 +25,7 @@ int halt (unsigned char status);
 int execute (unsigned char* command);
 int read (int fd, void* buf, int nbytes);
 int write (int fd, const void* buf, int nbytes);
-int open (const unsigned char* filename);
+int open (const char* filename);
 int close (int fd);
 int getargs (unsigned char* buf, int nbytes);
 int vidmap (unsigned char** screenstart);
@@ -83,16 +83,16 @@ int execute (unsigned char* command) {
     // fetch file
     unsigned char buf[MAX_FNAME_LEN];
     int fd, count;
-    if ((fd = fs_open(exename)) == -1) {
+    if ((fd = open((char *) exename)) == -1) {
         return -1;
     }
 
     // exe check
     unsigned char first_bytes[4];
-    if (fs_read(fd, first_bytes, 4)) {
+    if (read(fd, first_bytes, 4)) {
         return -1;
     }
-    if (strncmp(MAGIC_EXE_NUMS, first_bytes, 4)) {
+    if (strncmp((char *) MAGIC_EXE_NUMS, (char *) first_bytes, 4)) {
         return -1;
     }
 
@@ -121,7 +121,7 @@ int execute (unsigned char* command) {
     new_page(phys_addr, CPID);
 
     // file loader
-    if (fs_copy(exename, EXE_ENTRY_POINT)) {
+    if (fs_copy((char *) exename, (unsigned char *) EXE_ENTRY_POINT)) {
         return -1;
     }
 
@@ -161,16 +161,16 @@ int execute (unsigned char* command) {
 int read (int fd, void* buf, int nbytes) {
     if (fd < 0 || fd > MAX_FD)
         return -1;
-    return processes[CPID].fd_array[fd].jumptable->read((file_t *) processes[CPID].fd_array[i], buf, nbytes);
+    return processes[CPID].fd_array[fd].jumptable->read(&processes[CPID].fd_array[fd], buf, nbytes);
 }
 
 int write (int fd, const void* buf, int nbytes) {
     if (fd < 0 || fd > MAX_FD)
         return -1;
-    return processes[CPID].fd_array[fd].jumptable->write((file_t *) processes[CPID].fd_array[i], buf, nbytes);
+    return processes[CPID].fd_array[fd].jumptable->write(&processes[CPID].fd_array[fd], buf, nbytes);
 }
 
-int open (const unsigned char* filename) {
+int open (const char* filename) {
     dentry_t dentry;
     if (read_dentry_by_name(filename, &dentry))
         return -1;
@@ -178,12 +178,10 @@ int open (const unsigned char* filename) {
     int i;
     for (i = 0; i < MAX_FD; i++) {
         if (processes[CPID].fd_array[i].flags.in_use == 0) {
-            if (dentry.type == 0) {
-                processes[CPID].fd_array[i].jumptable = rtc_jumptable;
-            } 
-            else {
-                processes[CPID].fd_array[i].jumptable = fs_jumptable;
-            } 
+            // if (dentry.type == 0) {
+            //     processes[CPID].fd_array[i].jumptable = rtc_jumptable;
+            // } 
+            processes[CPID].fd_array[i].jumptable = & fs_jumptable;
             if (processes[CPID].fd_array[i].jumptable->open())
                 return -1;
             processes[CPID].fd_array[i].inode = dentry.inode;
@@ -203,7 +201,7 @@ int close (int fd) {
     if (fd < 2 || fd > 7)
         return -1;
     processes[CPID].fd_array[fd].flags.in_use = 0;
-    return processes[CPID].fd_array[fd].jumptable->close((file_t *) processes[CPID].fd_array[i]);
+    return processes[CPID].fd_array[fd].jumptable->close(&processes[CPID].fd_array[fd]);
 }
 
 int getargs (unsigned char* buf, int nbytes) {

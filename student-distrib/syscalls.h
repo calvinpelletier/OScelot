@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "filesys.h"
+#include "rtc.h"
 #define MAX_FD 8
 
 /*
@@ -31,7 +32,7 @@ extern int halt (unsigned char status);
 extern int execute (unsigned char* command);
 extern int read (int fd, void* buf, int nbytes);
 extern int write (int fd, const void* buf, int nbytes);
-extern int open (const unsigned char* filename);
+extern int open (const char* filename);
 extern int close (int fd);
 extern int getargs (unsigned char* buf, int nbytes);
 extern int vidmap (unsigned char** screenstart);
