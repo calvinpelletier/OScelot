@@ -18,6 +18,7 @@ pcb_t processes[7];
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 
 // FUNCTION DECLARATIONS
+void syscalls_init(void);
 int halt (unsigned char status);
 int execute (unsigned char* command);
 int read (int fd, void* buf, int nbytes);
@@ -29,12 +30,24 @@ int vidmap (unsigned char** screenstart);
 int set_handler (int signum, void* handler_address);
 int sigreturn (void);
 
+void syscalls_init(void) {
+    for (i = 0; i < MAX_FD; i++) {
+        processes[CPID].fd_array[i].flags.in_use = 0;
+    }
+    processes[CPID].PID = CPID;
+    processes[CPID].PPID = 0;
+    processes[CPID].running = 1;
+}
+
 int halt (unsigned char status) {
     int i;
 
     for (i = 0; i < MAX_FD; i++) {
         close(i);
     }
+
+    processes[CPID].running = 0;
+    CPID = processes[CPID].PPID;
 
     __asm__("movl %0, %%ebp"
             :
@@ -105,6 +118,9 @@ int execute (unsigned char* command) {
     new_page(phys_addr, CPID);
 
     // file loader
+    if (fs_copy(exename, EXE_ENTRY_POINT)) {
+        return -1;
+    }
 
     // save current esp ebp or anything you need in pcb
     int old_esp, old_ebp;
