@@ -29,7 +29,25 @@ int sigreturn (void);
 
 
 int halt (unsigned char status) {
-    return -1;
+    int i;
+
+    for (i = 0; i < MAX_FD; i++) {
+        close(i);
+    }
+
+    __asm__("movl %0, %%ebp"
+            :
+            : "r" (processes[CPID].ebp))
+            : "memory");
+
+    __asm__("movl %0, %%esp"
+            :
+            : "r" (processes[CPID].esp))
+            : "memory");
+
+    __asm__("jmp end_execute");
+
+    return 0;
 }
 
 
@@ -97,7 +115,10 @@ int execute (unsigned char* command) {
            ); // push EIP
 
     // iret
-    __asm__("iret"); //  most likely incorrect
+    __asm__("iret;
+            end_execute:"
+            :
+            ); //  most likely incorrect
 
     return 0;
 }
