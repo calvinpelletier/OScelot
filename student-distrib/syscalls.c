@@ -83,9 +83,18 @@ int execute (unsigned char* command) {
 
     // push artificial iret context onto stack
     __asm__("pushf"); // push FLAGS
-    __asm__("push "); // push CS
-    __asm__("push "); // push EIP
+    __asm__("push %0;"
+           : // nothing here
+           : "r"(USER_CS)
+           : // nothing here
+           ); // push CS
+    __asm__("push %0;"
+           : // nothing here
+           : /* the address we need to push */
+           : // nothing here
+           ); // push EIP
     // iret
+    __asm__("iret"); //  most likely incorrect
     // halt_ret_label
     // ret
 }
