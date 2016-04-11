@@ -79,6 +79,9 @@ int execute (unsigned char* command) {
     for (i = 0; command[i] != '\0' && command[i] != ' '; i++) {
         exename[i] = command[i];
     }
+    exename[i+1] = '\0';
+
+    printf("check0\n");
 
     // fetch file
     unsigned char buf[MAX_FNAME_LEN];
@@ -87,14 +90,21 @@ int execute (unsigned char* command) {
         return -1;
     }
 
+    printf("check1\n");
+
     // exe check
     unsigned char first_bytes[4];
     if (read(fd, first_bytes, 4)) {
         return -1;
     }
+
+    printf("check1.1\n");
+
     if (strncmp((char *) MAGIC_EXE_NUMS, (char *) first_bytes, 4)) {
         return -1;
     }
+    
+    printf("check2\n");
 
     // new pcb
     int old_CPID = CPID;
@@ -116,14 +126,20 @@ int execute (unsigned char* command) {
     processes[CPID].PPID = old_CPID;
     processes[CPID].running = 1;
 
+    printf("check3\n");
+
     // set up paging
     unsigned int phys_addr = FOUR_MB * (CPID + 1);
     new_page(phys_addr, CPID);
+
+    printf("check4\n");
 
     // file loader
     if (fs_copy((char *) exename, (unsigned char *) EXE_ENTRY_POINT)) {
         return -1;
     }
+
+    printf("check5\n");
 
     // save current esp ebp or anything you need in pcb
     int old_esp, old_ebp;
@@ -133,9 +149,13 @@ int execute (unsigned char* command) {
     processes[old_CPID].esp = old_esp;
     processes[old_CPID].ebp = old_ebp;
 
+    printf("check6\n");
+
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = KERNEL_DS;
     tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
+
+    printf("check7\n");
 
     // push artificial iret context onto stack
     __asm__("pushf"); // push FLAGS
@@ -149,6 +169,8 @@ int execute (unsigned char* command) {
            : // nothing here
            : "r"(EXE_ENTRY_POINT)
            ); // push EIP
+
+    printf("check8\n");
 
     // iret
     __asm__("iret; end_execute:"
@@ -180,7 +202,7 @@ int open (const char* filename) {
         if (processes[CPID].fd_array[i].flags.in_use == 0) {
             // if (dentry.type == 0) {
             //     processes[CPID].fd_array[i].jumptable = rtc_jumptable;
-            // } 
+            // }
             processes[CPID].fd_array[i].jumptable = & fs_jumptable;
             if (processes[CPID].fd_array[i].jumptable->open())
                 return -1;

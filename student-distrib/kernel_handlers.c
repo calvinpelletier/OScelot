@@ -115,7 +115,7 @@ void generalProtectionFault()
 
 void pageFault()
 {
-	clear();
+	// clear();
     printf("0x0E\n");
     printf("OScelot's book has a page fault. He can't read his book now. Happy?\n");
 	while(1);

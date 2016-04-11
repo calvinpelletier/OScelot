@@ -181,18 +181,26 @@ int fs_copy(const char* fname, unsigned char * mem_location) {
 	int bytes_read;
 	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE]; //maximum file size - if 1 file used all available datablocks
 
+    printf("check4.1\n");
+
 	if (!fname)
 		return -1; // invalid file name
+
+    printf("check4.2\n");
 
 	// get dentry for filename
 	if (read_dentry_by_name(fname, &file_dentry))
 		return -1; // function returned -1
+
+    printf("check4.3\n");
 
 	// read file data into buf
 	inode = file_dentry.inode;
 	bytes_read = read_data(inode, 0, buf, inodes[inode].length);
 	if (bytes_read == -1)
 		return -1;
+
+    printf("check4.4\n");
 
 	// write the file into physical memory
 	int i;

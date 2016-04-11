@@ -186,7 +186,7 @@ entry (unsigned long magic, unsigned long addr)
 	sti();
 
 	/* Execute the first program (`shell') ... */
-	if (execute('shell')) {
+	if (execute("shell")) {
 		printf("ERROR: shell failed to run.");
 	}
 
