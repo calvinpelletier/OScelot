@@ -224,11 +224,13 @@ fs_close
     OUTPUTS: none
     RETURNS: 0 for success, -1 for fail
 */
+
 int fs_close(file_t * file) {
 	if (file-filetype == 1)
 		dirs_read = 0;
 	return 0;
 }
+
 
 /*
 fs_read
@@ -245,6 +247,7 @@ int fs_read (file_t* file, unsigned char * buf, int nbytes) {
 	else // RTC
 		return -1;
 }
+
 
 /*
 fs_write
@@ -264,12 +267,12 @@ file_read
     OUTPUTS: read bytes
     RETURNS: number of bytes read on success, -1 for fail
 */
-int file_read (int fd, unsigned char * buf, int nbytes) {
-	int bytes_read = read_data(filearray[fd].inode, filearray[fd].position, buf, nbytes);
-	if (bytes_read != -1)
-		filearray[fd].position += bytes_read;
-	return bytes_read;
-}
+// int file_read (int fd, unsigned char * buf, int nbytes) {
+// 	int bytes_read = read_data(filearray[fd].inode, filearray[fd].position, buf, nbytes);
+// 	if (bytes_read != -1)
+// 		filearray[fd].position += bytes_read;
+// 	return bytes_read;
+// }
 
 /*
 dir_read
@@ -289,148 +292,148 @@ int dir_read (int fd, unsigned char * buf, int nbytes) {
 }
 
 // TESTING FUNCTIONS
-int test_debug(void) {
-    int ret = 0;
-    printf("~~~FILE SYSTEM TEST~~~\n");
-    printf("n_dentries: %d\n", bootblock.n_dentries);
-    printf("n_inodes: %d\n", bootblock.n_inodes);
-    printf("n_datablocks: %d\n", bootblock.n_datablocks);
-
-    // test read_dentry_by_index, read_dentry_by_name too (if it isn't commented out)
-    dentry_t temp;
-    int result;
-    int i;
-    for (i = 0; i < bootblock.n_dentries; i++) {
-	    result = read_dentry_by_index(i, &temp);
-	    if (result) {
-	        printf("FAIL: did not find the %d directory entry\n", i);
-	        ret = -1;
-	    } else {
-	        printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-            char* tmp = temp.name;
-    	    result = read_dentry_by_name(tmp, &temp);
-    	    if (result) {
-                printf("FAIL: did not find %s directory entry\n", temp.name);
-          	    ret = -1;
-            } else {
-           	    printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
-       		}
-	    }
-	}
-
-	// test read_data
-	// tested with inode 16, 13
-	int bytes_read;
-	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
-	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
-	if (bytes_read == -1) {
-		printf("Read_data returned an error\n");
-		ret = -1;
-	}
-	else {
-		for (i = 0; i < bytes_read; i++)
-			printf("%c", buf[i]);
-		printf("\n");
-	}
-
-	// test fs_copy by writing frame1.txt to memory and printing from this location
-	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
-	unsigned char *mem_location = (unsigned char *)0x8000;
-	if (fs_copy("frame1.txt", mem_location)) {
-		printf("fs_copy returned an error\n");
-		ret = -1;
-	}
-	else {
-		for (i = 0; i < bytes_read; i++)
-		printf("%c", mem_location[i]);
-		printf("\n");
-	}
-
-	// test OCRW
-	int fd = fs_open("frame1.txt");
-	if (fd == -1) {
-		printf("fs_open has failed.\n");
-		return -1;
-	}
-	bytes_read = fs_read(fd, buf, inodes[filearray[fd].inode].length);
-	if (bytes_read == -1) {
-		printf("fs_read has failed.\n");
-		return -1;
-	}
-	for (i = 0; i < bytes_read; i++)
-		printf("%c", buf[i]);
-	printf("\n");
-	if(fs_close(fd))
-		printf("fs_close has failed.\n");
-	printf("%d\n", filearray[fd].flags.in_use);
-
-	// test printing dirs
-	unsigned char buf32[32];
-	fd = fs_open(".");
-	int j;
-	if (fd == -1) {
-		printf("fs_open has failed.\n");
-		return -1;
-	}
-	for (i = 0; i < bootblock.n_dentries; i++) {
-		fs_read(fd, buf32, 0);
-		for (j = 0; j < 32; j++) {
-			printf("%c", buf32[j]);
-		}
-		printf("\n");
-	}
-	fs_close(fd);
-
-    printf("~~~~~~\n");
-    return ret;
-}
-
-int test_demo1(char* filename) {
-    int fd, bytes_read;
-    unsigned char buf[bootblock.n_datablocks * FS_BLOCK_SIZE];
-
-    if ((fd = fs_open(filename)) == -1) {
-        return -1;
-    }
-    if (filearray[fd].inode == -1) {
-        return -1;
-    }
-
-    bytes_read = fs_read(fd, buf, inodes[filearray[fd].inode].length);
-    if (bytes_read == -1) {
-        return -1;
-    }
-
-    buf[inodes[filearray[fd].inode].length] = '\0';
-    printf("%s\n", buf);
-    return 0;
-}
-
-int test_demo2(char* filename) {
-    int fd;
-    if ((fd = fs_open(filename)) == -1) {
-        return -1;
-    }
-    if (filearray[fd].inode == -1) {
-        return -1;
-    }
-    return inodes[filearray[fd].inode].length;
-}
-
-int test_demo3(void) {
-    unsigned char buf[MAX_FNAME_LEN];
-    int fd, count;
-
-    if ((fd = fs_open((char*)".")) == -1) {
-        return -1;
-    }
-
-    while ((count = fs_read(fd, buf, MAX_FNAME_LEN))) {
-        if (count == -1) {
-            return -1;
-        }
-        printf("%s\n", buf);
-    }
-
-    return 0;
-}
+// int test_debug(void) {
+//     int ret = 0;
+//     printf("~~~FILE SYSTEM TEST~~~\n");
+//     printf("n_dentries: %d\n", bootblock.n_dentries);
+//     printf("n_inodes: %d\n", bootblock.n_inodes);
+//     printf("n_datablocks: %d\n", bootblock.n_datablocks);
+//
+//     // test read_dentry_by_index, read_dentry_by_name too (if it isn't commented out)
+//     dentry_t temp;
+//     int result;
+//     int i;
+//     for (i = 0; i < bootblock.n_dentries; i++) {
+// 	    result = read_dentry_by_index(i, &temp);
+// 	    if (result) {
+// 	        printf("FAIL: did not find the %d directory entry\n", i);
+// 	        ret = -1;
+// 	    } else {
+// 	        printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
+//             char* tmp = temp.name;
+//     	    result = read_dentry_by_name(tmp, &temp);
+//     	    if (result) {
+//                 printf("FAIL: did not find %s directory entry\n", temp.name);
+//           	    ret = -1;
+//             } else {
+//            	    printf("dentry name: %s, type: %d, inode: %d\n", temp.name, temp.type, temp.inode);
+//        		}
+// 	    }
+// 	}
+//
+// 	// test read_data
+// 	// tested with inode 16, 13
+// 	int bytes_read;
+// 	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
+// 	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
+// 	if (bytes_read == -1) {
+// 		printf("Read_data returned an error\n");
+// 		ret = -1;
+// 	}
+// 	else {
+// 		for (i = 0; i < bytes_read; i++)
+// 			printf("%c", buf[i]);
+// 		printf("\n");
+// 	}
+//
+// 	// test fs_copy by writing frame1.txt to memory and printing from this location
+// 	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
+// 	unsigned char *mem_location = (unsigned char *)0x8000;
+// 	if (fs_copy("frame1.txt", mem_location)) {
+// 		printf("fs_copy returned an error\n");
+// 		ret = -1;
+// 	}
+// 	else {
+// 		for (i = 0; i < bytes_read; i++)
+// 		printf("%c", mem_location[i]);
+// 		printf("\n");
+// 	}
+//
+// 	// test OCRW
+// 	int fd = fs_open("frame1.txt");
+// 	if (fd == -1) {
+// 		printf("fs_open has failed.\n");
+// 		return -1;
+// 	}
+// 	bytes_read = fs_read(fd, buf, inodes[filearray[fd].inode].length);
+// 	if (bytes_read == -1) {
+// 		printf("fs_read has failed.\n");
+// 		return -1;
+// 	}
+// 	for (i = 0; i < bytes_read; i++)
+// 		printf("%c", buf[i]);
+// 	printf("\n");
+// 	if(fs_close(fd))
+// 		printf("fs_close has failed.\n");
+// 	printf("%d\n", filearray[fd].flags.in_use);
+//
+// 	// test printing dirs
+// 	unsigned char buf32[32];
+// 	fd = fs_open(".");
+// 	int j;
+// 	if (fd == -1) {
+// 		printf("fs_open has failed.\n");
+// 		return -1;
+// 	}
+// 	for (i = 0; i < bootblock.n_dentries; i++) {
+// 		fs_read(fd, buf32, 0);
+// 		for (j = 0; j < 32; j++) {
+// 			printf("%c", buf32[j]);
+// 		}
+// 		printf("\n");
+// 	}
+// 	fs_close(fd);
+//
+//     printf("~~~~~~\n");
+//     return ret;
+// }
+//
+// int test_demo1(char* filename) {
+//     int fd, bytes_read;
+//     unsigned char buf[bootblock.n_datablocks * FS_BLOCK_SIZE];
+//
+//     if ((fd = fs_open(filename)) == -1) {
+//         return -1;
+//     }
+//     if (filearray[fd].inode == -1) {
+//         return -1;
+//     }
+//
+//     bytes_read = fs_read(fd, buf, inodes[filearray[fd].inode].length);
+//     if (bytes_read == -1) {
+//         return -1;
+//     }
+//
+//     buf[inodes[filearray[fd].inode].length] = '\0';
+//     printf("%s\n", buf);
+//     return 0;
+// }
+//
+// int test_demo2(char* filename) {
+//     int fd;
+//     if ((fd = fs_open(filename)) == -1) {
+//         return -1;
+//     }
+//     if (filearray[fd].inode == -1) {
+//         return -1;
+//     }
+//     return inodes[filearray[fd].inode].length;
+// }
+//
+// int test_demo3(void) {
+//     unsigned char buf[MAX_FNAME_LEN];
+//     int fd, count;
+//
+//     if ((fd = fs_open((char*)".")) == -1) {
+//         return -1;
+//     }
+//
+//     while ((count = fs_read(fd, buf, MAX_FNAME_LEN))) {
+//         if (count == -1) {
+//             return -1;
+//         }
+//         printf("%s\n", buf);
+//     }
+//
+//     return 0;
+// }

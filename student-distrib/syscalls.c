@@ -18,7 +18,9 @@ pcb_t processes[7];
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
 fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
+
 // FUNCTION DECLARATIONS
+void syscalls_init(void);
 int halt (unsigned char status);
 int execute (unsigned char* command);
 int read (int fd, void* buf, int nbytes);
@@ -30,6 +32,16 @@ int vidmap (unsigned char** screenstart);
 int set_handler (int signum, void* handler_address);
 int sigreturn (void);
 
+void syscalls_init(void) {
+    int i;
+    for (i = 0; i < MAX_FD; i++) {
+        processes[CPID].fd_array[i].flags.in_use = 0;
+    }
+    processes[CPID].PID = CPID;
+    processes[CPID].PPID = 0;
+    processes[CPID].running = 1;
+}
+
 int halt (unsigned char status) {
     int i;
 
@@ -37,14 +49,17 @@ int halt (unsigned char status) {
         close(i);
     }
 
+    processes[CPID].running = 0;
+    CPID = processes[CPID].PPID;
+
     __asm__("movl %0, %%ebp"
             :
-            : "r" (processes[CPID].ebp))
+            : "r" (processes[CPID].ebp)
             : "memory");
 
     __asm__("movl %0, %%esp"
             :
-            : "r" (processes[CPID].esp))
+            : "r" (processes[CPID].esp)
             : "memory");
 
     __asm__("jmp end_execute");
@@ -68,7 +83,7 @@ int execute (unsigned char* command) {
     // fetch file
     unsigned char buf[MAX_FNAME_LEN];
     int fd, count;
-    if ((fd = fs_open(exename) == -1) {
+    if ((fd = fs_open(exename)) == -1) {
         return -1;
     }
 
@@ -106,14 +121,14 @@ int execute (unsigned char* command) {
     new_page(phys_addr, CPID);
 
     // file loader
+    if (fs_copy(exename, EXE_ENTRY_POINT)) {
+        return -1;
+    }
 
     // save current esp ebp or anything you need in pcb
     int old_esp, old_ebp;
-    __asm__("mv %%esp, %0;
-             mv %%ebp, %1;"
-             :"=r"(old_esp), "=r"(old_ebp) // outputs (%0 and %1 respectively)
-             :
-             :
+    __asm__("mv %%esp, %0; mv %%ebp, %1"
+             :"=r"(old_esp), "=r"(old_ebp) /* outputs (%0 and %1 respectively) */
             );
     processes[old_CPID].esp = old_esp;
     processes[old_CPID].ebp = old_ebp;
@@ -125,26 +140,23 @@ int execute (unsigned char* command) {
     // push artificial iret context onto stack
     __asm__("pushf"); // push FLAGS
 
-    __asm__("push %0;"
+    __asm__("push %0"
            : // nothing here
            : "r"(USER_CS)
-           : // nothing here
            ); // push CS
 
-    __asm__("push %0;"
+    __asm__("push %0"
            : // nothing here
            : "r"(EXE_ENTRY_POINT)
-           : // nothing here
            ); // push EIP
 
     // iret
-    __asm__("iret;
-            end_execute:"
-            :
+    __asm__("iret; end_execute:"
             ); //  most likely incorrect
 
     return 0;
 }
+
 
 int read (int fd, void* buf, int nbytes) {
     if (fd < 0 || fd > MAX_FD)
