@@ -79,7 +79,7 @@ int execute (unsigned char* command) {
     for (i = 0; command[i] != '\0' && command[i] != ' '; i++) {
         exename[i] = command[i];
     }
-    exename[i+1] = '\0';
+    exename[i] = '\0';
 
     printf("check0\n");
 
@@ -103,7 +103,7 @@ int execute (unsigned char* command) {
     if (strncmp((char *) MAGIC_EXE_NUMS, (char *) first_bytes, 4)) {
         return -1;
     }
-    
+
     printf("check2\n");
 
     // new pcb
