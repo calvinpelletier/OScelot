@@ -5,10 +5,11 @@
 
 // CONSTANTS
 unsigned char MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
+int
 
-// Global Variables
-unsigned int current_PID;
-pcb_t processes[6];
+// GLOBAL VARIABLES
+unsigned int CPID = 0;
+pcb_t processes[7];
 
 // File Ops Tables
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
@@ -73,11 +74,12 @@ int execute (unsigned char* command) {
              :
              :
             );
-    // TODO store old esp and ebp
+    processes[CPID].esp = old_esp;
+    processes[CPID].ebp = old_ebp;
 
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = USER_DS;
-    // TODO: tss.esp0 = ;
+    tss.esp0 = ;
 
     // push artificial iret context onto stack
     __asm__("pushf"); // push FLAGS

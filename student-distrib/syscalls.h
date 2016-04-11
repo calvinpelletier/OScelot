@@ -7,9 +7,9 @@
 /*
  *	Process Control Block used to describe each process. Contains data
  *  pertinent to the current process. WORK IN PROGRESS
- *	
+ *
  * 	Fields:
- *	fd_array: Array of file descriptors, contains info on each file opened by process. 
+ *	fd_array: Array of file descriptors, contains info on each file opened by process.
  * 			  First two files are stdin and stdout, up to 6 more files can be opened after that.
  *	PID: Process number/ID of the current running process.
  * 	PPID: Parent process number/ID of the current running process.
@@ -18,8 +18,11 @@
 
 typedef struct {
 	file_t fd_array[MAX_FD];
-	unsigned char PID; 
+	unsigned char PID;
 	unsigned char PPID;
+	int esp;
+	int ebp;
+	unsigned char running; // 0 for no, 1 for yes
 } pcb_t;
 
 // System Calls
