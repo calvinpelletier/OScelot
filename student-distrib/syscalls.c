@@ -6,7 +6,6 @@
 
 // CONSTANTS
 #define MAX_FNAME_LEN 32;
-unsigned char MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 
 // FUNCTION DECLARATIONS
@@ -38,22 +37,25 @@ int execute (unsigned char* command) {
         exename[i] = command[i];
     }
 
-    // fetch file
+    // exe check
     unsigned char buf[MAX_FNAME_LEN];
     int fd, count;
-    if ((fd = fs_open(exename) == -1) {
+    if ((fd = fs_open((char*)".")) == -1) {
         return -1;
     }
-
-    // exe check
-    unsigned char first_bytes[4];
-    if (fs_read(fd, first_bytes, 4)) {
+    int fail = 1;
+    while ((count = fs_read(fd, buf, MAX_FNAME_LEN))) {
+        if (count == -1) {
+            return -1;
+        }
+        if (!strncmp(exename, buf, MAX_FNAME_LEN)) {
+            fail = 0;
+            break;
+        }
+    }
+    if (fail) {
         return -1;
     }
-    if (strncmp(MAGIC_EXE_NUMS, first_bytes, 4)) {
-        return -1;
-    }
-
 
     // set up paging
     // file loader
@@ -67,11 +69,13 @@ int execute (unsigned char* command) {
 }
 
 int read (int fd, void *buf, int nbytes) {
-    return -1;
+    int out = pcb[fd].file_ops_table_ptr[READ];
+    return out;
 }
 
 int write (int fd, const void *buf, int nbytes) {
-    return -1;
+    int out = pcb[fd].file_ops_table_ptr[WRITE];
+    return out;
 }
 
 int open (const unsigned char *filename) {
