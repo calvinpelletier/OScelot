@@ -2,6 +2,11 @@
 
 #include "syscalls.h"
 #include "lib.h"
+#include "filesys.h"
+
+// CONSTANTS
+#define MAX_FNAME_LEN 32;
+
 
 // FUNCTION DECLARATIONS
 int halt (unsigned char status);
@@ -20,9 +25,39 @@ int halt (unsigned char status) {
     return -1;
 }
 
+
 int execute (unsigned char* command) {
+    unsigned char exename[MAX_FNAME_LEN];
+    int i;
+
     // parse
+    if (command == NULL) {
+        return -1;
+    }
+    for (i = 0; command[i] != '\0' && command[i] != ' '; i++) {
+        exename[i] = command[i];
+    }
+
     // exe check
+    unsigned char buf[MAX_FNAME_LEN];
+    int fd, count;
+    if ((fd = fs_open((char*)".")) == -1) {
+        return -1;
+    }
+    int fail = 1;
+    while ((count = fs_read(fd, buf, MAX_FNAME_LEN))) {
+        if (count == -1) {
+            return -1;
+        }
+        if (!strncmp(exename, buf, MAX_FNAME_LEN)) {
+            fail = 0;
+            break;
+        }
+    }
+    if (fail) {
+        return -1;
+    }
+
     // set up paging
     // file loader
     // new pcb
