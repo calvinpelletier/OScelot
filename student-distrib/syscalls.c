@@ -152,12 +152,33 @@ int execute (unsigned char* command) {
 
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
+    // tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
+    tss.esp0 = 0x00800000-(0x00002000*(CPID-1));
 
     printf("check7\n");
 
+    asm volatile("cli; \
+                  movl %0, %%eax; \
+                  movw %%ax, %%ds; \
+                  movw %%ax, %%es; \
+                  movw %%ax, %%fs; \
+                  movw %%ax, %%gs; \
+                  movl %%esp, %%ebx; \
+                  pushl %%eax; \
+                  pushl %%ebx; \
+                  pushf; \
+                  popl %%eax; \
+                  orl $0x200, %%eax; \
+                  pushl %%eax; \
+                  pushl %1; \
+                  pushl %2"
+                  :
+                  : "r"(USER_DS), "r"(USER_CS), "r"(0x080482e8)
+                );
+    asm volatile("iret; end_execute:");
+
     // push artificial iret context onto stack
-    __asm__("pushf"); // push FLAGS
+    /*__asm__("pushf"); // push FLAGS
 
     __asm__("push %0"
            : // nothing here
@@ -169,12 +190,12 @@ int execute (unsigned char* command) {
            : "r"(EXE_ENTRY_POINT)
            ); // push EIP
 
-    printf("check8\n");
+    // printf("check8\n");
 
     // iret
     __asm__("iret; end_execute:"
             ); //  most likely incorrect
-
+*/
     return 0;
 }
 
