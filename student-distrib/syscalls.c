@@ -16,6 +16,7 @@ pcb_t processes[7];
 
 // File Ops Tables
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
+fileops_t term_jumptable = {terminal_open, terminal_read, terminal_write, terminal_close};
 //fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
 
@@ -127,6 +128,10 @@ int execute (unsigned char* command) {
     processes[CPID].PID = CPID;
     processes[CPID].PPID = old_CPID;
     processes[CPID].running = 1;
+
+    processes[CPID].fd_array[0].jumptable = &term_jumptable;
+    processes[CPID].fd_array[1].jumptable = &term_jumptable;
+
 
     printf("check3\n");
 

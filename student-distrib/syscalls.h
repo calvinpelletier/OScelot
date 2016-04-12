@@ -4,6 +4,7 @@
 #include "types.h"
 #include "filesys.h"
 #include "rtc.h"
+#include "terminal.h"
 #define MAX_FD 8
 
 /*

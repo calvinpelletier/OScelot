@@ -117,5 +117,5 @@ void idt_init(void) {
 
     idt_desc_t sys = the_idt_desc;
     SET_IDT_ENTRY(sys, syscall_wrapper);
-    idt[127] = sys;
+    idt[128] = sys;
 }

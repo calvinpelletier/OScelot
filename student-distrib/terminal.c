@@ -370,7 +370,7 @@ void buf_clear(void) {
  *   RETURN VALUE: Number of bytes written
  *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
  */
-int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
+int32_t terminal_write(file_t * file, unsigned char* buf, int32_t nbytes) {
     int i;              /* Loop counter                           */
     int num_bytes = 0;  /* Number of bytes that have been written */
 
@@ -411,7 +411,7 @@ int32_t terminal_write(int32_t fd, const char* buf, int32_t nbytes) {
  *   RETURN VALUE: Number of bytes read
  *   SIDE EFFECTS: Overwrites the terminal buffer and keyboard buffer
  */
-int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
+int32_t terminal_read(file_t * file, unsigned char* buf, int32_t nbytes) {
     int i = 0;          /* Loop counter         */
     int num_bytes = 0;  /* Number of bytes read */
 
@@ -441,7 +441,7 @@ int32_t terminal_read(int32_t fd, char* buf, int32_t nbytes) {
  *   RETURN VALUE: -1 if unsuccessful
  *   SIDE EFFECTS: none
  */
-int32_t terminal_open(const uint8_t* filename) {
+int32_t terminal_open() {
     return -1;
 }
 
@@ -453,7 +453,7 @@ int32_t terminal_open(const uint8_t* filename) {
  *   RETURN VALUE: -1 if unsuccessful
  *   SIDE EFFECTS: none
  */
-int32_t terminal_close(int32_t fd) {
+int32_t terminal_close(file_t * file) {
     return -1;
 }
 
