@@ -154,6 +154,7 @@ int execute (unsigned char* command) {
     tss.ss0 = KERNEL_DS;
     // tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
     tss.esp0 = 0x00800000-(0x00002000*(CPID-1));
+    // tss.esp0 = 0x00400000;
 
     printf("check7\n");
 
