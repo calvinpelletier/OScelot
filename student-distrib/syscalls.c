@@ -6,7 +6,7 @@
 #include "paging.h"
 
 // CONSTANTS
-#define PROCESS_KERNEL_STACK_ADDR 0x08000000
+#define PROCESS_KERNEL_STACK_ADDR 0x007ffffc // last location in kernel page that is accessible (according to GDB)
 #define EXE_ENTRY_POINT 0x08048000
 unsigned char MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 
@@ -52,17 +52,19 @@ int halt (unsigned char status) {
     processes[CPID].running = 0;
     CPID = processes[CPID].PPID;
 
-    __asm__("movl %0, %%ebp"
-            :
-            : "r" (processes[CPID].ebp)
-            : "memory");
+    haltasm(processes[CPID].ebp, processes[CPID].esp);
 
-    __asm__("movl %0, %%esp"
-            :
-            : "r" (processes[CPID].esp)
-            : "memory");
+    // __asm__("movl %0, %%ebp"
+    //         :
+    //         : "r" (processes[CPID].ebp)
+    //         : "memory");
 
-    __asm__("jmp end_execute");
+    // __asm__("movl %0, %%esp"
+    //         :
+    //         : "r" (processes[CPID].esp)
+    //         : "memory");
+
+    // __asm__("jmp end_execute");
 
     return 0;
 }
@@ -138,6 +140,17 @@ int execute (unsigned char* command) {
         return -1;
     }
 
+    unsigned char new_eip[4];
+    unsigned int user_entry = 0;
+    new_eip[0] = *((unsigned char *) EXE_ENTRY_POINT + 24);
+    new_eip[1] = *((unsigned char *) EXE_ENTRY_POINT + 25);
+    new_eip[2] = *((unsigned char *) EXE_ENTRY_POINT + 26);
+    new_eip[3] = *((unsigned char *) EXE_ENTRY_POINT + 27);
+
+    for (i = 0; i < 4; i ++) {
+        user_entry |= (unsigned int) new_eip[i] << (8*i);
+    }
+
     printf("check5\n");
 
     // save current esp ebp or anything you need in pcb
@@ -150,33 +163,37 @@ int execute (unsigned char* command) {
 
     printf("check6\n");
 
+
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = KERNEL_DS;
-    // tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
-    tss.esp0 = 0x00800000-(0x00002000*(CPID-1));
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
+    //tss.esp0 = 0x00800000-(0x00002000*(CPID-1));
     // tss.esp0 = 0x00400000;
+
+
+    kernel_to_user(user_entry);
 
     printf("check7\n");
 
-    asm volatile("cli; \
-                  movl %0, %%eax; \
-                  movw %%ax, %%ds; \
-                  movw %%ax, %%es; \
-                  movw %%ax, %%fs; \
-                  movw %%ax, %%gs; \
-                  movl %%esp, %%ebx; \
-                  pushl %%eax; \
-                  pushl %%ebx; \
-                  pushf; \
-                  popl %%eax; \
-                  orl $0x200, %%eax; \
-                  pushl %%eax; \
-                  pushl %1; \
-                  pushl %2"
-                  :
-                  : "r"(USER_DS), "r"(USER_CS), "r"(0x080482e8)
-                );
-    asm volatile("iret; end_execute:");
+    // asm volatile("cli; \
+    //               movl %0, %%eax; \
+    //               movw %%ax, %%ds; \
+    //               movw %%ax, %%es; \
+    //               movw %%ax, %%fs; \
+    //               movw %%ax, %%gs; \
+    //               movl %%esp, %%ebx; \
+    //               pushl %%eax; \
+    //               pushl %%ebx; \
+    //               pushf; \
+    //               popl %%eax; \
+    //               orl $0x200, %%eax; \
+    //               pushl %%eax; \
+    //               pushl %1; \
+    //               pushl %2"
+    //               :
+    //               : "r"(USER_DS), "r"(USER_CS), "r"(0x080482e8)
+    //             );
+    // asm volatile("iret; end_execute:");
 
     // push artificial iret context onto stack
     /*__asm__("pushf"); // push FLAGS

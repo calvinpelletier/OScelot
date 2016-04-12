@@ -28,6 +28,8 @@ typedef struct {
 } pcb_t;
 
 extern void syscalls_init(void);
+extern void kernel_to_user(unsigned int user_entry);
+extern void haltasm(int ebp, int esp);
 // System Calls
 extern int halt (unsigned char status);
 extern int execute (unsigned char* command);
