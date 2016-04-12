@@ -27,6 +27,7 @@ typedef struct {
 	unsigned char running; // 0 for no, 1 for yes
 } pcb_t;
 
+extern void syscalls_init(void);
 // System Calls
 extern int halt (unsigned char status);
 extern int execute (unsigned char* command);

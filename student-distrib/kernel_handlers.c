@@ -107,7 +107,6 @@ void stackFault()
 
 void generalProtectionFault()
 {
-	clear();
     printf("0x0D\n");
     printf("OScelot can't protect you any more\n");
 	while(1);

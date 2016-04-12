@@ -129,8 +129,7 @@ int execute (unsigned char* command) {
     printf("check3\n");
 
     // set up paging
-    unsigned int phys_addr = FOUR_MB * (CPID + 1);
-    new_page(phys_addr, CPID);
+    new_page_directory(CPID);
 
     printf("check4\n");
 
