@@ -9,11 +9,11 @@
 
 
 // FUNCTION DECLARATIONS
-int paging_init(void);
+int32_t paging_init();
 
 // GLOBAL VARIABLES
-static unsigned long pageDir[7][1024] __attribute__((aligned(4096)));
-static unsigned long first_4MB[7][1024] __attribute__((aligned(4096)));
+static uint32_t pageDir[7][1024] __attribute__((aligned(4096)));
+static uint32_t first_4MB[7][1024] __attribute__((aligned(4096)));
 
 
 /*
@@ -43,15 +43,15 @@ paging_init
     OUTPUTS: none
     RETURNS: 0 for success, -1 for fail
 */
-int paging_init(void) {
+int32_t paging_init() {
 
     // initialize pageDir[0]
-    int i;
+    int32_t i;
     for (i = 0; i < 1024; i++) {
         pageDir[0][i] = 0x00000002; // this sets the flags to kernel-only, write-enabled, and not-present
     }
 
-    pageDir[0][0] = (unsigned long)(first_4MB[0]) | 0x00000003; // sets flags to accessible-by-kernel, write-enabled, and present
+    pageDir[0][0] = (uint32_t)(first_4MB[0]) | 0x00000003; // sets flags to accessible-by-kernel, write-enabled, and present
     for (i = 0; i < 1024; i++) {
         first_4MB[0][i] = (i * 0x1000) | 0x00000003; // sets flags to kernel, write-enabled, and present
     }
@@ -68,14 +68,14 @@ int paging_init(void) {
     return 0;
 }
 
-void new_page_directory(unsigned int PID) {
+void new_page_directory(uint32_t PID) {
     // initialize pageDir[PID]
-    int i;
+    int32_t i;
     for (i = 0; i < 1024; i++) {
         pageDir[PID][i] = 0x00000002; // this sets the flags to kernel-only, write-enabled, and not-present
     }
 
-    pageDir[PID][0] = (unsigned long)(first_4MB[PID]) | 0x00000003; // sets flags to accessible-by-kernel, write-enabled, and present
+    pageDir[PID][0] = (uint32_t)(first_4MB[PID]) | 0x00000003; // sets flags to accessible-by-kernel, write-enabled, and present
     for (i = 0; i < 1024; i++) {
         first_4MB[PID][i] = (i * 0x1000) | 0x00000003; // sets flags to kernel, write-enabled, and present
     }
@@ -84,8 +84,8 @@ void new_page_directory(unsigned int PID) {
     // initialize kernel 4 MB
     pageDir[PID][1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
 
-    unsigned int phys_addr = FOUR_MB * (PID + 1);
-    unsigned int dir_entry = PROGRAM_IMAGE/ FOUR_MB;
+    uint32_t phys_addr = FOUR_MB * (PID + 1);
+    uint32_t dir_entry = PROGRAM_IMAGE/ FOUR_MB;
     pageDir[PID][dir_entry] = phys_addr | 0x00000087; // 4MB page for program image is set to user, write-enabled, and present 
 
     // enable paging

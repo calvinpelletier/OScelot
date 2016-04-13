@@ -23,16 +23,16 @@
 #define RIGHT_ARROW 0x4D
 
 /* Function Declarations */
-void keyboardHandler(void);
-void do_self(unsigned char scancode, pos_t cur_position);
-void do_spec(unsigned char scancode);
-void do_caps(unsigned char scancode, pos_t cur_position);
-void do_shift(unsigned char scancode, pos_t cur_position);
-void do_shiftcap(unsigned char scancode, pos_t cur_position);
-void buf_clear(void);
+void keyboardHandler();
+void do_self(uint8_t  scancode, pos_t cur_position);
+void do_spec(uint8_t  scancode);
+void do_caps(uint8_t  scancode, pos_t cur_position);
+void do_shift(uint8_t  scancode, pos_t cur_position);
+void do_shiftcap(uint8_t  scancode, pos_t cur_position);
+void buf_clear();
 
-extern int32_t terminal_write(file_t * file, unsigned char * buf, int32_t nbytes);
-extern int32_t terminal_read(file_t * file, unsigned char* buf, int32_t nbytes);
+extern int32_t terminal_write(file_t * file, uint8_t  * buf, int32_t nbytes);
+extern int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes);
 extern int32_t terminal_open();
 extern int32_t terminal_close(file_t * file);
 

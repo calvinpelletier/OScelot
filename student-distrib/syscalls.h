@@ -5,6 +5,7 @@
 #include "filesys.h"
 #include "rtc.h"
 #include "terminal.h"
+
 #define MAX_FD 8
 
 /*
@@ -21,27 +22,28 @@
 
 typedef struct {
 	file_t fd_array[MAX_FD];
-	unsigned int PID;
-	unsigned int PPID;
-	int esp;
-	int ebp;
-	unsigned char running; // 0 for no, 1 for yes
+	uint32_t PID;
+	uint32_t PPID;
+	int32_t esp;
+	int32_t ebp;
+	uint8_t running; // 0 for no, 1 for yes
 } pcb_t;
 
-extern void syscalls_init(void);
-extern void kernel_to_user(unsigned int user_entry);
-extern void haltasm(int ebp, int esp);
+extern void syscalls_init();
+extern void kernel_to_user(uint32_t user_entry);
+extern void haltasm(int32_t ebp, int32_t esp);
+
 // System Calls
-extern int halt (unsigned char status);
-extern int execute (unsigned char* command);
-extern int read (int fd, void* buf, int nbytes);
-extern int write (int fd, void* buf, int nbytes);
-extern int open (const char* filename);
-extern int close (int fd);
-extern int getargs (unsigned char* buf, int nbytes);
-extern int vidmap (unsigned char** screenstart);
-extern int set_handler (int signum, void* handler_address);
-extern int sigreturn (void);
+extern int32_t halt (uint8_t status);
+extern int32_t execute (int8_t* command);
+extern int32_t read (int32_t fd, void* buf, int32_t nbytes);
+extern int32_t write (int32_t fd, void* buf, int32_t nbytes);
+extern int32_t open (const int8_t* filename);
+extern int32_t close (int32_t fd);
+extern int32_t getargs (uint8_t* buf, int32_t nbytes);
+extern int32_t vidmap (uint8_t** screenstart);
+extern int32_t set_handler (int32_t signum, void* handler_address);
+extern int32_t sigreturn (void);
 
 
 

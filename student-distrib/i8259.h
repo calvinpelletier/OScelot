@@ -16,12 +16,12 @@
 /* Externally-visible functions */
 
 /* Initialize both PICs */
-void i8259_init(void);
+void i8259_init();
 /* Enable (unmask) the specified IRQ */
-void enable_irq(unsigned char irq_num);
+void enable_irq(uint8_t irq_num);
 /* Disable (mask) the specified IRQ */
-void disable_irq(unsigned char irq_num);
+void disable_irq(uint8_t irq_num);
 /* Send end-of-interrupt signal for the specified IRQ */
-void send_eoi(unsigned char irq_num);
+void send_eoi(uint8_t irq_num);
 
 #endif /* _I8259_H */

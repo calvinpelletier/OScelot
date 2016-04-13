@@ -6,11 +6,11 @@
 #include "syscalls_asm.h"
 
 // FUNCTION DECLARATIONS
-void idt_init(void);
+void idt_init();
 
 
 // GLOBAL FUNCTIONS
-void idt_init(void) {
+void idt_init() {
     idt_desc_t the_idt_desc;
 
     the_idt_desc.dpl = 0;

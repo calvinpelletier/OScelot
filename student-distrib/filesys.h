@@ -15,29 +15,29 @@
 
 // STRUCTS
 typedef struct {
-    char name[MAX_FNAME_LEN];
-    int type;
-    unsigned int inode;
-    unsigned char reserved[DENTRY_RESERVED];
+    int8_t  name[MAX_FNAME_LEN];
+    int32_t type;
+    uint32_t inode;
+    uint8_t  reserved[DENTRY_RESERVED];
 } dentry_t;
 
 typedef struct {
-    unsigned int n_dentries;
-    unsigned int n_inodes;
-    unsigned int n_datablocks;
-    unsigned char reserved[BOOTBLOCK_RESERVED];
+    uint32_t n_dentries;
+    uint32_t n_inodes;
+    uint32_t n_datablocks;
+    uint8_t  reserved[BOOTBLOCK_RESERVED];
     dentry_t dentries[MAX_DENTRIES];
 } bootblock_t;
 
 typedef struct {
-    unsigned int length; // in bytes
-    unsigned int datablocks[DATABLOCKS_PER_INODE];
+    uint32_t length; // in bytes
+    uint32_t datablocks[DATABLOCKS_PER_INODE];
 } inode_t;
 
 typedef struct {
-    unsigned int in_use : 1; // occupies 1 bit (total struct size 4 bytes)
-    unsigned int read_only : 1;
-    unsigned int write_only : 1;
+    uint32_t in_use : 1; // occupies 1 bit (total struct size 4 bytes)
+    uint32_t read_only : 1;
+    uint32_t write_only : 1;
 } fileflags_t;
 
 struct file;
@@ -47,32 +47,32 @@ typedef struct fileops fileops_t;
 
 struct file {
     fileops_t * jumptable;
-    unsigned int inode;
-    unsigned int position;
-    unsigned int filetype;
+    uint32_t inode;
+    uint32_t position;
+    uint32_t filetype;
     fileflags_t flags;
 };
 
 struct fileops {
-    int (*open)();
-    int (*read)(file_t*, unsigned char*, int);
-    int (*write)(file_t*, unsigned char*, int);
-    int (*close)(file_t*);
+    int32_t (*open)();
+    int32_t (*read)(file_t*, uint8_t *, int32_t);
+    int32_t (*write)(file_t*, uint8_t *, int32_t);
+    int32_t (*close)(file_t*);
 };
 
 
 // GLOBAL FUNCTIONS
-extern int fs_init(void* start, void* end);
-extern int fs_copy(const char* fname, unsigned char * mem_location);
-extern int fs_open ();
-extern int fs_close(file_t* file);
-extern int fs_read (file_t* file, unsigned char * buf, int nbytes);
-extern int fs_write (file_t* file, unsigned char * buf, int nbytes);
-extern int read_dentry_by_name(const char* fname, dentry_t* dentry);
-extern int read_dentry_by_index(unsigned int index, dentry_t* dentry);
-extern int test_demo1(char* filename);
-extern int test_demo2(char* filename);
-extern int test_demo3(void);
+extern int32_t fs_init(void* start, void* end);
+extern int32_t fs_copy(const int8_t * fname, uint8_t * mem_location);
+extern int32_t fs_open ();
+extern int32_t fs_close(file_t* file);
+extern int32_t fs_read (file_t* file, uint8_t * buf, int32_t nbytes);
+extern int32_t fs_write (file_t* file, uint8_t * buf, int32_t nbytes);
+extern int32_t read_dentry_by_name(const int8_t * fname, dentry_t* dentry);
+extern int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
+extern int32_t test_demo1(int8_t * filename);
+extern int32_t test_demo2(int8_t * filename);
+extern int32_t test_demo3();
 
 
 #endif

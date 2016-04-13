@@ -6,8 +6,8 @@
 
 #include "types.h"
 
-extern void rtc_init(void);
-extern void rtcHandler(void);
+extern void rtc_init();
+extern void rtcHandler();
 
 extern int32_t rtc_open(const int8_t *filename);
 extern int32_t rtc_read(int32_t fd, void *buf, int32_t nbytes);

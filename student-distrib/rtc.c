@@ -13,17 +13,17 @@
 #define MAXIMUM_RTC_RATE 1024
 
 #if (TEST_RTC_RTC)
-volatile int count = 0;
+volatile int32_t  count = 0;
 #endif
 
 // FUNCTION DECLARATIONS
-void rtc_init(void);
-void rtcHandler(void);
+void rtc_init();
+void rtcHandler();
 
 // Flags for rtc_read
-volatile char rtc_interrupt_flag;
-static int rtc_in_use;
-int freq;
+volatile int8_t  rtc_interrupt_flag;
+static int32_t  rtc_in_use;
+int32_t  freq;
 
 // GLOBAL FUNCTIONS
 /*
@@ -36,7 +36,7 @@ NOTES: important that interrupts are disabled when calling this function
 */
 void rtc_init(void) {
     outb(0x8B, RTC_ADDR); // address register 0x0B and disable NMIs (0x80)
-    unsigned char temp = inb(RTC_DATA); // read register 0x0B
+    uint8_t  temp = inb(RTC_DATA); // read register 0x0B
     outb(0x8B, RTC_ADDR); // address register again because apparently reading resets this
     outb(temp | 0x40, RTC_DATA); // turns on periodic interrupts
     enable_irq(RTC_IRQ_NUM);
@@ -82,10 +82,10 @@ int32_t rtc_open(const int8_t *filename)
     rtc_in_use = 1;
 
     cli();
-    unsigned char rate = 0x0F;
+    uint8_t  rate = 0x0F;
     outb(0x8A, RTC_ADDR);
-    unsigned char prev = inb(RTC_DATA);
-    unsigned char newRate = (prev & 0xF0) | rate;
+    uint8_t  prev = inb(RTC_DATA);
+    uint8_t  newRate = (prev & 0xF0) | rate;
     outb(0x8A, RTC_ADDR);
     outb(newRate, RTC_DATA);
     sti();
@@ -131,10 +131,10 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
     if (rtc_in_use != 1)
         return -1;
 
-    int num_bytes = 0;
+    int32_t  num_bytes = 0;
 
     if (buf != NULL) {
-        int frequency = *(int*)buf;
+        int32_t  frequency = *(int*)buf;
 
         /*
          * If the rate is not in the range of acceptable values,
@@ -147,7 +147,7 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
          * If the rate is not a power of two,
          * fail gracefully
          */
-        int rate = 1;
+        int32_t  rate = 1;
         while ((1 << rate) < frequency)
             rate++;
 
@@ -160,7 +160,7 @@ int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes)
          */
         outb(0x8A, RTC_ADDR);
         num_bytes++;
-        unsigned char newRate = inb(RTC_DATA);
+        uint8_t  newRate = inb(RTC_DATA);
 
         /*
          * set the value of the new frequency
@@ -197,7 +197,7 @@ int32_t rtc_close(int32_t fd)
 }
 
 void rtc_test1() {
-    int fd = rtc_open("rtc.c");
+    int32_t  fd = rtc_open("rtc.c");
     if (fd == 0)
         printf("successful open");
     else
@@ -211,13 +211,13 @@ void rtc_test1() {
 }
 
 void rtc_test2() {
-    int count = 0;
-    int tmp_fd = rtc_open("rtc.c");
-    int rate = 2;
-    int tmp;
+    int32_t  count = 0;
+    int32_t  tmp_fd = rtc_open("rtc.c");
+    int32_t  rate = 2;
+    int32_t  tmp;
     while (rate <= MAXIMUM_RTC_RATE) {
         tmp = rate;
-        int *newRate = &tmp;
+        int32_t  *newRate = &tmp;
         tmp = rtc_write(tmp_fd, newRate, 0);
         while (count < (rate * 4)) {
             tmp = rtc_read(tmp_fd, newRate, 0);

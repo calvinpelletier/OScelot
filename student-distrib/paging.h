@@ -10,10 +10,10 @@
 #define PROGRAM_IMAGE 0x8000000
 
 // GLOBAL VAR: pageDir
-extern int paging_init(void);
-extern void loadPageDir(unsigned long *);
-extern void enablePaging(void);
-extern void enable4MB(void);
-extern void new_page_directory(unsigned int PID);
+extern int32_t paging_init();
+extern void loadPageDir(uint32_t *);
+extern void enablePaging();
+extern void enable4MB();
+extern void new_page_directory(uint32_t PID);
 
 #endif

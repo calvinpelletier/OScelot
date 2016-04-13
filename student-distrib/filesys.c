@@ -10,13 +10,13 @@ static void* FILESYS_END;
 static bootblock_t bootblock;
 static inode_t* inodes;
 static void* FS_DATA_START;
-static unsigned int dirs_read;
+static uint32_t dirs_read;
 
 // FUNCTION DECLARATIONS
-int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length);
-int file_read (file_t * file, unsigned char * buf, int nbytes);
-int dir_read (file_t* file, unsigned char * buf, int nbytes);
-int test_debug(void);
+int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+int32_t file_read (file_t * file, uint8_t * buf, int32_t nbytes);
+int32_t dir_read (file_t* file, uint8_t * buf, int32_t nbytes);
+int32_t test_debug();
 
 
 // EXTERNAL FUNCTIONS
@@ -27,7 +27,7 @@ fs_init
     OUTPUTS: none
     RETURNS: 0 for success, -1 for fail
 */
-int fs_init(void* start, void* end) {
+int32_t fs_init(void* start, void* end) {
     FILESYS_START = start;
     FILESYS_END = end;
 
@@ -43,7 +43,7 @@ int fs_init(void* start, void* end) {
     if (DEBUG_ALL) {
         // test_debug();
 
-        // int result;
+        // int32_t result;
         // printf("~~~FILE SYSTEM DEMO~~~\n");
 
         // DEMO TEST 1
@@ -81,15 +81,15 @@ read_dentry_by_name
     OUTPUTS: dentry struct
     RETURNS: 0 for success, -1 for fail
 */
-int read_dentry_by_name(const char* fname, dentry_t* dentry) {
-    int len = 0;
+int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry) {
+    int32_t len = 0;
     while (len <= MAX_FNAME_LEN && fname[len]) {
         len++;
     }
 
-    int i = 0;
+    int32_t i = 0;
     while (i < bootblock.n_dentries && i < MAX_DENTRIES) {
-        if (!strncmp( (int8_t*) fname, (int8_t *) bootblock.dentries[i].name, len)) {
+        if (!strncmp(fname, bootblock.dentries[i].name, len)) {
             // found match
             *dentry = bootblock.dentries[i];
             return 0;
@@ -107,7 +107,7 @@ read_dentry_by_index
     OUTPUTS: dentry struct
     RETURNS: 0 for success, -1 for fail
 */
-int read_dentry_by_index(unsigned int index, dentry_t* dentry) {
+int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 	// Return error if invalid index
 	if (index >= MAX_DENTRIES || index >= bootblock.n_dentries)
@@ -125,13 +125,13 @@ read_data
     OUTPUTS: bytes read
     RETURNS: number of bytes read successfully, -1 for failure
 */
-int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsigned int length) {
+int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
 	// Initialize local variables
-	unsigned int bytes_read = 0; 								// current number of bytes read
-	unsigned int file_data_block = offset/FS_BLOCK_SIZE;		// current data block within inode (indexes into inode's array of data block numbers)
-	unsigned int block_offset = offset % FS_BLOCK_SIZE;			// offset into the current data block
-	unsigned int fs_data_block = inodes[inode].datablocks[file_data_block];										  	// current filesytem data block number
-	unsigned char * curr_data_loc = (unsigned char *)(FS_DATA_START + fs_data_block*FS_BLOCK_SIZE + block_offset); // ptr to current byte to be read
+	uint32_t bytes_read = 0; 								// current number of bytes read
+	uint32_t file_data_block = offset/FS_BLOCK_SIZE;		// current data block within inode (indexes into inode's array of data block numbers)
+	uint32_t block_offset = offset % FS_BLOCK_SIZE;			// offset into the current data block
+	uint32_t fs_data_block = inodes[inode].datablocks[file_data_block];										  	// current filesytem data block number
+	uint8_t * curr_data_loc = (uint8_t *)(FS_DATA_START + fs_data_block*FS_BLOCK_SIZE + block_offset); // ptr to current byte to be read
 
 	// Error checking
     if (inode >= bootblock.n_inodes)
@@ -156,7 +156,7 @@ int read_data(unsigned int inode, unsigned int offset, unsigned char* buf, unsig
     		if (fs_data_block >= bootblock.n_datablocks)
     			return -1; 	 	// new data block number out of range
 
-    		curr_data_loc = (unsigned char *)(FS_DATA_START + fs_data_block*FS_BLOCK_SIZE + block_offset); // update current byte ptr to start of new block
+    		curr_data_loc = (uint8_t *)(FS_DATA_START + fs_data_block*FS_BLOCK_SIZE + block_offset); // update current byte ptr to start of new block
     	}
 
     	// else, read current byte into buf
@@ -175,24 +175,18 @@ fs_copy
     OUTPUTS: file at memory location
     RETURNS: 0 for success, -1 for fail
 */
-int fs_copy(const char* fname, unsigned char * mem_location) {
+int32_t fs_copy(const int8_t* fname, uint8_t * mem_location) {
 	dentry_t file_dentry;
-	unsigned int inode;
-	int bytes_read;
-	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE]; //maximum file size - if 1 file used all available datablocks
-
-    printf("check4.1\n");
+	uint32_t inode;
+	int32_t bytes_read;
+	uint8_t buf[bootblock.n_datablocks*FS_BLOCK_SIZE]; //maximum file size - if 1 file used all available datablocks
 
 	if (!fname)
 		return -1; // invalid file name
 
-    printf("check4.2\n");
-
 	// get dentry for filename
 	if (read_dentry_by_name(fname, &file_dentry))
 		return -1; // function returned -1
-
-    printf("check4.3\n");
 
 	// read file data into buf
 	inode = file_dentry.inode;
@@ -200,10 +194,8 @@ int fs_copy(const char* fname, unsigned char * mem_location) {
 	if (bytes_read == -1)
 		return -1;
 
-    printf("check4.4\n");
-
 	// write the file into physical memory
-	int i;
+	int32_t i;
 	for (i = 0; i < bytes_read; i++) {
 		mem_location[i] = buf[i];
 	}
@@ -218,7 +210,7 @@ fs_open
     OUTPUTS: none
     RETURNS: 0 on success, -1 on fail
 */
-int fs_open () {
+int32_t fs_open () {
 	return 0;
 }
 
@@ -230,7 +222,7 @@ fs_close
     RETURNS: 0 for success, -1 for fail
 */
 
-int fs_close(file_t * file) {
+int32_t fs_close(file_t * file) {
 	if (file->filetype == 1)
 		dirs_read = 0;
 	return 0;
@@ -244,7 +236,7 @@ fs_read
     OUTPUTS: bytes read
     RETURNS: number of bytes read on success, -1 for fail
 */
-int fs_read (file_t* file, unsigned char * buf, int nbytes) {
+int32_t fs_read (file_t* file, uint8_t * buf, int32_t nbytes) {
 	if (file->filetype == 2) // regular file
 		return file_read (file, buf, nbytes);
 	else if (file->filetype == 1) // dir
@@ -261,7 +253,7 @@ fs_write
     OUTPUTS: none
     RETURNS: -1
 */
-int fs_write (file_t * file, unsigned char * buf, int nbytes) {
+int32_t fs_write (file_t * file, uint8_t * buf, int32_t nbytes) {
 	return -1; // file system is read only
 }
 
@@ -272,8 +264,8 @@ file_read
     OUTPUTS: read bytes
     RETURNS: number of bytes read on success, -1 for fail
 */
-int file_read (file_t * file, unsigned char * buf, int nbytes) {
-	int bytes_read = read_data(file->inode, file->position, buf, nbytes);
+int32_t file_read (file_t * file, uint8_t * buf, int32_t nbytes) {
+	int32_t bytes_read = read_data(file->inode, file->position, buf, nbytes);
 	if (bytes_read != -1)
 		file->position += bytes_read;
 	return bytes_read;
@@ -286,19 +278,19 @@ dir_read
     OUTPUTS: directory name
     RETURNS: directory name length on success, 0 for fail
 */
-int dir_read (file_t * file, unsigned char * buf, int nbytes) {
+int32_t dir_read (file_t * file, uint8_t * buf, int32_t nbytes) {
 	if (dirs_read >= bootblock.n_dentries)
 		return 0;
 
-	strncpy( (char *) buf, (char *) bootblock.dentries[dirs_read].name, MAX_FNAME_LEN); // copy full 32 bytes of filename into buf
+	strncpy( (int8_t *) buf, bootblock.dentries[dirs_read].name, MAX_FNAME_LEN); // copy full 32 bytes of filename into buf
 	dirs_read++;
 
 	return MAX_FNAME_LEN;
 }
 
 // TESTING FUNCTIONS
-// int test_debug(void) {
-//     int ret = 0;
+// int32_t test_debug(void) {
+//     int32_t ret = 0;
 //     printf("~~~FILE SYSTEM TEST~~~\n");
 //     printf("n_dentries: %d\n", bootblock.n_dentries);
 //     printf("n_inodes: %d\n", bootblock.n_inodes);
@@ -306,8 +298,8 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 //
 //     // test read_dentry_by_index, read_dentry_by_name too (if it isn't commented out)
 //     dentry_t temp;
-//     int result;
-//     int i;
+//     int32_t result;
+//     int32_t i;
 //     for (i = 0; i < bootblock.n_dentries; i++) {
 // 	    result = read_dentry_by_index(i, &temp);
 // 	    if (result) {
@@ -328,8 +320,8 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 //
 // 	// test read_data
 // 	// tested with inode 16, 13
-// 	int bytes_read;
-// 	unsigned char buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
+// 	int32_t bytes_read;
+// 	uint8_t buf[bootblock.n_datablocks*FS_BLOCK_SIZE];
 // 	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
 // 	if (bytes_read == -1) {
 // 		printf("Read_data returned an error\n");
@@ -343,7 +335,7 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 //
 // 	// test fs_copy by writing frame1.txt to memory and printing from this location
 // 	bytes_read = read_data(13, 0, buf, bootblock.n_datablocks*FS_BLOCK_SIZE);
-// 	unsigned char *mem_location = (unsigned char *)0x8000;
+// 	uint8_t *mem_location = (uint8_t *)0x8000;
 // 	if (fs_copy("frame1.txt", mem_location)) {
 // 		printf("fs_copy returned an error\n");
 // 		ret = -1;
@@ -355,7 +347,7 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 // 	}
 //
 // 	// test OCRW
-// 	int fd = fs_open("frame1.txt");
+// 	int32_t fd = fs_open("frame1.txt");
 // 	if (fd == -1) {
 // 		printf("fs_open has failed.\n");
 // 		return -1;
@@ -373,9 +365,9 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 // 	printf("%d\n", filearray[fd].flags.in_use);
 //
 // 	// test printing dirs
-// 	unsigned char buf32[32];
+// 	uint8_t buf32[32];
 // 	fd = fs_open(".");
-// 	int j;
+// 	int32_t j;
 // 	if (fd == -1) {
 // 		printf("fs_open has failed.\n");
 // 		return -1;
@@ -393,9 +385,9 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 //     return ret;
 // }
 //
-// int test_demo1(char* filename) {
-//     int fd, bytes_read;
-//     unsigned char buf[bootblock.n_datablocks * FS_BLOCK_SIZE];
+// int32_t test_demo1(char* filename) {
+//     int32_t fd, bytes_read;
+//     uint8_t buf[bootblock.n_datablocks * FS_BLOCK_SIZE];
 //
 //     if ((fd = fs_open(filename)) == -1) {
 //         return -1;
@@ -414,8 +406,8 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 //     return 0;
 // }
 //
-// int test_demo2(char* filename) {
-//     int fd;
+// int32_t test_demo2(char* filename) {
+//     int32_t fd;
 //     if ((fd = fs_open(filename)) == -1) {
 //         return -1;
 //     }
@@ -425,9 +417,9 @@ int dir_read (file_t * file, unsigned char * buf, int nbytes) {
 //     return inodes[filearray[fd].inode].length;
 // }
 //
-// int test_demo3(void) {
-//     unsigned char buf[MAX_FNAME_LEN];
-//     int fd, count;
+// int32_t test_demo3(void) {
+//     uint8_t buf[MAX_FNAME_LEN];
+//     int32_t fd, count;
 //
 //     if ((fd = fs_open((char*)".")) == -1) {
 //         return -1;

@@ -8,10 +8,10 @@
 // CONSTANTS
 #define PROCESS_KERNEL_STACK_ADDR 0x007ffffc // last location in kernel page that is accessible (according to GDB)
 #define EXE_ENTRY_POINT 0x08048000
-unsigned char MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
+uint8_t MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 // GLOBAL VARIABLES
-unsigned int CPID = 0;
+uint32_t CPID = 0;
 pcb_t processes[7];
 
 // File Ops Tables
@@ -21,20 +21,20 @@ fileops_t term_jumptable = {terminal_open, terminal_read, terminal_write, termin
 
 
 // FUNCTION DECLARATIONS
-void syscalls_init(void);
-int halt (unsigned char status);
-int execute (unsigned char* command);
-int read (int fd, void* buf, int nbytes);
-int write (int fd, void* buf, int nbytes);
-int open (const char* filename);
-int close (int fd);
-int getargs (unsigned char* buf, int nbytes);
-int vidmap (unsigned char** screenstart);
-int set_handler (int signum, void* handler_address);
-int sigreturn (void);
+void syscalls_init();
+int32_t halt (uint8_t status);
+int32_t execute (int8_t* command);
+int32_t read (int32_t fd, void* buf, int32_t nbytes);
+int32_t write (int32_t fd, void* buf, int32_t nbytes);
+int32_t open (const int8_t* filename);
+int32_t close (int32_t fd);
+int32_t getargs (uint8_t* buf, int32_t nbytes);
+int32_t vidmap (uint8_t** screenstart);
+int32_t set_handler (int32_t signum, void* handler_address);
+int32_t sigreturn (void);
 
-void syscalls_init(void) {
-    int i;
+void syscalls_init() {
+    int32_t i;
     for (i = 0; i < MAX_FD; i++) {
         processes[CPID].fd_array[i].flags.in_use = 0;
     }
@@ -43,8 +43,8 @@ void syscalls_init(void) {
     processes[CPID].running = 1;
 }
 
-int halt (unsigned char status) {
-    int i;
+int32_t halt (uint8_t status) {
+    int32_t i;
 
     for (i = 0; i < MAX_FD; i++) {
         close(i);
@@ -71,9 +71,9 @@ int halt (unsigned char status) {
 }
 
 
-int execute (unsigned char* command) {
-    unsigned char exename[MAX_FNAME_LEN];
-    int i;
+int32_t execute (int8_t* command) {
+    int8_t exename[MAX_FNAME_LEN];
+    int32_t i;
 
     // parse
     if (command == NULL) {
@@ -84,33 +84,26 @@ int execute (unsigned char* command) {
     }
     exename[i] = '\0';
 
-    printf("check0\n");
-
     // fetch file
-    unsigned char buf[MAX_FNAME_LEN];
-    int fd, count;
-    if ((fd = open((char *) exename)) == -1) {
+    // uint8_t buf[MAX_FNAME_LEN];
+    int32_t fd;
+    // int32_t count;
+    if ((fd = open(exename)) == -1) {
         return -1;
     }
 
-    printf("check1\n");
-
     // exe check
-    unsigned char first_bytes[4];
+    uint8_t first_bytes[4];
     if (read(fd, first_bytes, 4) == -1) {
         return -1;
     }
 
-    printf("check1.1\n");
-
-    if (strncmp((char *) MAGIC_EXE_NUMS, (char *) first_bytes, 4)) {
+    if (strncmp((int8_t *) MAGIC_EXE_NUMS, (int8_t *) first_bytes, 4)) {
         return -1;
     }
 
-    printf("check2\n");
-
     // new pcb
-    int old_CPID = CPID;
+    int32_t old_CPID = CPID;
     CPID = 0;
     while (processes[CPID].running) {
         CPID++;
@@ -132,42 +125,32 @@ int execute (unsigned char* command) {
     processes[CPID].fd_array[0].jumptable = &term_jumptable;
     processes[CPID].fd_array[1].jumptable = &term_jumptable;
 
-
-    printf("check3\n");
-
     // set up paging
     new_page_directory(CPID);
 
-    printf("check4\n");
-
     // file loader
-    if (fs_copy((char *) exename, (unsigned char *) EXE_ENTRY_POINT)) {
+    if (fs_copy(exename, (uint8_t *) EXE_ENTRY_POINT)) {
         return -1;
     }
 
-    unsigned char new_eip[4];
-    unsigned int user_entry = 0;
-    new_eip[0] = *((unsigned char *) EXE_ENTRY_POINT + 24);
-    new_eip[1] = *((unsigned char *) EXE_ENTRY_POINT + 25);
-    new_eip[2] = *((unsigned char *) EXE_ENTRY_POINT + 26);
-    new_eip[3] = *((unsigned char *) EXE_ENTRY_POINT + 27);
+    uint8_t new_eip[4];
+    uint32_t user_entry = 0;
+    new_eip[0] = *((uint8_t *) EXE_ENTRY_POINT + 24);
+    new_eip[1] = *((uint8_t *) EXE_ENTRY_POINT + 25);
+    new_eip[2] = *((uint8_t *) EXE_ENTRY_POINT + 26);
+    new_eip[3] = *((uint8_t *) EXE_ENTRY_POINT + 27);
 
     for (i = 0; i < 4; i ++) {
-        user_entry |= (unsigned int) new_eip[i] << (8*i);
+        user_entry |= (uint32_t) new_eip[i] << (8*i);
     }
 
-    printf("check5\n");
-
     // save current esp ebp or anything you need in pcb
-    int old_esp, old_ebp;
+    int32_t old_esp, old_ebp;
     __asm__("movl %%esp, %0; movl %%ebp, %1"
              :"=r"(old_esp), "=r"(old_ebp) /* outputs (%0 and %1 respectively) */
             );
     processes[old_CPID].esp = old_esp;
     processes[old_CPID].ebp = old_ebp;
-
-    printf("check6\n");
-
 
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = KERNEL_DS;
@@ -178,69 +161,28 @@ int execute (unsigned char* command) {
 
     kernel_to_user(user_entry);
 
-    printf("check7\n");
-
-    // asm volatile("cli; \
-    //               movl %0, %%eax; \
-    //               movw %%ax, %%ds; \
-    //               movw %%ax, %%es; \
-    //               movw %%ax, %%fs; \
-    //               movw %%ax, %%gs; \
-    //               movl %%esp, %%ebx; \
-    //               pushl %%eax; \
-    //               pushl %%ebx; \
-    //               pushf; \
-    //               popl %%eax; \
-    //               orl $0x200, %%eax; \
-    //               pushl %%eax; \
-    //               pushl %1; \
-    //               pushl %2"
-    //               :
-    //               : "r"(USER_DS), "r"(USER_CS), "r"(0x080482e8)
-    //             );
-    // asm volatile("iret; end_execute:");
-
-    // push artificial iret context onto stack
-    /*__asm__("pushf"); // push FLAGS
-
-    __asm__("push %0"
-           : // nothing here
-           : "r"(USER_CS)
-           ); // push CS
-
-    __asm__("push %0"
-           : // nothing here
-           : "r"(EXE_ENTRY_POINT)
-           ); // push EIP
-
-    // printf("check8\n");
-
-    // iret
-    __asm__("iret; end_execute:"
-            ); //  most likely incorrect
-*/
     return 0;
 }
 
 
-int read (int fd, void* buf, int nbytes) {
+int32_t read (int32_t fd, void* buf, int32_t nbytes) {
     if (fd < 0 || fd > MAX_FD)
         return -1;
     return processes[CPID].fd_array[fd].jumptable->read(&processes[CPID].fd_array[fd], buf, nbytes);
 }
 
-int write (int fd, void* buf, int nbytes) {
+int32_t write (int32_t fd, void* buf, int32_t nbytes) {
     if (fd < 0 || fd > MAX_FD)
         return -1;
     return processes[CPID].fd_array[fd].jumptable->write(&processes[CPID].fd_array[fd], buf, nbytes);
 }
 
-int open (const char* filename) {
+int32_t open (const int8_t* filename) {
     dentry_t dentry;
     if (read_dentry_by_name(filename, &dentry))
         return -1;
 
-    int i;
+    int32_t i;
     for (i = 0; i < MAX_FD; i++) {
         if (processes[CPID].fd_array[i].flags.in_use == 0) {
             // if (dentry.type == 0) {
@@ -262,38 +204,25 @@ int open (const char* filename) {
     return -1;
 }
 
-int close (int fd) {
+int32_t close (int32_t fd) {
     if (fd < 2 || fd > 7)
         return -1;
     processes[CPID].fd_array[fd].flags.in_use = 0;
     return processes[CPID].fd_array[fd].jumptable->close(&processes[CPID].fd_array[fd]);
 }
 
-int getargs (unsigned char* buf, int nbytes) {
+int32_t getargs (uint8_t* buf, int32_t nbytes) {
     return -1;
 }
 
-int vidmap (unsigned char** screenstart) {
+int32_t vidmap (uint8_t** screenstart) {
     return -1;
 }
 
-int set_handler (int signum, void* handler_address) {
+int32_t set_handler (int32_t signum, void* handler_address) {
     return -1;
 }
 
-int sigreturn (void) {
+int32_t sigreturn (void) {
     return -1;
-}
-
-
-void fd_init ()
-{
-    // initialize file descriptor array
-    int i;
-    for (i = 0; i < MAX_FD; i++) {
-        if (i < 2)
-            processes[CPID].fd_array[i].flags.in_use = 1;
-        else
-            processes[CPID].fd_array[i].flags.in_use = 0;
-    }
 }
