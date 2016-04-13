@@ -33,7 +33,7 @@ extern void kernel_to_user(unsigned int user_entry);
 extern void haltasm(int ebp, int esp);
 // System Calls
 extern int halt (unsigned char status);
-extern int execute (unsigned char* command);
+extern int execute (const char* command);
 extern int read (int fd, void* buf, int nbytes);
 extern int write (int fd, void* buf, int nbytes);
 extern int open (const char* filename);

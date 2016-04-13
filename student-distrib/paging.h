@@ -15,5 +15,6 @@ extern void loadPageDir(unsigned long *);
 extern void enablePaging(void);
 extern void enable4MB(void);
 extern void new_page_directory(unsigned int PID);
+extern void swap_pages(unsigned int PID);
 
 #endif

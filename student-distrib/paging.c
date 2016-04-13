@@ -85,7 +85,7 @@ void new_page_directory(unsigned int PID) {
     pageDir[PID][1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
 
     unsigned int phys_addr = FOUR_MB * (PID + 1);
-    unsigned int dir_entry = PROGRAM_IMAGE/ FOUR_MB;
+    unsigned int dir_entry = PROGRAM_IMAGE / FOUR_MB;
     pageDir[PID][dir_entry] = phys_addr | 0x00000087; // 4MB page for program image is set to user, write-enabled, and present 
 
     // enable paging
@@ -93,4 +93,8 @@ void new_page_directory(unsigned int PID) {
     enable4MB();
     enablePaging();
 
+}
+
+void swap_pages(unsigned int PID) {
+    loadPageDir(pageDir[PID]);
 }

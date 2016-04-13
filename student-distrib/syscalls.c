@@ -23,7 +23,7 @@ fileops_t term_jumptable = {terminal_open, terminal_read, terminal_write, termin
 // FUNCTION DECLARATIONS
 void syscalls_init(void);
 int halt (unsigned char status);
-int execute (unsigned char* command);
+int execute (const char* command);
 int read (int fd, void* buf, int nbytes);
 int write (int fd, void* buf, int nbytes);
 int open (const char* filename);
@@ -35,6 +35,7 @@ int sigreturn (void);
 
 void syscalls_init(void) {
     int i;
+
     for (i = 0; i < MAX_FD; i++) {
         processes[CPID].fd_array[i].flags.in_use = 0;
     }
@@ -71,7 +72,7 @@ int halt (unsigned char status) {
 }
 
 
-int execute (unsigned char* command) {
+int execute (const char* command) {
     unsigned char exename[MAX_FNAME_LEN];
     int i;
 
@@ -87,8 +88,7 @@ int execute (unsigned char* command) {
     printf("check0\n");
 
     // fetch file
-    unsigned char buf[MAX_FNAME_LEN];
-    int fd, count;
+    int fd;
     if ((fd = open((char *) exename)) == -1) {
         return -1;
     }
@@ -118,6 +118,7 @@ int execute (unsigned char* command) {
             return -1;
         }
     }
+
     for (i = 0; i < MAX_FD; i++) {
         if (i == 0 || i == 1) {
             processes[CPID].fd_array[i].flags.in_use = 1;
@@ -161,39 +162,37 @@ int execute (unsigned char* command) {
     // save current esp ebp or anything you need in pcb
     int old_esp, old_ebp;
     __asm__("movl %%esp, %0; movl %%ebp, %1"
-             :"=r"(old_esp), "=r"(old_ebp) /* outputs (%0 and %1 respectively) */
+             :"=g"(old_esp), "=g"(old_ebp) /* outputs (%0 and %1 respectively) */
             );
     processes[old_CPID].esp = old_esp;
     processes[old_CPID].ebp = old_ebp;
 
     printf("check6\n");
 
-
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (0x00002000*(CPID-1));
     //tss.esp0 = 0x00800000-(0x00002000*(CPID-1));
     // tss.esp0 = 0x00400000;
 
-
-    kernel_to_user(user_entry);
+    kernel_to_user(user_entry);    
 
     printf("check7\n");
 
-    // asm volatile("cli; \
-    //               movl %0, %%eax; \
-    //               movw %%ax, %%ds; \
-    //               movw %%ax, %%es; \
-    //               movw %%ax, %%fs; \
-    //               movw %%ax, %%gs; \
-    //               movl %%esp, %%ebx; \
-    //               pushl %%eax; \
-    //               pushl %%ebx; \
-    //               pushf; \
-    //               popl %%eax; \
-    //               orl $0x200, %%eax; \
-    //               pushl %%eax; \
-    //               pushl %1; \
+    // asm volatile("cli; 
+    //               movl %0, %%eax; 
+    //               movw %%ax, %%ds; 
+    //               movw %%ax, %%es; 
+    //               movw %%ax, %%fs; 
+    //               movw %%ax, %%gs; 
+    //               movl %%esp, %%ebx; 
+    //               pushl %%eax; 
+    //               pushl %%ebx; 
+    //               pushf; 
+    //               popl %%eax; 
+    //               orl $0x200, %%eax; 
+    //               pushl %%eax; 
+    //               pushl %1; 
     //               pushl %2"
     //               :
     //               : "r"(USER_DS), "r"(USER_CS), "r"(0x080482e8)
