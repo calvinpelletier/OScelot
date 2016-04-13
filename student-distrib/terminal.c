@@ -363,7 +363,7 @@ void buf_clear(void) {
 /*
  * terminal_write
  *   DESCRIPTION:  System call that writes the terminal buffer to the screen.
- *   INPUTS:       fd     - not used
+ *   INPUTS:       file    - not used
  *                 buf    - buffer from which to write data from
  *                 nbytes - number of bytes to write
  *   OUTPUTS:      none
@@ -404,7 +404,7 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
 /*
  * terminal_read
  *   DESCRIPTION:  System call that reads from the terminal buffer
- *   INPUTS:       fd     - not used
+ *   INPUTS:       file     - not used
  *                 buf    - buffer from which to read data to
  *                 nbytes - number of bytes to read
  *   OUTPUTS:      none
@@ -448,7 +448,7 @@ int32_t terminal_open() {
 /*
  * terminal_close
  *   DESCRIPTION:  System call that closes a file. Not used by terminal.
- *   INPUTS:       fd - file descriptor of file to close
+ *   INPUTS:       file- file descriptor ptr of file to close
  *   OUTPUTS:      none
  *   RETURN VALUE: -1 if unsuccessful
  *   SIDE EFFECTS: none

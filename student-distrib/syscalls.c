@@ -15,9 +15,18 @@ uint32_t CPID = 0;
 pcb_t processes[7];
 
 // File Ops Tables
+int32_t no_read (file_t * file, uint8_t * buf, int32_t nbytes) {
+    return -1;
+}
+
+int32_t no_write(file_t * file, uint8_t * buf, int32_t nbytes) {
+    return -1;
+}
+
 fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
-fileops_t term_jumptable = {terminal_open, terminal_read, terminal_write, terminal_close};
-//fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
+fileops_t stdin_jumptable = {terminal_open, terminal_read, no_write, terminal_close};
+fileops_t stdout_jumptable = {terminal_open, no_read, terminal_write, terminal_close};
+fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
 
 // FUNCTION DECLARATIONS
@@ -122,8 +131,8 @@ int32_t execute (int8_t* command) {
     processes[CPID].PPID = old_CPID;
     processes[CPID].running = 1;
 
-    processes[CPID].fd_array[0].jumptable = &term_jumptable;
-    processes[CPID].fd_array[1].jumptable = &term_jumptable;
+    processes[CPID].fd_array[0].jumptable = &stdin_jumptable;
+    processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
 
     // set up paging
     new_page_directory(CPID);
@@ -183,10 +192,11 @@ int32_t open (const int8_t* filename) {
     int32_t i;
     for (i = 0; i < MAX_FD; i++) {
         if (processes[CPID].fd_array[i].flags.in_use == 0) {
-            // if (dentry.type == 0) {
-            //     processes[CPID].fd_array[i].jumptable = rtc_jumptable;
-            // }
-            processes[CPID].fd_array[i].jumptable = & fs_jumptable;
+            if (dentry.type == 0) {
+                processes[CPID].fd_array[i].jumptable = &rtc_jumptable;
+            }
+            else
+                processes[CPID].fd_array[i].jumptable = &fs_jumptable;
             if (processes[CPID].fd_array[i].jumptable->open())
                 return -1;
             processes[CPID].fd_array[i].inode = dentry.inode;
