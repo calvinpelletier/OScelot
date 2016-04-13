@@ -8,7 +8,6 @@ syscall_wrapper:
 _syscall_wrapper:
     pushl   %es
     pushl   %ds
-    pushl   %eax
     pushl   %ebx
     pushl   %ecx
     pushl   %edx
@@ -30,7 +29,6 @@ _syscall_wrapper:
     popl    %edx
     popl    %ecx
     popl    %ebx
-    popl    %eax
     popl    %ds
     popl    %es
     iret

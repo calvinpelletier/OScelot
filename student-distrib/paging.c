@@ -85,7 +85,7 @@ void new_page_directory(uint32_t PID) {
     pageDir[PID][1] = KERNEL_LOC | 0x00000083; // maps kernel to 4MiB, sets flags to 4MiB-size, kernel-only, write-enabled, and present
 
     uint32_t phys_addr = FOUR_MB * (PID + 1);
-    uint32_t dir_entry = PROGRAM_IMAGE/ FOUR_MB;
+    uint32_t dir_entry = PROGRAM_IMAGE / FOUR_MB;
 
     pageDir[PID][dir_entry] = phys_addr | 0x00000087; // 4MB page for program image is set to user, write-enabled, and present 
 

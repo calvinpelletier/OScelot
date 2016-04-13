@@ -173,13 +173,13 @@ int32_t execute (int8_t* command) {
 
 
 int32_t read (int32_t fd, void* buf, int32_t nbytes) {
-    if (fd < 0 || fd > MAX_FD)
+    if (fd < 0 || fd > MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
     return processes[CPID].fd_array[fd].jumptable->read(&processes[CPID].fd_array[fd], buf, nbytes);
 }
 
 int32_t write (int32_t fd, void* buf, int32_t nbytes) {
-    if (fd < 0 || fd > MAX_FD)
+    if (fd < 0 || fd > MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
     return processes[CPID].fd_array[fd].jumptable->write(&processes[CPID].fd_array[fd], buf, nbytes);
 }
@@ -213,7 +213,7 @@ int32_t open (const int8_t* filename) {
 }
 
 int32_t close (int32_t fd) {
-    if (fd < 2 || fd > 7)
+    if (fd < 2 || fd > 7 || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
     processes[CPID].fd_array[fd].flags.in_use = 0;
     return processes[CPID].fd_array[fd].jumptable->close(&processes[CPID].fd_array[fd]);
