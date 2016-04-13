@@ -89,13 +89,17 @@ int32_t halt (uint8_t status) {
     /* Set the current process running flag to 0 and update CPID field */
     processes[CPID].running = 0;
     CPID = processes[CPID].PPID;
-    swap_pages(CPID);
+    
     
     /* If we attempt to halt the last process, we re-launch shell instead */
     if (CPID == 0) {
+        swap_pages(CPID);
         printf("Cannot close last process! Restarting shell...\n");
         execute("shell");
         return 0;
+    } else {
+        swap_pages(CPID);
+        tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
     }
 
     uint32_t ret = (uint32_t) status;

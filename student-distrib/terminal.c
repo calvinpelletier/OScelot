@@ -317,7 +317,7 @@ void do_spec(uint8_t  scancode) {
                     keyboard_buffer[i - 1] = keyboard_buffer[i];
                 }
 
-                /* Print32_t  the buffer to the terminal plus an empty space for the deleted char */
+                /* Print  the buffer to the terminal plus an empty space for the deleted char */
                 _print_to_terminal(t_buf_offset);
                 putc(' ');
 
@@ -363,7 +363,7 @@ void buf_clear(void) {
 /*
  * terminal_write
  *   DESCRIPTION:  System call that writes the terminal buffer to the screen.
- *   INPUTS:       file    - not used
+ *   INPUTS:       file   - not used
  *                 buf    - buffer from which to write data from
  *                 nbytes - number of bytes to write
  *   OUTPUTS:      none
@@ -375,7 +375,7 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     int32_t  num_bytes = 0;  /* Number of bytes that have been written */
 
     if (buf != NULL) {
-        /* Print32_t  each character in the passed in buffer to the screen */
+        /* Print each character in the passed in buffer to the screen */
         for (i = 0; i < nbytes; i++) {
             putc(buf[i]);
 
@@ -404,7 +404,7 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
 /*
  * terminal_read
  *   DESCRIPTION:  System call that reads from the terminal buffer
- *   INPUTS:       file     - not used
+ *   INPUTS:       file   - not used
  *                 buf    - buffer from which to read data to
  *                 nbytes - number of bytes to read
  *   OUTPUTS:      none
@@ -474,7 +474,7 @@ static void _do_key_press(uint8_t  scancode, uint8_t  chars[], pos_t cur_positio
 
     cur_buf_pos++;
 
-    /* Print32_t  the keyboard buffer to the screen and update the position */
+    /* Print the keyboard buffer to the screen and update the position */
     _print_to_terminal(t_buf_offset);
     _update_buf_pos(cur_position);
 }
