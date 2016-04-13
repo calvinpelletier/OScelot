@@ -6,6 +6,11 @@
 
 syscall_wrapper:
 _syscall_wrapper:
+    cmpl    $0, %eax
+    jle     fail
+    cmpl    $10, %eax
+    jg      fail
+
     pushl   %es
     pushl   %ds
     pushl   %ebx
@@ -33,6 +38,9 @@ _syscall_wrapper:
     popl    %es
     iret
 
+fail:
+    movl    $-1, %eax
+    iret
 
 jmptbl:
     .long halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
