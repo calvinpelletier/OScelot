@@ -27,11 +27,12 @@ typedef struct {
 	int32_t esp;
 	int32_t ebp;
 	uint8_t running; // 0 for no, 1 for yes
+	int32_t tss_esp0;
 } pcb_t;
 
 extern void syscalls_init();
 extern void kernel_to_user(uint32_t user_entry);
-extern void haltasm(int32_t ebp, int32_t esp);
+extern void haltasm(int32_t ebp, int32_t esp, uint32_t PPID);
 
 // System Calls
 extern int32_t halt (uint8_t status);

@@ -61,8 +61,12 @@ int32_t halt (uint8_t status) {
 
     processes[CPID].running = 0;
     CPID = processes[CPID].PPID;
+    swap_pages(CPID);
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (0x00002000*(CPID-1));
 
-    haltasm(processes[CPID].ebp, processes[CPID].esp);
+    uint32_t ret = (uint32_t) status;
+    haltasm(processes[CPID].ebp, processes[CPID].esp, ret);
+
 
     // __asm__("movl %0, %%ebp"
     //         :
@@ -107,6 +111,10 @@ int32_t execute (int8_t* command) {
     }
 
     if (strncmp((int8_t *) MAGIC_EXE_NUMS, (int8_t *) first_bytes, 4)) {
+        return -1;
+    } 
+
+    if (close(fd) == -1 && CPID != 0) {
         return -1;
     }
 
@@ -167,7 +175,8 @@ int32_t execute (int8_t* command) {
     //tss.esp0 = 0x00800000-(0x00002000*(CPID-1));
     // tss.esp0 = 0x00400000;
 
-    kernel_to_user(user_entry);    
+    kernel_to_user(user_entry);  
+
     return 0;
 }
 

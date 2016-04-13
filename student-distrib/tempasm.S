@@ -3,14 +3,18 @@
 #define ASM 1
 #include "x86_desc.h"
 
+
 .text
 .globl kernel_to_user, _kernel_to_user
 .globl haltasm, _haltasm
 
 haltasm:
 _haltasm:
-movl 4(%esp), %ebp
-movl 8(%esp), %esp
+pushl %ebp
+movl %esp, %ebp
+movl 16(%ebp), %eax
+movl 12(%ebp), %esp
+movl 8(%ebp), %ebp
 jmp end_execute
 
 kernel_to_user:
@@ -33,3 +37,5 @@ pushl $USER_CS			// push user code segment selctor
 pushl %ecx 				// push user EIP
 iret
 end_execute:
+leave
+ret 
