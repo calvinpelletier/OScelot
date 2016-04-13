@@ -1,3 +1,6 @@
+#define ASM 1
+#include "x86_desc.h"
+
 .globl syscall_wrapper
 .align 4
 
@@ -16,6 +19,8 @@ _syscall_wrapper:
     pushl   %edx
     pushl   %ecx
     pushl   %ebx
+
+    decl    %eax
     call	*jmptbl(,%eax,4)
     addl    $12, %esp
 
@@ -32,4 +37,4 @@ _syscall_wrapper:
 
 
 jmptbl:
-    .long 0x0, halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
+    .long halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn

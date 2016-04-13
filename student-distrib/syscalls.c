@@ -70,7 +70,6 @@ int32_t halt (uint8_t status) {
     return 0;
 }
 
-
 int32_t execute (int8_t* command) {
     int8_t exename[MAX_FNAME_LEN];
     int32_t i;
@@ -111,6 +110,7 @@ int32_t execute (int8_t* command) {
             return -1;
         }
     }
+
     for (i = 0; i < MAX_FD; i++) {
         if (i == 0 || i == 1) {
             processes[CPID].fd_array[i].flags.in_use = 1;
@@ -147,20 +147,18 @@ int32_t execute (int8_t* command) {
     // save current esp ebp or anything you need in pcb
     int32_t old_esp, old_ebp;
     __asm__("movl %%esp, %0; movl %%ebp, %1"
-             :"=r"(old_esp), "=r"(old_ebp) /* outputs (%0 and %1 respectively) */
+             :"=g"(old_esp), "=g"(old_ebp) /* outputs (%0 and %1 respectively) */
             );
     processes[old_CPID].esp = old_esp;
     processes[old_CPID].ebp = old_ebp;
 
     // write tss.esp0/ss0 with new process kernel stack
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = PROCESS_KERNEL_STACK_ADDR;
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (0x00002000*(CPID-1));
     //tss.esp0 = 0x00800000-(0x00002000*(CPID-1));
     // tss.esp0 = 0x00400000;
 
-
-    kernel_to_user(user_entry);
-
+    kernel_to_user(user_entry);    
     return 0;
 }
 

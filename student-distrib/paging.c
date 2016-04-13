@@ -86,6 +86,7 @@ void new_page_directory(uint32_t PID) {
 
     uint32_t phys_addr = FOUR_MB * (PID + 1);
     uint32_t dir_entry = PROGRAM_IMAGE/ FOUR_MB;
+
     pageDir[PID][dir_entry] = phys_addr | 0x00000087; // 4MB page for program image is set to user, write-enabled, and present 
 
     // enable paging
@@ -93,4 +94,8 @@ void new_page_directory(uint32_t PID) {
     enable4MB();
     enablePaging();
 
+}
+
+void swap_pages(uint32_t PID) {
+    loadPageDir(pageDir[PID]);
 }

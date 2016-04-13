@@ -101,8 +101,37 @@ void generalProtectionFault()
 
 void pageFault()
 {
+    uint32_t cr2, cr2_P, cr2_RW, cr2_US, cr2_RSVD;
+    uint32_t error_code;
+    uint32_t bitmask;
+
+    asm volatile("movl %%cr2, %0;" 
+                "movl (%%esp), %%eax;" 
+                "movl %%eax, %1"
+                :"=r" (cr2), "=r" (error_code)              
+                );
+
+    bitmask = 0x00000001;
+    cr2_P = error_code & bitmask;
+
+    error_code >>= 1;
+    cr2_RW = error_code & bitmask;
+
+    error_code >>= 1;
+    cr2_US = error_code & bitmask;
+
+    error_code >>= 1;
+    cr2_RSVD = error_code & bitmask;
+
     printf("0x0E\n");
     printf("OScelot's book has a page fault. He can't read his book now. Happy?\n");
+    printf("Page Fault Information:\n");
+    printf("Page Fault Address: 0x%#x\n", cr2);
+    printf("P flag (0 - non-present page; 1 - protection violation): %d\n", cr2_P);
+    printf("R/W flag (0 - occurred on a read; 1 - occurred on a write): %d\n", cr2_RW);
+    printf("U/S flag (0 - occurred in Supervisor Mode; 1 - occured in User Mode): %d\n", cr2_US);
+    printf("RSVD flag (0 - not caused by RSVD bit violation; 1 - caused by RSVD bits): %d\n", cr2_RSVD);
+
     while(1);
 }
 
