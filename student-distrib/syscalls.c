@@ -130,10 +130,6 @@ int32_t execute (int8_t* command) {
     uint32_t user_entry;
     int32_t old_esp, old_ebp;
 
-    if (processes[MAX_PROCESSES].running) {
-        return -1;
-    }
-
     /* Parse command passed into execute() */
     if (command == NULL) {
         return -1;
@@ -170,7 +166,8 @@ int32_t execute (int8_t* command) {
     while (processes[CPID].running) {
         CPID++;
         if (CPID > MAX_PROCESSES) {
-            return -1;
+            CPID = old_CPID; // reset CPID
+            return -2;       // return value to indicate program found, but could not execute
         }
     }
 
