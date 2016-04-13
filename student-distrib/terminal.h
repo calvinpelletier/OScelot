@@ -22,6 +22,8 @@
 #define LEFT_ARROW  0x4B
 #define RIGHT_ARROW 0x4D
 
+#define SHELL_OFFSET 7
+
 /* Function Declarations */
 void keyboardHandler();
 void do_self(uint8_t  scancode, pos_t cur_position);

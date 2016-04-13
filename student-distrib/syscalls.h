@@ -6,7 +6,8 @@
 #include "rtc.h"
 #include "terminal.h"
 
-#define MAX_FD 8
+#define MAX_FD        8
+#define MAX_PROCESSES 6
 
 /*
  *	Process Control Block used to describe each process. Contains data
@@ -17,13 +18,16 @@
  * 			  First two files are stdin and stdout, up to 6 more files can be opened after that.
  *	PID: Process number/ID of the current running process.
  * 	PPID: Parent process number/ID of the current running process.
- *
+ *  esp: Value of ESP before context switch
+ *  ebp: Value of EBP before context switch
+ *  running: Boolean to determine if the process is running or not
+ *  tss_esp0: Value of ESP0 to store in TSS
  */
 
 typedef struct {
-	file_t fd_array[MAX_FD];
-	uint32_t PID;
-	uint32_t PPID;
+	file_t fd_array[MAX_FD]; // File descriptor array
+	uint32_t PID;            
+	uint32_t PPID;           
 	int32_t esp;
 	int32_t ebp;
 	uint8_t running; // 0 for no, 1 for yes

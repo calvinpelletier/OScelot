@@ -89,7 +89,7 @@ void keyboardHandler(void) {
      */
     if (ctrl_active && scancode == L) {
         clear();
-
+        
         /* Reset buffer position to (0, 0) */
         set_pos(0, 0);
 
@@ -514,7 +514,7 @@ static void _update_buf_pos(pos_t cur_position) {
 
 /*
  * _print_to_terminal
- *   DESCRIPTION:  Helper function that to print32_t  the terminal buffer 
+ *   DESCRIPTION:  Helper function that to print to the terminal buffer 
  *                 to the screen.
  *   INPUTS:       t_buf_offset - current position in the terminal buffer
  *   OUTPUTS:      none
@@ -525,7 +525,7 @@ static void _print_to_terminal(uint8_t t_buf_offset) {
     /* Update the position in the terminal so we don't overwrite anything */
     set_pos(buf_start.pos_x, buf_start.pos_y);
 
-    /* Print32_t  to the screen with the t_buf_offset offset so we 
+    /* Print to the screen with the t_buf_offset offset so we 
      * don't copy multiple lines when we're calling scroll().
      */
     puts(keyboard_buffer + t_buf_offset);

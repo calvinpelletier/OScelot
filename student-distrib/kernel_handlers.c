@@ -125,8 +125,8 @@ void pageFault()
 
     printf("0x0E\n");
     printf("OScelot's book has a page fault. He can't read his book now. Happy?\n");
-    printf("Page Fault Information:\n");
-    printf("Page Fault Address: 0x%#x\n", cr2);
+    printf("\nPage Fault Information:\n");
+    printf("Page Fault at address: 0x%#x\n", cr2);
     printf("P flag (0 - non-present page; 1 - protection violation): %d\n", cr2_P);
     printf("R/W flag (0 - occurred on a read; 1 - occurred on a write): %d\n", cr2_RW);
     printf("U/S flag (0 - occurred in Supervisor Mode; 1 - occured in User Mode): %d\n", cr2_US);

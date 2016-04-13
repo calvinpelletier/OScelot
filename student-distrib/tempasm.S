@@ -38,4 +38,4 @@ pushl %ecx 				// push user EIP
 iret
 end_execute:
 leave
-ret 
+ret
