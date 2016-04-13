@@ -37,6 +37,7 @@ typedef struct {
 extern void syscalls_init();
 extern void kernel_to_user(uint32_t user_entry);
 extern void haltasm(int32_t ebp, int32_t esp, uint32_t PPID);
+extern int32_t exception_halt ();
 
 // System Calls
 extern int32_t halt (uint8_t status);

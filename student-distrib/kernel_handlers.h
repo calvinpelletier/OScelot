@@ -1,6 +1,8 @@
 #ifndef KERNEL_HANDLER_H
 #define KERNEL_HANDLER_H
 
+#include "syscalls.h"
+
 extern void divideByZero();
 extern void debug();
 extern void nonMaskableInterrupts();

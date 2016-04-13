@@ -148,7 +148,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     		return bytes_read;
 
     	// end of current data block reached
-    	if (block_offset + bytes_read >= FS_BLOCK_SIZE) {
+    	if (block_offset >= FS_BLOCK_SIZE) {
     		file_data_block++; // increment to next data block in inode's data block array
     		fs_data_block = inodes[inode].datablocks[file_data_block]; 	// update actual filesystem datablock number
     		block_offset = 0;  // reset offset into block to start of new data block
@@ -162,6 +162,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     	// else, read current byte into buf
     	buf[bytes_read] = *curr_data_loc;
     	bytes_read++;
+        block_offset++;
     	curr_data_loc++;
     }
 

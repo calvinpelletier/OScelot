@@ -108,6 +108,35 @@ int32_t halt (uint8_t status) {
     return 0;
 }
 
+int32_t exception_halt () {
+    int32_t i;
+
+    /* Close all file descriptors */
+    for (i = 0; i < MAX_FD; i++) {
+        close(i);
+    }
+
+    /* Set the current process running flag to 0 and update CPID field */
+    processes[CPID].running = 0;
+    CPID = processes[CPID].PPID;
+
+
+    /* If we attempt to halt the last process, we re-launch shell instead */
+    if (CPID == 0) {
+        swap_pages(CPID);
+        printf("Cannot close last process! Restarting shell...\n");
+        execute("shell");
+        return 0;
+    } else {
+        swap_pages(CPID);
+        tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
+    }
+
+    haltasm(processes[CPID].ebp, processes[CPID].esp, 256);
+
+    return 0;
+}
+
 /*
  * execute
  *   DESCRIPTION:  Loads and executes a new program, handing off the processor
@@ -189,6 +218,7 @@ int32_t execute (int8_t* command) {
 
     processes[CPID].fd_array[0].jumptable = &stdin_jumptable;
     processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
+
 
     /* Set up paging for current process */
     new_page_directory(CPID);

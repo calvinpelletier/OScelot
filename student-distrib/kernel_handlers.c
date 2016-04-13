@@ -5,98 +5,98 @@ void divideByZero()
 {
     printf("0x00\n");
     printf("OScelot won't let you divide by zero\n");
-    while(1);
+    exception_halt();
 }
 
 void debug()
 {
     printf("0x01\n");
     printf("OScelot won't let you debug\n");
-    while(1);
+    exception_halt();
 }
 
 void nonMaskableInterrupts()
 {
     printf("0x02\n");
     printf("OScelot asks about NMIs\n");
-    while(1);
+    exception_halt();
 }
 
 void breakpoint()
 {
     printf("0x03\n");
     printf("OScelot hits a breakpoint\n");
-    while(1);
+    exception_halt();
 }
 
 void overflow()
 {
     printf("0x04\n");
     printf("OScelot's cup has overflowed\n");
-    while(1);
+    exception_halt();
 }
 
 void bounds()
 {
     printf("0x05\n");
     printf("You are intruding on OScelot's bounds\n");
-    while(1);
+    exception_halt();
 }
 
 void invalidOpCode()
 {
     printf("0x06\n");
     printf("OScelot doesn't understand your speech\n");
-    while(1);
+    exception_halt();
 }
 
 void coprocessorNotAvailable()
 {
     printf("0x07\n");
     printf("OScelot's pardner ain't here yet\n");
-    while(1);
+    exception_halt();
 }
 
 void doubleFault()
 {
     printf("0x08\n");
     printf("OScelot hit a wall ... again\n");
-    while(1);
+    exception_halt();
 }
 
 void coprocessorSegmentOverrun()
 {
     printf("0x09\n");
     printf("OScelot's pardner's segment has been overrun\n");
-    while(1);
+    exception_halt();
 }
 
 void invalidTaskStateSegment()
 {
     printf("0x0A\n");
     printf("OScelot's TSS failed. You incompetent programmer\n");
-    while(1);
+    exception_halt();
 }
 
 void segmentNotPresent()
 {
     printf("0x0B\n");
     printf("OScelot doesn't know what segment you are talking about\n");
-    while(1);
+    exception_halt();
 }
 
 void stackFault()
 {
     printf("0x0C\n");
     printf("OScelot suggests you check the stack fault thingamajig\n");
-    while(1);
+    exception_halt();
 }
 
 void generalProtectionFault()
 {
     printf("0x0D\n");
     printf("OScelot can't protect you any more\n");
-    while(1);
+    exception_halt();
 }
 
 void pageFault()
@@ -132,40 +132,40 @@ void pageFault()
     printf("U/S flag (0 - occurred in Supervisor Mode; 1 - occured in User Mode): %d\n", cr2_US);
     printf("RSVD flag (0 - not caused by RSVD bit violation; 1 - caused by RSVD bits): %d\n", cr2_RSVD);
 
-    while(1);
+    exception_halt();
 }
 
 void reserved()
 {
     printf("0x0F\n");
     printf("OScelot won't let you do that\n");
-    while(1);
+    exception_halt();
 }
 
 void mathFault()
 {
     printf("0x10\n");
     printf("OScelot can't do the math\n");
-    while(1);
+    exception_halt();
 }
 
 void alignmentCheck()
 {
     printf("0x11\n");
     printf("OScelot asks you to check your alignment\n");
-    while(1);
+    exception_halt();
 }
 
 void machineCheck()
 {
     printf("0x12\n");
     printf("OScelot needs you to check your machine and cry\n");
-    while(1);
+    exception_halt();
 }
 
 void simdFloatingPointException()
 {
     printf("0x13\n");
     printf("OScelot can't handle floats right now\n");
-    while(1);
+    exception_halt();
 }
