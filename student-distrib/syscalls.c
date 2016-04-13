@@ -9,7 +9,7 @@
 #define PROCESS_KERNEL_STACK_ADDR 0x007ffffc // Last location in kernel page that is accessable
 #define EXE_ENTRY_POINT           0x08048000 // Entry point for executables in virtual memory
 #define STACK_SIZE                0x00002000 // Size of kernel stack
-#define VIRT_ADDR_BYTE_1          24         
+#define VIRT_ADDR_BYTE_1          24
 #define VIRT_ADDR_BYTE_2          25         /* Bytes 24-27 of the EXE hold virtual address of first */
 #define VIRT_ADDR_BYTE_3          26         /* instruction to be executed.                          */
 #define VIRT_ADDR_BYTE_4          27
@@ -89,8 +89,8 @@ int32_t halt (uint8_t status) {
     /* Set the current process running flag to 0 and update CPID field */
     processes[CPID].running = 0;
     CPID = processes[CPID].PPID;
-    
-    
+
+
     /* If we attempt to halt the last process, we re-launch shell instead */
     if (CPID == 0) {
         swap_pages(CPID);
@@ -130,6 +130,10 @@ int32_t execute (int8_t* command) {
     uint32_t user_entry;
     int32_t old_esp, old_ebp;
 
+    if (processes[MAX_PROCESSES].running) {
+        return -1;
+    }
+
     /* Parse command passed into execute() */
     if (command == NULL) {
         return -1;
@@ -152,7 +156,7 @@ int32_t execute (int8_t* command) {
 
     if (strncmp((int8_t *) MAGIC_EXE_NUMS, (int8_t *) first_bytes, 4)) {
         return -1;
-    } 
+    }
 
     if (close(fd) == -1 && CPID != 0) {
         return -1;
@@ -220,7 +224,7 @@ int32_t execute (int8_t* command) {
     tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
 
     /* Context switch */
-    kernel_to_user(user_entry);  
+    kernel_to_user(user_entry);
 
     return 0;
 }
@@ -228,7 +232,7 @@ int32_t execute (int8_t* command) {
 /*
  * read
  *   DESCRIPTION:  Reads data from the keyboard, a file, device (RTC) or
- *                 directory. 
+ *                 directory.
  *   INPUTS:       fd - file descriptor
  *                 buf - buffer to store read info
  *                 nbytes - number of bytes read
@@ -272,7 +276,7 @@ int32_t write (int32_t fd, void* buf, int32_t nbytes) {
 int32_t open (const int8_t* filename) {
     dentry_t dentry;
     int32_t i;
-    
+
     if (read_dentry_by_name(filename, &dentry))
         return -1;
 
@@ -284,7 +288,7 @@ int32_t open (const int8_t* filename) {
             } else {
                 processes[CPID].fd_array[i].jumptable = &fs_jumptable;
             }
-            
+
             if (processes[CPID].fd_array[i].jumptable->open())
                 return -1;
 
@@ -303,7 +307,7 @@ int32_t open (const int8_t* filename) {
 
 /*
  * close
- *   DESCRIPTION:  Closes the specified file descriptor and makes it available for 
+ *   DESCRIPTION:  Closes the specified file descriptor and makes it available for
  *                 more open() calls.
  *   INPUTS:       filename - directory entry to find
  *   OUTPUTS:      none
