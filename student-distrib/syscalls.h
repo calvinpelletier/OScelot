@@ -33,6 +33,7 @@ typedef struct {
 	uint8_t running; // 0 for no, 1 for yes
 	int32_t tss_esp0;
     int8_t args[BUFFER_SIZE];
+    uint32_t args_size;
 } pcb_t;
 
 extern void syscalls_init();

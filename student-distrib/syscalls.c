@@ -71,7 +71,8 @@ void syscalls_init() {
     processes[CPID].PID = CPID;
     processes[CPID].PPID = 0;
     processes[CPID].running = 1;
-    processes[CPID].args[BUFFER_SIZE] = NULL;
+    processes[CPID].args[0] = '\0';
+    processes[CPID].args_size = 0;
 }
 
 /*
@@ -94,7 +95,8 @@ int32_t halt (uint8_t status) {
     /* Set the current process running flag to 0 and update CPID field */
     processes[CPID].running = 0;
     CPID = processes[CPID].PPID;
-
+    processes[CPID].args[0] = '\0';
+    processes[CPID].args_size = 0;
 
     /* If we attempt to halt the last process, we re-launch shell instead */
     if (CPID == 0) {
@@ -124,6 +126,8 @@ int32_t exception_halt () {
     /* Set the current process running flag to 0 and update CPID field */
     processes[CPID].running = 0;
     CPID = processes[CPID].PPID;
+    processes[CPID].args[0] = '\0';
+    processes[CPID].args_size = 0;
 
 
     /* If we attempt to halt the last process, we re-launch shell instead */
@@ -239,6 +243,8 @@ int32_t execute (int8_t* command) {
     processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
 
     memcpy(processes[CPID].args, args, args_size);
+    processes[CPID].args[args_size] = '\0';  // play this safe, null terminate everywhere (in halt, in getargs as well)
+    processes[CPID].args_size = args_size;
 
     /* Set up paging for current process */
     new_page_directory(CPID);
@@ -379,7 +385,7 @@ int32_t getargs (int8_t* buf, int32_t nbytes) {
 
     memset(buf, 0, nbytes);
     memcpy(buf, processes[CPID].args, nbytes);
-    buf[nbytes] = '\0';
+    buf[processes[CPID].args_size] = '\0';
 
     return 0;
 }
