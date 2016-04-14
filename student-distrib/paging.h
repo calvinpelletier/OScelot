@@ -19,5 +19,6 @@ extern void enablePaging();
 extern void enable4MB();
 extern void new_page_directory(uint32_t PID);
 extern void swap_pages(uint32_t PID);
+extern int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phys_addr, uint8_t size, uint8_t privilege);
 
 #endif

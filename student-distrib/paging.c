@@ -14,6 +14,7 @@ int32_t paging_init();
 // GLOBAL VARIABLES
 static uint32_t pageDir[7][1024] __attribute__((aligned(4096)));
 static uint32_t first_4MB[7][1024] __attribute__((aligned(4096)));
+static uint32_t video_page_tables[7][1024] __attribute__((aligned(4096)));
 
 
 /*
@@ -93,6 +94,35 @@ void new_page_directory(uint32_t PID) {
     loadPageDir(pageDir[PID]);
     enable4MB();
     enablePaging();
+
+}
+
+int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phys_addr, uint8_t size, uint8_t privilege) {
+    uint32_t pde = virt_addr >> 22;
+    uint32_t pte = (virt_addr >> 12) & 0x3FF;
+
+    if (pageDir[PID][pde] & 0x00000001)
+        return -1;
+
+    if (size == 0) { // 4 KB pages
+        if (privilege == 3) {
+            pageDir[PID][pde] = (uint32_t)(video_page_tables[PID]) | 0x00000007;  // sets flags to user-level, write-enabled, and present
+            video_page_tables[PID][pte] = (phys_addr & ~0xFFF) | 0x00000007; // 4KB page set to user-level, write-enabled, and present
+        }
+        else {
+            pageDir[PID][pde] = (uint32_t)(video_page_tables[PID]) | 0x00000003;  // sets flags to kernel, write-enabled, and present
+            video_page_tables[PID][pte] = (phys_addr & ~0xFFF) | 0x00000003; // 4KB page set to kernel, write-enabled, and present
+        }
+    }
+    else {  // 4 MB pages
+        if (privilege == 3)
+            pageDir[PID][pde] = (phys_addr & ~0x3FFFFF) | 0x00000087;  // sets flags to user-level, write-enabled, and present
+        else 
+            pageDir[PID][pde] = (phys_addr & ~0x3FFFFF) | 0x00000083;  // sets flags to kernel, write-enabled, and present
+    }
+
+    loadPageDir(pageDir[PID]);
+    return 0;
 
 }
 

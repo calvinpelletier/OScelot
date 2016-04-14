@@ -395,11 +395,16 @@ int32_t vidmap (uint8_t** screenstart) {
         return -1;
     }
 
-    if ((int32_t) screenstart > USER_PAGE_BOTTOM || (int32_t) screenstart < PROGRAM_IMAGE) {
+    if ((int32_t) screenstart > (USER_PAGE_BOTTOM-4) || (int32_t) screenstart < PROGRAM_IMAGE) {
         return -1;
     }
 
-    *screenstart = (uint8_t *) VIDEO_MEMORY;
+    uint32_t user_video_addr = USER_PAGE_BOTTOM;
+    if (new_page_directory_entry(CPID, user_video_addr, VIDEO_MEMORY, 0, 3)) {
+        return -1;
+    }
+
+    *screenstart = (uint8_t *) user_video_addr;
 
     return 0;
 }
