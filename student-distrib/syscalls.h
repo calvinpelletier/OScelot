@@ -32,6 +32,7 @@ typedef struct {
 	int32_t ebp;
 	uint8_t running; // 0 for no, 1 for yes
 	int32_t tss_esp0;
+    uint8_t args[BUFFER_SIZE];
 } pcb_t;
 
 extern void syscalls_init();

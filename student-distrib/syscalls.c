@@ -67,6 +67,7 @@ void syscalls_init() {
     processes[CPID].PID = CPID;
     processes[CPID].PPID = 0;
     processes[CPID].running = 1;
+    processes[CPID].args[BUFFER_SIZE] = NULL;
 }
 
 /*
@@ -151,7 +152,7 @@ int32_t exception_halt () {
  */
 int32_t execute (int8_t* command) {
     int8_t exename[MAX_FNAME_LEN];
-    int32_t i;
+    int32_t i, j;
     int32_t old_CPID;
     int32_t fd;
     uint8_t first_bytes[4];
@@ -168,6 +169,16 @@ int32_t execute (int8_t* command) {
         exename[i] = command[i];
     }
     exename[i] = '\0';
+
+    while (command[i] == ' ') {
+        i++;
+    }
+
+    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE - i);  j++) {
+        if (CPID < MAX_PROCESSES) {
+            processes[CPID + 1].args[j - i] = command[j];
+        }
+    }
 
     /* Fetch the file executable */
     if ((fd = open(exename)) == -1) {
@@ -353,7 +364,15 @@ int32_t close (int32_t fd) {
 }
 
 int32_t getargs (uint8_t* buf, int32_t nbytes) {
-    return -1;
+    if (buf == NULL) {
+        return -1;
+    }
+
+    memset(buf, 0, nbytes);
+    memcpy(buf, processes[CPID].args, nbytes);
+    buf[nbytes] = '\0';
+
+    return 0;
 }
 
 int32_t vidmap (uint8_t** screenstart) {

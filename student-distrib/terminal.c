@@ -88,10 +88,13 @@ void keyboardHandler(void) {
      * clears the screen except for the terminal buffer.
      */
     if (ctrl_active && scancode == L) {
+        uint8_t buf[7] = "391OS> ";
         clear();
         
         /* Reset buffer position to (0, 0) */
         set_pos(0, 0);
+        terminal_write(0, buf, SHELL_OFFSET);
+        set_cursor(0);
 
         buf_start.pos_x = 0;
         buf_start.pos_y = 0;
@@ -499,12 +502,12 @@ static void _update_buf_pos(pos_t cur_position) {
          * we should copy from a different offset from
          * the beginning of the terminal buffer.
          */
-        if (cur_buf_pos >= NUM_COLS * 3) {
-            t_buf_offset = NUM_COLS * 3;
-        } else if (cur_buf_pos >= NUM_COLS * 2) {
-            t_buf_offset = NUM_COLS * 2;
-        } else if (cur_buf_pos >= NUM_COLS) {
-            t_buf_offset = NUM_COLS;
+        if (cur_buf_pos >= NUM_COLS * 3 - 7) {
+            t_buf_offset = NUM_COLS * 3 - 7;
+        } else if (cur_buf_pos >= NUM_COLS * 2 - 7) {
+            t_buf_offset = NUM_COLS * 2 - 7;
+        } else if (cur_buf_pos >= NUM_COLS - 7) {
+            t_buf_offset = NUM_COLS - 7;
         }
             
     } else {
