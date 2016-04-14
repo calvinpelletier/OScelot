@@ -376,7 +376,17 @@ int32_t getargs (uint8_t* buf, int32_t nbytes) {
 }
 
 int32_t vidmap (uint8_t** screenstart) {
-    return -1;
+    if (screenstart == NULL) {
+        return -1;
+    }
+
+    if ((int32_t) screenstart > USER_PAGE_BOTTOM || (int32_t) screenstart < PROGRAM_IMAGE) {
+        return -1;
+    }
+
+    *screenstart = (uint8_t *) VIDEO_MEMORY;
+
+    return 0;
 }
 
 int32_t set_handler (int32_t signum, void* handler_address) {

@@ -6,8 +6,10 @@
 
 #include "types.h"
 
-#define FOUR_MB   0x400000
-#define PROGRAM_IMAGE 0x8000000
+#define FOUR_MB          0x00400000
+#define USER_PAGE_BOTTOM 0x08400000
+#define PROGRAM_IMAGE    0x08000000
+#define VIDEO_MEMORY     0x000B8000
 
 // GLOBAL VAR: pageDir
 

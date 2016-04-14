@@ -502,12 +502,12 @@ static void _update_buf_pos(pos_t cur_position) {
          * we should copy from a different offset from
          * the beginning of the terminal buffer.
          */
-        if (cur_buf_pos >= NUM_COLS * 3 - 7) {
-            t_buf_offset = NUM_COLS * 3 - 7;
-        } else if (cur_buf_pos >= NUM_COLS * 2 - 7) {
-            t_buf_offset = NUM_COLS * 2 - 7;
-        } else if (cur_buf_pos >= NUM_COLS - 7) {
-            t_buf_offset = NUM_COLS - 7;
+        if (cur_buf_pos >= NUM_COLS * 3 - SHELL_OFFSET) {
+            t_buf_offset = NUM_COLS * 3 - SHELL_OFFSET;
+        } else if (cur_buf_pos >= NUM_COLS * 2 - SHELL_OFFSET) {
+            t_buf_offset = NUM_COLS * 2 - SHELL_OFFSET;
+        } else if (cur_buf_pos >= NUM_COLS - SHELL_OFFSET) {
+            t_buf_offset = NUM_COLS - SHELL_OFFSET;
         }
             
     } else {
