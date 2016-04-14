@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "paging.h"
+#include "syscalls_asm.h"
 
 // CONSTANTS
 #define PROCESS_KERNEL_STACK_ADDR 0x007ffffc // Last location in kernel page that is accessable
@@ -86,8 +87,6 @@ void syscalls_init() {
  */
 int32_t halt (uint8_t status) {
     int32_t i;
-    int32_t buf[1];
-    buf[0] = '\n';
 
     /* Close all file descriptors */
     for (i = 0; i < MAX_FD; i++) {
@@ -111,7 +110,6 @@ int32_t halt (uint8_t status) {
         tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
     }
 
-    write(1, buf, 1); // new line on terminal when exiting process
     uint32_t ret = (uint32_t) status;
     haltasm(processes[CPID].ebp, processes[CPID].esp, ret);
 
@@ -383,6 +381,14 @@ int32_t close (int32_t fd) {
     return processes[CPID].fd_array[fd].jumptable->close(&processes[CPID].fd_array[fd]);
 }
 
+/*
+ * getargs
+ *   DESCRIPTION:  returns the arguments that the process was launched with
+ *   INPUTS:       buffer, num bytes of buffer
+ *   OUTPUTS:      arguments as a string
+ *   RETURN VALUE: 0 if successful, -1 if not
+ *   SIDE EFFECTS: Overwrites PCB structs
+ */
 int32_t getargs (int8_t* buf, int32_t nbytes) {
     if (buf == NULL) {
         return -1;
@@ -395,6 +401,14 @@ int32_t getargs (int8_t* buf, int32_t nbytes) {
     return 0;
 }
 
+/*
+ * vidmap
+ *   DESCRIPTION:  maps video memory into user space
+ *   INPUTS:       location in user memory
+ *   OUTPUTS:      none
+ *   RETURN VALUE: 0 if successful, -1 if not
+ *   SIDE EFFECTS: changes page directory
+ */
 int32_t vidmap (uint8_t** screenstart) {
     if (screenstart == NULL) {
         return -1;
@@ -414,10 +428,26 @@ int32_t vidmap (uint8_t** screenstart) {
     return 0;
 }
 
+/*
+ * set_handler
+ *   DESCRIPTION:  does nothing
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: -1
+ *   SIDE EFFECTS: none
+ */
 int32_t set_handler (int32_t signum, void* handler_address) {
     return -1;
 }
 
+/*
+ * sigreturn
+ *   DESCRIPTION:  does nothing
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: -1
+ *   SIDE EFFECTS: none
+ */
 int32_t sigreturn (void) {
     return -1;
 }
