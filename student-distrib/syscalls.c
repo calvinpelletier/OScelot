@@ -43,7 +43,7 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes);
 int32_t write (int32_t fd, void* buf, int32_t nbytes);
 int32_t open (const int8_t* filename);
 int32_t close (int32_t fd);
-int32_t getargs (uint8_t* buf, int32_t nbytes);
+int32_t getargs (int8_t* buf, int32_t nbytes);
 int32_t vidmap (uint8_t** screenstart);
 int32_t set_handler (int32_t signum, void* handler_address);
 int32_t sigreturn (void);
@@ -60,9 +60,13 @@ void syscalls_init() {
     int32_t i;
 
     /* Initialize the PCB with the pertinent information */
-    for (i = 0; i < MAX_FD; i++) {
+    if (i == 0 || i == 1) {
+        processes[CPID].fd_array[i].flags.in_use = 1;
+    } else {
         processes[CPID].fd_array[i].flags.in_use = 0;
     }
+    processes[CPID].fd_array[0].jumptable = &stdin_jumptable;
+    processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
 
     processes[CPID].PID = CPID;
     processes[CPID].PPID = 0;
@@ -157,6 +161,8 @@ int32_t execute (int8_t* command) {
     int32_t fd;
     uint8_t first_bytes[4];
     uint8_t new_eip[4];
+    int8_t args[BUFFER_SIZE];
+    uint32_t args_size;
     uint32_t user_entry;
     int32_t old_esp, old_ebp;
 
@@ -174,9 +180,11 @@ int32_t execute (int8_t* command) {
         i++;
     }
 
-    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE - i);  j++) {
+    args_size = 0;
+    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE + i);  j++) {
         if (CPID < MAX_PROCESSES) {
-            processes[CPID + 1].args[j - i] = command[j];
+            args[j - i] = command[j];
+            args_size++;
         }
     }
 
@@ -230,6 +238,7 @@ int32_t execute (int8_t* command) {
     processes[CPID].fd_array[0].jumptable = &stdin_jumptable;
     processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
 
+    memcpy(processes[CPID].args, args, args_size);
 
     /* Set up paging for current process */
     new_page_directory(CPID);
@@ -363,7 +372,7 @@ int32_t close (int32_t fd) {
     return processes[CPID].fd_array[fd].jumptable->close(&processes[CPID].fd_array[fd]);
 }
 
-int32_t getargs (uint8_t* buf, int32_t nbytes) {
+int32_t getargs (int8_t* buf, int32_t nbytes) {
     if (buf == NULL) {
         return -1;
     }

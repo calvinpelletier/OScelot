@@ -32,7 +32,7 @@ typedef struct {
 	int32_t ebp;
 	uint8_t running; // 0 for no, 1 for yes
 	int32_t tss_esp0;
-    uint8_t args[BUFFER_SIZE];
+    int8_t args[BUFFER_SIZE];
 } pcb_t;
 
 extern void syscalls_init();
@@ -47,7 +47,7 @@ extern int32_t read (int32_t fd, void* buf, int32_t nbytes);
 extern int32_t write (int32_t fd, void* buf, int32_t nbytes);
 extern int32_t open (const int8_t* filename);
 extern int32_t close (int32_t fd);
-extern int32_t getargs (uint8_t* buf, int32_t nbytes);
+extern int32_t getargs (int8_t* buf, int32_t nbytes);
 extern int32_t vidmap (uint8_t** screenstart);
 extern int32_t set_handler (int32_t signum, void* handler_address);
 extern int32_t sigreturn (void);

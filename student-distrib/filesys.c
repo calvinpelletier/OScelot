@@ -82,7 +82,7 @@ read_dentry_by_name
     RETURNS: 0 for success, -1 for fail
 */
 int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry) {
-    int32_t len,len2 = 0;
+    int32_t len = 0, len2 = 0;
     while (len <= MAX_FNAME_LEN && fname[len]) {
         len++;
     }
@@ -90,11 +90,11 @@ int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry) {
 
     int32_t i = 0;
     while (i < bootblock.n_dentries && i < MAX_DENTRIES) {
-        while (len2 <= MAX_FNAME_LEN && fname[len2]) {
+        while (len2 <= MAX_FNAME_LEN && bootblock.dentries[i].name[len2]) {
             len2++;
         }
         
-        if (len == len) {
+        if (len2 == len) {
             if (!strncmp(fname, bootblock.dentries[i].name, len)) {
                 // found match
                 *dentry = bootblock.dentries[i];
@@ -102,6 +102,7 @@ int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry) {
             }
         }
         i++;
+        len2 = 0;
     }
 
     return -1;
