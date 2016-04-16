@@ -2,6 +2,7 @@
 
 #include "terminal.h"
 #include "i8259.h"
+#include "syscalls.h"
 
 
 /* Local variables by group OScelot */
@@ -82,6 +83,29 @@ void keyboardHandler(void) {
                    (scancode & ~(KEYBOARD_MASK)) == RIGHT_SHIFT)) {
             shift_active = 0;
         }
+    }
+
+    /* Handles the special key combo of CTRL-C which 
+     * halts the currently running program.
+     */
+    if (ctrl_active && scancode == C) {
+        uint8_t buf[7] = "391OS> ";
+        clear();
+        
+        /* Reset buffer position to (0, 0) */
+        set_pos(0, 0);
+        terminal_write(0, buf, SHELL_OFFSET);
+        set_cursor(0);
+
+        buf_start.pos_x = 0;
+        buf_start.pos_y = 0;
+
+        /* Clear the whole terminal buffer */
+        buf_clear();
+        send_eoi(KEYBOARD_IRQ_NUM);
+        enable_irq(KEYBOARD_IRQ_NUM);
+
+        exception_halt();
     }
 
     /* Handles the special key combo of CTRL-L which 

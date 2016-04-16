@@ -19,6 +19,7 @@
 #define SPACE       0x39
 #define LEFT_SHIFT  0x2A
 #define L           0x26
+#define C 			0x2E
 #define LEFT_ARROW  0x4B
 #define RIGHT_ARROW 0x4D
 

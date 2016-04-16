@@ -202,11 +202,11 @@ int32_t execute (int8_t* command) {
         return -1;
     }
 
-    if (strncmp((int8_t *) MAGIC_EXE_NUMS, (int8_t *) first_bytes, 4)) {
+    if (close(fd) == -1 && CPID != 0) {
         return -1;
     }
 
-    if (close(fd) == -1 && CPID != 0) {
+    if (strncmp((int8_t *) MAGIC_EXE_NUMS, (int8_t *) first_bytes, 4)) {
         return -1;
     }
 
