@@ -118,8 +118,6 @@ int32_t halt (uint8_t status) {
 
 int32_t exception_halt () {
     int32_t i;
-    int32_t buf[1];
-    buf[0] = '\n';
 
     /* Close all file descriptors */
     for (i = 0; i < MAX_FD; i++) {
@@ -143,7 +141,6 @@ int32_t exception_halt () {
         swap_pages(CPID);
         tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
     }
-    write(1, buf, 1); // new line on terminal when exiting process
     haltasm(processes[CPID].ebp, processes[CPID].esp, 256);
 
     return 0;
