@@ -5,14 +5,15 @@
 #define RTC_H
 
 #include "types.h"
+#include "filesys.h"
 
-extern void rtc_init(void);
-extern void rtcHandler(void);
+extern void rtc_init();
+extern void rtcHandler();
 
-extern int32_t rtc_open(const int8_t *filename);
-extern int32_t rtc_read(int32_t fd, void *buf, int32_t nbytes);
-extern int32_t rtc_write(int32_t fd, const void *buf, int32_t nbytes);
-extern int32_t rtc_close(int32_t fd);
+extern int32_t rtc_open();
+extern int32_t rtc_read(file_t * file, uint8_t * buf, int32_t nbytes);
+extern int32_t rtc_write(file_t * file, uint8_t * buf, int32_t nbytes);
+extern int32_t rtc_close(file_t * file);
 
 void rtc_test1();
 void rtc_test2();

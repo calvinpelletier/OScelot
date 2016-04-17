@@ -30,17 +30,17 @@
 
 
 // FUNCTION DECLARATIONS
-void i8259_init(void);
-void enable_irq(unsigned char irq_num);
-void disable_irq(unsigned char irq_num);
-void send_eoi(unsigned char irq_num);
+void i8259_init();
+void enable_irq(uint8_t  irq_num);
+void disable_irq(uint8_t  irq_num);
+void send_eoi(uint8_t  irq_num);
 
 
 // GLOBAL VARIABLES
 /* Interrupt masks to determine which interrupts
  * are enabled and disabled */
-static unsigned char master_mask; /* IRQs 7-0 */
-static unsigned char slave_mask; /* IRQs 15-8 */
+static uint8_t  master_mask; /* IRQs 7-0 */
+static uint8_t  slave_mask; /* IRQs 15-8 */
 
 
 /*
@@ -50,7 +50,7 @@ i8259_init
     OUTPUTS: none
     RETURNS: none
 */
-void i8259_init(void) {
+void i8259_init() {
     // mask all interrupts
     outb(0xFF, MASTER_DATA);
     outb(0xFF, SLAVE_DATA);
@@ -88,7 +88,7 @@ enable_irq
     OUTPUTS: none
     RETURNS: none
 */
-void enable_irq(unsigned char irq_num) {
+void enable_irq(uint8_t  irq_num) {
     // check if irq is on master or slave
     if (irq_num < 8) { // master
         if (master_mask & (0x01 << irq_num)) { // not already enabled
@@ -112,7 +112,7 @@ disable_irq
     OUTPUTS: none
     RETURNS: none
 */
-void disable_irq(unsigned char irq_num) {
+void disable_irq(uint8_t  irq_num) {
     // check if irq is on master or slave
     if (irq_num < 8) { // master
         if (!(master_mask & (0x01 << irq_num))) { // not already disabled
@@ -136,7 +136,7 @@ send_eoi
     OUTPUTS: none
     RETURNS: none
 */
-void send_eoi(unsigned char irq_num) {
+void send_eoi(uint8_t  irq_num) {
     if (irq_num < 8) { // master
         outb(EOI | irq_num, MASTER_CMD);
     } else { // slave

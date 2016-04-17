@@ -5,6 +5,6 @@
 
 #include "types.h"
 
-extern void idt_init(void);
+extern void idt_init();
 
 #endif

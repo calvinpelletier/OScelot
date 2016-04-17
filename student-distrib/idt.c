@@ -3,16 +3,16 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "int_wrapper.h"
-
+#include "syscalls_asm.h"
 
 // FUNCTION DECLARATIONS
-void idt_init(void);
+void idt_init();
 
 
 // GLOBAL FUNCTIONS
-void idt_init(void) {
+void idt_init() {
     idt_desc_t the_idt_desc;
-    
+
     the_idt_desc.dpl = 0;
     the_idt_desc.size = 1;
     the_idt_desc.reserved0 = 0;
@@ -112,10 +112,10 @@ void idt_init(void) {
     SET_IDT_ENTRY(kb, keyboardHandler_wrapper);
     idt[33] = kb;
 
-    // the_idt_desc.reserved3 = 1;
-    // the_idt_desc.dpl = 3;
-    //
-    // idt_desc_t sys = the_idt_desc;
-    // SET_IDT_ENTRY(sys, dispatch);
-    // idt[127] = sys;
+    the_idt_desc.reserved3 = 1;
+    the_idt_desc.dpl = 3;
+
+    idt_desc_t sys = the_idt_desc;
+    SET_IDT_ENTRY(sys, syscall_wrapper);
+    idt[128] = sys;
 }
