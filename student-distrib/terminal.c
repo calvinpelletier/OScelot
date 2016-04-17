@@ -320,18 +320,23 @@ void do_spec(uint8_t  scancode) {
             /* If we're not at the beginning of the buffer, we can delete */
             if (cur_buf_pos > 0) {
                 pos_t prev_pos = get_pos();
+                pos_t new_pos;
 
                 /* Update the buffer position */
                 cur_buf_pos--;
 
                 /* Check if the current buffer position is at the end of the line */
-                if (cur_buf_pos == (NUM_COLS - 1)) {
-                    prev_pos.pos_x = NUM_COLS - 1;
-                    prev_pos.pos_y--;
-                
+                if (cur_buf_pos == (NUM_COLS - SHELL_OFFSET - 1)) {
+                    new_pos.pos_x = NUM_COLS - 1;
+                    new_pos.pos_y = prev_pos.pos_y - 1;
+
+                    buf_start.pos_x = SHELL_OFFSET;
                     buf_start.pos_y--;
-                
+
                     t_buf_offset = 0;
+                } else {
+                  new_pos.pos_x = prev_pos.pos_x - 1;
+                  new_pos.pos_y = prev_pos.pos_y;
                 }
 
                 /* Repopulate the keyboard buffer with the appropriate characters */
@@ -344,7 +349,7 @@ void do_spec(uint8_t  scancode) {
                 putc(' ');
 
                 /* Change the position to the previous position */
-                set_pos(prev_pos.pos_x - 1, prev_pos.pos_y);
+                set_pos(new_pos.pos_x, new_pos.pos_y);
             }
 
             break;
