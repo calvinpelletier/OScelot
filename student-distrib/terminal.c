@@ -331,7 +331,7 @@ void do_spec(uint8_t  scancode) {
                     new_pos.pos_y = prev_pos.pos_y - 1;
 
                     buf_start.pos_x = SHELL_OFFSET;
-                    buf_start.pos_y--;
+                    buf_start.pos_y = new_pos.pos_y;
 
                     t_buf_offset = 0;
                 } else {
