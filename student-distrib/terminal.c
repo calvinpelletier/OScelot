@@ -306,7 +306,7 @@ void do_spec(uint8_t  scancode) {
             /* Append a newline to the keyboard buffer */
             keyboard_buffer[cur_buf_pos] = '\n';
 
-            _print_to_terminal(t_buf_offset);
+            putc('\n');
 
             /* Copy the keyboard buffer to the terminal buffer */
             strncpy(terminal_buffer, keyboard_buffer, BUFFER_SIZE);
