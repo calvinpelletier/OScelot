@@ -89,43 +89,39 @@ void keyboardHandler(void) {
      * halts the currently running program.
      */
     if (ctrl_active && scancode == C) {
-        uint8_t buf[7] = "391OS> ";
         clear();
         
         /* Reset buffer position to (0, 0) */
         set_pos(0, 0);
-        terminal_write(0, buf, SHELL_OFFSET);
-        set_cursor(0);
+        puts("391OS> ");
 
-        buf_start.pos_x = 0;
+        buf_start.pos_x = SHELL_OFFSET;
         buf_start.pos_y = 0;
 
-        /* Clear the whole terminal buffer */
+        /* Clear the whole keyboard buffer */
         buf_clear();
+        
         send_eoi(KEYBOARD_IRQ_NUM);
         enable_irq(KEYBOARD_IRQ_NUM);
 
         exception_halt();
-    }
 
     /* Handles the special key combo of CTRL-L which 
      * clears the screen except for the terminal buffer.
      */
-    if (ctrl_active && scancode == L) {
-        uint8_t buf[7] = "391OS> ";
+    } else if (ctrl_active && scancode == L) {
         clear();
         
         /* Reset buffer position to (0, 0) */
         set_pos(0, 0);
-        terminal_write(0, buf, SHELL_OFFSET);
-        set_cursor(0);
+        puts("391OS> ");
 
-        buf_start.pos_x = 0;
+        buf_start.pos_x = SHELL_OFFSET;
         buf_start.pos_y = 0;
 
-        /* Clear the whole terminal buffer */
+        /* Clear the whole keyboard buffer */
         buf_clear();
-
+        
     /* '\n' is 1 byte so the buffer should stop at 127 instead of 128 */
     } else if (cur_buf_pos < BUFFER_SIZE - 1) { 
         if (!caps_active && !shift_active) {
@@ -383,8 +379,9 @@ void buf_clear(void) {
         keyboard_buffer[i] = NULL;
     }
 
-    /* Reset buffer position */
+    /* Reset buffer position and buffer offset */
     cur_buf_pos = 0;
+    t_buf_offset = 0;
 }
 
 /*
