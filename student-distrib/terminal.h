@@ -33,6 +33,8 @@ void do_caps(uint8_t  scancode, pos_t cur_position);
 void do_shift(uint8_t  scancode, pos_t cur_position);
 void do_shiftcap(uint8_t  scancode, pos_t cur_position);
 void buf_clear();
+void t_buf_clear(void);
+
 
 extern int32_t terminal_write(file_t * file, uint8_t  * buf, int32_t nbytes);
 extern int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes);

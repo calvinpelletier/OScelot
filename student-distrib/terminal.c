@@ -310,11 +310,10 @@ void do_spec(uint8_t  scancode) {
 
             /* Copy the keyboard buffer to the terminal buffer */
             strncpy(terminal_buffer, keyboard_buffer, BUFFER_SIZE);
-            buf_clear();
 
             /* Set kbd_is_read flag so we know it can be read */
             kbd_is_read = 1;
-            t_buf_offset = 0;
+            buf_clear();
 
             break;
         case BACKSPACE:
@@ -377,6 +376,27 @@ void buf_clear(void) {
     /* Clear the whole keyboard buffer */
     for (i = 0; i < BUFFER_SIZE; i++) {
         keyboard_buffer[i] = NULL;
+    }
+
+    /* Reset buffer position and buffer offset */
+    cur_buf_pos = 0;
+    t_buf_offset = 0;
+}
+
+/*
+ * t_buf_clear
+ *   DESCRIPTION:  Helper function that clears terminal buffer.
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites the keyboard buffer
+ */
+void t_buf_clear(void) {
+    int32_t  i; /* Loop counter */
+
+    /* Clear the whole keyboard buffer */
+    for (i = 0; i < BUFFER_SIZE; i++) {
+        terminal_buffer[i] = NULL;
     }
 
     /* Reset buffer position and buffer offset */
@@ -450,7 +470,8 @@ int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes) {
         num_bytes++;
         i++;
     }
-
+    t_buf_clear();
+    
     /* Turn kbd_is_read flag to accept more interrupts */
     kbd_is_read = 0;
 
