@@ -178,6 +178,9 @@ int32_t execute (int8_t* command) {
     for (i = 0; command[i] != '\0' && command[i] != ' '; i++) {
         exename[i] = command[i];
     }
+    if (i >= MAX_FNAME_LEN)
+      return -1;
+
     exename[i] = '\0';
 
     while (command[i] == ' ') {

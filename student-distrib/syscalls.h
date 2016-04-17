@@ -53,6 +53,4 @@ extern int32_t vidmap (uint8_t** screenstart);
 extern int32_t set_handler (int32_t signum, void* handler_address);
 extern int32_t sigreturn (void);
 
-
-
 #endif
