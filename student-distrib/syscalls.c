@@ -175,11 +175,13 @@ int32_t execute (int8_t* command) {
         return -1;
     }
 
-    for (i = 0; command[i] != '\0' && command[i] != ' '; i++) {
-        exename[i] = command[i];
+    i = 0;
+    while (command[i] != '\0' && command[i] != ' ') {
+      if (i >= MAX_FNAME_LEN)
+        return -1;
+      exename[i] = command[i];
+      i++;
     }
-    if (i >= MAX_FNAME_LEN)
-      return -1;
 
     exename[i] = '\0';
 
@@ -188,7 +190,7 @@ int32_t execute (int8_t* command) {
     }
 
     args_size = 0;
-    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE + i);  j++) {
+    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE - i);  j++) {
         if (CPID < MAX_PROCESSES) {
             args[j - i] = command[j];
             args_size++;
