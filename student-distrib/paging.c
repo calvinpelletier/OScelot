@@ -11,6 +11,9 @@
 
 // FUNCTION DECLARATIONS
 int32_t paging_init();
+void new_page_directory(uint32_t PID);
+int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phys_addr, uint8_t size, uint8_t privilege);
+void swap_pages(uint32_t PID);
 
 // GLOBAL VARIABLES
 static uint32_t pageDir[7][1024] __attribute__((aligned(4096)));
@@ -149,12 +152,4 @@ swap_pages
 */
 void swap_pages(uint32_t PID) {
     loadPageDir(pageDir[PID]);
-}
-
-void hide_process(unsigned int PID) {
-    return;
-}
-
-void show_process(unsigned int PID) {
-    return;
 }

@@ -6,7 +6,45 @@
 
 static int screen_x;
 static int screen_y;
-static char* video_mem = (char *)VIDEO;
+char* video_mem = (char *)VIDEO;
+
+/*
+* set_video_context
+*   Inputs: -1 for visible memory, 0-2 for hidden memory (terminal 0-2)
+*   Return Value: none
+*	Function: Clears video memory
+*/
+void set_video_context(int context) {
+    if (context == ACTIVE_CONTEXT) {
+        video_mem = (char*)VIDEO;
+    } else if (context == 0) {
+        video_mem = (char*)VIDEO_0;
+    } else if (context == 1) {
+        video_mem = (char*)VIDEO_1;
+    } else if (context == 2) {
+        video_mem = (char*)VIDEO_2;
+    }
+}
+
+void save_video_context(int context) {
+    if (context == 0) {
+        memcpy(VIDEO_0, VIDEO, VIDEO_SIZE);
+    } else if (context == 1) {
+        memcpy(VIDEO_1, VIDEO, VIDEO_SIZE);
+    } else if (context == 2) {
+        memcpy(VIDEO_2, VIDEO, VIDEO_SIZE);
+    }
+}
+
+void load_video_context(int context) {
+    if (context == 0) {
+        memcpy(VIDEO, VIDEO_0, VIDEO_SIZE);
+    } else if (context == 1) {
+        memcpy(VIDEO, VIDEO_1, VIDEO_SIZE);
+    } else if (context == 2) {
+        memcpy(VIDEO, VIDEO_2, VIDEO_SIZE);
+    }
+}
 
 /*
 * void clear(void);
@@ -14,7 +52,6 @@ static char* video_mem = (char *)VIDEO;
 *   Return Value: none
 *	Function: Clears video memory
 */
-
 void
 clear(void)
 {
@@ -196,8 +233,8 @@ putc(uint8_t c)
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        
-        /* Check if x is at the end of the line, if yes, go to the next row. 
+
+        /* Check if x is at the end of the line, if yes, go to the next row.
          * This allows for text wrapping.
          */
         if (screen_x == NUM_COLS) {
@@ -597,7 +634,7 @@ void scroll(void) {
 
     /* If the y position of the text is in the last row, shift the data up */
 	if (screen_y >= NUM_ROWS) {
-		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS), 
+		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS),
 			     2 * (NUM_ROWS - 1) * NUM_COLS);
 
         screen_y--;
@@ -669,7 +706,7 @@ pos_t get_pos(void) {
 void set_cursor(int x) {
 	int new_cursor;
 	pos_t cur_cursor;
-	
+
 	/* Get the current cursor position and update the cursor with the offset */
 	cur_cursor = get_pos();
 	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);

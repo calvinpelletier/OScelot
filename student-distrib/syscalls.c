@@ -22,6 +22,7 @@ uint8_t MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 uint32_t CPID = 0;
 pcb_t processes[MAX_PROCESSES + 1];
 uint32_t active_processes[NUM_TERMINALS]; // active process for each terminal
+int current_terminal = 0;
 
 // File Ops Tables
 int32_t no_read (file_t * file, uint8_t * buf, int32_t nbytes) {
@@ -113,6 +114,13 @@ void task_switch() {
         return;
     }
 
+    // adjust video memory
+    if (processes[CPID].terminal == current_terminal) {
+        set_video_context(ACTIVE_CONTEXT);
+    } else {
+        set_video_context(processes[CPID].terminal);
+    }
+
     // adjust PCB
         int old_esp, old_ebp;
     __asm__("movl %%esp, %0; movl %%ebp, %1"
@@ -146,27 +154,29 @@ void task_switch() {
  *   SIDE EFFECTS: writes to video memory
  */
 void terminal_switch(int new_terminal) {
-    // find current terminal
-    unsigned char old_terminal = 0;
-    while (active_processes[old_terminal] != CPID) {
-        old_terminal++;
+    if (new_terminal == current_terminal) {
+        return;
     }
 
-    // remap video memory for now hidden/visible processes
-    int i;
-    for (i = 1; i <= MAX_PROCESSES; i++) {
-        if (processes[i].terminal == old_terminal) {
-            hide_process(i);
-        } else if (processes[i].terminal == new_terminal) {
-            show_process(i);
-        }
-    }
+    int old_terminal = current_terminal;
+    current_terminal = new_terminal;
 
     // check if we need to load the base shell
-    if (active_processes[new_terminal] == -1) {
-        execute_base_shell(new_terminal);
+    if (active_processes[current_terminal] == -1) {
+        save_video_context(old_terminal);
+        set_video_context(ACTIVE_CONTEXT);
+        clear();
+        execute_base_shell(current_terminal);
+        return;
     }
-    return;
+
+    save_video_context(old_terminal);
+    load_video_context(current_terminal);
+    if (processes[CPID].terminal == current_terminal) {
+        set_video_context(ACTIVE_CONTEXT);
+    } else {
+        set_video_context(processes[CPID].terminal);
+    }
 }
 
 /*
