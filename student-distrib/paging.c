@@ -88,7 +88,7 @@ void new_page_directory(uint32_t PID) {
     uint32_t phys_addr = FOUR_MB * (PID + 1);
     uint32_t dir_entry = PROGRAM_IMAGE / FOUR_MB;
 
-    pageDir[PID][dir_entry] = phys_addr | 0x00000087; // 4MB page for program image is set to user, write-enabled, and present 
+    pageDir[PID][dir_entry] = phys_addr | 0x00000087; // 4MB page for program image is set to user, write-enabled, and present
 
     // enable paging
     loadPageDir(pageDir[PID]);
@@ -117,7 +117,7 @@ int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phy
     else {  // 4 MB pages
         if (privilege == 3)
             pageDir[PID][pde] = (phys_addr & ~0x3FFFFF) | 0x00000087;  // sets flags to user-level, write-enabled, and present
-        else 
+        else
             pageDir[PID][pde] = (phys_addr & ~0x3FFFFF) | 0x00000083;  // sets flags to kernel, write-enabled, and present
     }
 
@@ -128,4 +128,12 @@ int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phy
 
 void swap_pages(uint32_t PID) {
     loadPageDir(pageDir[PID]);
+}
+
+void hide_process(unsigned int PID) {
+
+}
+
+void show_process(unsigned int PID) {
+    
 }

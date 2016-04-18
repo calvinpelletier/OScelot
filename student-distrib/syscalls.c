@@ -134,7 +134,7 @@ void task_switch() {
                   :
                   : "r"(processes[CPID].ebp_switch), "r"(processes[CPID].esp_switch)
               );
-    // the implied return here should switch to new context
+    return; // should switch to new context
 }
 
 /*
@@ -145,11 +145,26 @@ void task_switch() {
  *   RETURN VALUE: none
  *   SIDE EFFECTS: writes to video memory
  */
-void terminal_switch(int num) {
+void terminal_switch(int new_terminal) {
+    // find current terminal
+    unsigned char old_terminal = 0;
+    while (active_processes[old_terminal] != CPID) {
+        old_terminal++;
+    }
+
+    // remap video memory for now hidden/visible processes
+    int i;
+    for (i = 1; i++; i <= MAX_PROCESSES) {
+        if (processes[i].terminal == old_terminal) {
+            hide_process(i);
+        } else if (processes[i].terminal == new_terminal) {
+            show_process(i);
+        }
+    }
+
     // check if we need to load the base shell
-    if (active_processes[num] == -1) {
-        execute_base_shell(num);
-        return;
+    if (active_processes[new_terminal] == -1) {
+        execute_base_shell(new_terminal);
     }
     return;
 }
