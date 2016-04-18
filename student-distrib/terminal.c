@@ -18,7 +18,9 @@ static int8_t keyboard_buffer[BUFFER_SIZE];  // Keyboard buffer
 static int8_t terminal_buffer[BUFFER_SIZE];  // System call terminal buffer
 static uint32_t cur_buf_pos = 0;             // Current buffer position
 static pos_t buf_start;                      // pos_t struct to hold the coordinates of the buffer
-
+static int shell_offset = 0;                     /* Keeps track of how much user has written to beginning of line in terminal
+                                              * for handling key presses afterward.
+                                              */
 /* Local functions by group OScelot */
 static void _do_key_press(uint8_t  scancode, uint8_t  chars[], pos_t cur_position);
 static void _update_buf_pos(pos_t cur_position);
@@ -95,7 +97,7 @@ void keyboardHandler(void) {
         set_pos(0, 0);
         puts("391OS> ");
 
-        buf_start.pos_x = SHELL_OFFSET;
+        buf_start.pos_x = SHELL_PROMPT_OFFSET;
         buf_start.pos_y = 0;
 
         /* Clear the whole keyboard buffer */
@@ -116,7 +118,7 @@ void keyboardHandler(void) {
         set_pos(0, 0);
         puts("391OS> ");
 
-        buf_start.pos_x = SHELL_OFFSET;
+        buf_start.pos_x = SHELL_PROMPT_OFFSET;
         buf_start.pos_y = 0;
 
         /* Clear the whole keyboard buffer */
@@ -326,11 +328,11 @@ void do_spec(uint8_t  scancode) {
                 cur_buf_pos--;
 
                 /* Check if the current buffer position is at the end of the line */
-                if (cur_buf_pos == (NUM_COLS - SHELL_OFFSET - 1)) {
+                if (cur_buf_pos == (NUM_COLS - shell_offset- 1)) {
                     new_pos.pos_x = NUM_COLS - 1;
                     new_pos.pos_y = prev_pos.pos_y - 1;
 
-                    buf_start.pos_x = SHELL_OFFSET;
+                    buf_start.pos_x = shell_offset;
                     buf_start.pos_y = new_pos.pos_y;
 
                     t_buf_offset = 0;
@@ -446,7 +448,7 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     } else {
         return -1;
     }
-
+    shell_offset = num_bytes;
     return num_bytes++;
 }
 
@@ -542,19 +544,19 @@ static void _update_buf_pos(pos_t cur_position) {
     if (cur_position.pos_x >= NUM_COLS - 1) {
         buf_start.pos_x = 0;
         buf_start.pos_y++;
-        
+
         set_pos(buf_start.pos_x, buf_start.pos_y);
-        
+
         /* Depending on the current size of the buffer, 
          * we should copy from a different offset from
          * the beginning of the terminal buffer.
          */
-        if (cur_buf_pos >= NUM_COLS * 3 - SHELL_OFFSET) {
-            t_buf_offset = NUM_COLS * 3 - SHELL_OFFSET;
-        } else if (cur_buf_pos >= NUM_COLS * 2 - SHELL_OFFSET) {
-            t_buf_offset = NUM_COLS * 2 - SHELL_OFFSET;
-        } else if (cur_buf_pos >= NUM_COLS - SHELL_OFFSET) {
-            t_buf_offset = NUM_COLS - SHELL_OFFSET;
+        if (cur_buf_pos >= NUM_COLS * 3 - shell_offset) {
+            t_buf_offset = NUM_COLS * 3 - shell_offset;
+        } else if (cur_buf_pos >= NUM_COLS * 2 - shell_offset) {
+            t_buf_offset = NUM_COLS * 2 - shell_offset;
+        } else if (cur_buf_pos >= NUM_COLS - shell_offset) {
+            t_buf_offset = NUM_COLS - shell_offset;
         }
             
     } else {
