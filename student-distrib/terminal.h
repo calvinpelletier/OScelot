@@ -22,6 +22,10 @@
 #define C 			0x2E
 #define LEFT_ARROW  0x4B
 #define RIGHT_ARROW 0x4D
+#define ALT         0x38
+#define F1          0x3B
+#define F2          0x3C
+#define F3          0x3D
 
 #define SHELL_PROMPT_OFFSET 7
 

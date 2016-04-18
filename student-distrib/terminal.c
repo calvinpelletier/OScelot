@@ -9,7 +9,8 @@
 static uint8_t caps_active = 0;              // Booleans for special keys
 static uint8_t ctrl_active = 0;
 static uint8_t shift_active = 0;
-static uint8_t t_buf_offset = 0;             /* Offset to determine from where in the terminal 
+static uint8_t alt_active = 0;
+static uint8_t t_buf_offset = 0;             /* Offset to determine from where in the terminal
                                               * to start printing from
                                               */
 
@@ -70,29 +71,54 @@ void keyboardHandler(void) {
         case LEFT_SHIFT:
             shift_active = 1;
             break;
+        case ALT:
+            alt_active = 1;
+            break;
         default:
             break;
     }
 
-    /* Since CTRL and SHIFT are not toggled keys, we need to turn them off 
+    /* Since CTRL and SHIFT are not toggled keys, we need to turn them off
      * if they are released. If they are held down, we need to use a different
      * character array.
      */
     if (scancode == key_released_code) {
         if (ctrl_active && ((scancode & ~(KEYBOARD_MASK)) == CTRL)) {
             ctrl_active = 0;
-        } else if (shift_active && ((scancode & ~(KEYBOARD_MASK)) == LEFT_SHIFT || 
+        } else if (shift_active && ((scancode & ~(KEYBOARD_MASK)) == LEFT_SHIFT ||
                    (scancode & ~(KEYBOARD_MASK)) == RIGHT_SHIFT)) {
             shift_active = 0;
+        } else if (alt_active && ((scancode & ~(KEYBOARD_MASK)) == ALT)) {
+            alt_active = 0;
         }
     }
 
-    /* Handles the special key combo of CTRL-C which 
+    // handles special key combo of ALT-F1/F2/F3
+    if (alt_active && scancode == F1) {
+        cli();
+        send_eoi(KEYBOARD_IRQ_NUM);
+        enable_irq(KEYBOARD_IRQ_NUM);
+        terminal_switch(0);
+    }
+    if (alt_active && scancode == F2) {
+        cli();
+        send_eoi(KEYBOARD_IRQ_NUM);
+        enable_irq(KEYBOARD_IRQ_NUM);
+        terminal_switch(1);
+    }
+    if (alt_active && scancode == F3) {
+        cli();
+        send_eoi(KEYBOARD_IRQ_NUM);
+        enable_irq(KEYBOARD_IRQ_NUM);
+        terminal_switch(2);
+    }
+
+    /* Handles the special key combo of CTRL-C which
      * halts the currently running program.
      */
     if (ctrl_active && scancode == C) {
         clear();
-        
+
         /* Reset buffer position to (0, 0) */
         set_pos(0, 0);
         puts("391OS> ");
@@ -102,18 +128,18 @@ void keyboardHandler(void) {
 
         /* Clear the whole keyboard buffer */
         buf_clear();
-        
+
         send_eoi(KEYBOARD_IRQ_NUM);
         enable_irq(KEYBOARD_IRQ_NUM);
 
         exception_halt();
 
-    /* Handles the special key combo of CTRL-L which 
+    /* Handles the special key combo of CTRL-L which
      * clears the screen except for the terminal buffer.
      */
     } else if (ctrl_active && scancode == L) {
         clear();
-        
+
         /* Reset buffer position to (0, 0) */
         set_pos(0, 0);
         puts("391OS> ");
@@ -123,11 +149,11 @@ void keyboardHandler(void) {
 
         /* Clear the whole keyboard buffer */
         buf_clear();
-        
+
     /* '\n' is 1 byte so the buffer should stop at 127 instead of 128 */
-    } else if (cur_buf_pos < BUFFER_SIZE - 1) { 
+    } else if (cur_buf_pos < BUFFER_SIZE - 1) {
         if (!caps_active && !shift_active) {
-            do_self(scancode, cur_position);         
+            do_self(scancode, cur_position);
         } else if (caps_active && shift_active) {
             do_shiftcap(scancode, cur_position);
         } else if (shift_active) {
@@ -155,7 +181,7 @@ void keyboardHandler(void) {
 
 /*
  * do_self
- *   DESCRIPTION:  Helper function that handles regular keys (lowercase 
+ *   DESCRIPTION:  Helper function that handles regular keys (lowercase
  *                 characters).
  *   INPUTS:       scancode     - scancode of key that has been pressed
  *                 cur_position - current position on the screen
@@ -166,13 +192,13 @@ void keyboardHandler(void) {
 void do_self(uint8_t  scancode, pos_t cur_position) {
     /* Character array using scancode set 1 */
     uint8_t  self_chars[64] = {
-        0, 0, '1', '2', '3', '4', '5', '6', 
-        '7', '8', '9', '0', '-', '=', 0, 0, 
-        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 
-        'o', 'p','[', ']', 0, 0, 'a', 's', 
+        0, 0, '1', '2', '3', '4', '5', '6',
+        '7', '8', '9', '0', '-', '=', 0, 0,
+        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',
+        'o', 'p','[', ']', 0, 0, 'a', 's',
         'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',
-        '\'', '`', 0, '\\', 'z', 'x', 'c', 'v', 
-        'b', 'n', 'm', ',', '.', '/', 0, 0, 
+        '\'', '`', 0, '\\', 'z', 'x', 'c', 'v',
+        'b', 'n', 'm', ',', '.', '/', 0, 0,
         0,' ',0, 0, 0, 0, 0, 0
     };
 
@@ -200,13 +226,13 @@ void do_self(uint8_t  scancode, pos_t cur_position) {
 void do_caps(uint8_t  scancode, pos_t cur_position) {
     /* CAPS character array using scancode set 1 */
     uint8_t  caps_chars[64] = {
-        0, 0, '1', '2', '3', '4', '5', '6', 
-        '7', '8', '9', '0', '-', '=', 0, 0, 
-        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 
-        'O', 'P','[', ']', 0, 0, 'A', 'S', 
+        0, 0, '1', '2', '3', '4', '5', '6',
+        '7', '8', '9', '0', '-', '=', 0, 0,
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
+        'O', 'P','[', ']', 0, 0, 'A', 'S',
         'D', 'F', 'G', 'H', 'J', 'K', 'L', ';',
-        '\'', '`', 0, '\\', 'Z', 'X', 'C', 'V', 
-        'B', 'N', 'M', ',', '.', '/', 0, 0, 
+        '\'', '`', 0, '\\', 'Z', 'X', 'C', 'V',
+        'B', 'N', 'M', ',', '.', '/', 0, 0,
         0,' ',0, 0, 0, 0, 0, 0
     };
 
@@ -234,13 +260,13 @@ void do_caps(uint8_t  scancode, pos_t cur_position) {
 void do_shift(uint8_t  scancode, pos_t cur_position) {
     /* SHIFT character array using scancode set 1 */
     uint8_t  shift_chars[64] = {
-        0, 0, '!', '@', '#', '$', '%', '^', 
-        '&', '*', '(', ')', '_', '+', 0, 0, 
-        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 
-        'O', 'P','{', '}', 0, 0,  'A', 'S', 
+        0, 0, '!', '@', '#', '$', '%', '^',
+        '&', '*', '(', ')', '_', '+', 0, 0,
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
+        'O', 'P','{', '}', 0, 0,  'A', 'S',
         'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',
-        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V', 
-        'B', 'N', 'M', '<', '>', '?', 0, 0, 
+        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V',
+        'B', 'N', 'M', '<', '>', '?', 0, 0,
         0, ' ', 0, 0, 0, 0, 0, 0
     };
 
@@ -268,13 +294,13 @@ void do_shift(uint8_t  scancode, pos_t cur_position) {
 void do_shiftcap(uint8_t  scancode, pos_t cur_position) {
     /* SHIFT-CAP character array using scancode set 1 */
     uint8_t  combo_chars[64] = {
-        0, 0, '!', '@', '#', '$', '%', '^', 
-        '&', '*', '(', ')', '_', '+', 0, 0, 
-        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 
-        'o', 'p','{', '}', 0, 0, 'a', 's', 
+        0, 0, '!', '@', '#', '$', '%', '^',
+        '&', '*', '(', ')', '_', '+', 0, 0,
+        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',
+        'o', 'p','{', '}', 0, 0, 'a', 's',
         'd', 'f', 'g', 'h', 'j', 'k', 'l', ':',
-        '\"', '~', 0, '|', 'z', 'x', 'c', 'v', 
-        'b', 'n', 'm', '<', '>', '?', 0, 0, 
+        '\"', '~', 0, '|', 'z', 'x', 'c', 'v',
+        'b', 'n', 'm', '<', '>', '?', 0, 0,
         0,' ',0, 0, 0, 0, 0, 0
     };
 
@@ -301,7 +327,7 @@ void do_shiftcap(uint8_t  scancode, pos_t cur_position) {
  */
 void do_spec(uint8_t  scancode) {
     int32_t  i;  /* Loop counter */
-    
+
     /* Depending on the scancode, do the special action for each key */
     switch (scancode) {
         case ENTER:
@@ -366,7 +392,7 @@ void do_spec(uint8_t  scancode) {
             break;
         default:
             break;
-    } 
+    }
 }
 
 /*
@@ -478,7 +504,7 @@ int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes) {
         i++;
     }
     t_buf_clear();
-    
+
     /* Turn kbd_is_read flag to accept more interrupts */
     kbd_is_read = 0;
 
@@ -547,7 +573,7 @@ static void _update_buf_pos(pos_t cur_position) {
 
         set_pos(buf_start.pos_x, buf_start.pos_y);
 
-        /* Depending on the current size of the buffer, 
+        /* Depending on the current size of the buffer,
          * we should copy from a different offset from
          * the beginning of the terminal buffer.
          */
@@ -558,7 +584,7 @@ static void _update_buf_pos(pos_t cur_position) {
         } else if (cur_buf_pos >= NUM_COLS - shell_offset) {
             t_buf_offset = NUM_COLS - shell_offset;
         }
-            
+
     } else {
         set_pos(cur_position.pos_x + 1, cur_position.pos_y);
     }
@@ -566,7 +592,7 @@ static void _update_buf_pos(pos_t cur_position) {
 
 /*
  * _print_to_terminal
- *   DESCRIPTION:  Helper function that to print to the terminal buffer 
+ *   DESCRIPTION:  Helper function that to print to the terminal buffer
  *                 to the screen.
  *   INPUTS:       t_buf_offset - current position in the terminal buffer
  *   OUTPUTS:      none
@@ -577,7 +603,7 @@ static void _print_to_terminal(uint8_t t_buf_offset) {
     /* Update the position in the terminal so we don't overwrite anything */
     set_pos(buf_start.pos_x, buf_start.pos_y);
 
-    /* Print to the screen with the t_buf_offset offset so we 
+    /* Print to the screen with the t_buf_offset offset so we
      * don't copy multiple lines when we're calling scroll().
      */
     puts(keyboard_buffer + t_buf_offset);

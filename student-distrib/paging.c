@@ -138,7 +138,6 @@ int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phy
 
     loadPageDir(pageDir[PID]);
     return 0;
-
 }
 
 /*
