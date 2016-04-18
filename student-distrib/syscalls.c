@@ -375,7 +375,7 @@ int32_t execute (int8_t* command) {
     }
 
     args_size = 0;
-    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE - i);  j++) {
+    for (j = i; command[j] != '\0' && j < BUFFER_SIZE - 1;  j++) {
         if (CPID < MAX_PROCESSES) {
             args[j - i] = command[j];
             args_size++;

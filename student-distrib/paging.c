@@ -69,6 +69,13 @@ int32_t paging_init() {
     return 0;
 }
 
+/*
+new_page_directory
+    DESCRIPTION: creates page directory for a process
+    INPUTS: process ID
+    OUTPUTS: none
+    RETURNS: none
+*/
 void new_page_directory(uint32_t PID) {
     // initialize pageDir[PID]
     int32_t i;
@@ -97,6 +104,13 @@ void new_page_directory(uint32_t PID) {
 
 }
 
+/*
+new_page_directory_entry
+    DESCRIPTION: maps a new page entry
+    INPUTS: process ID, virtual address, physical address, size, privilege
+    OUTPUTS: none
+    RETURNS: 0 for success, -1 for fail
+*/
 int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phys_addr, uint8_t size, uint8_t privilege) {
     uint32_t pde = virt_addr >> 22;
     uint32_t pte = (virt_addr >> 12) & 0x3FF;
@@ -126,6 +140,13 @@ int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phy
 
 }
 
+/*
+swap_pages
+    DESCRIPTION: swaps page directory at CPU level
+    INPUTS: process ID
+    OUTPUTS: none
+    RETURNS: none
+*/
 void swap_pages(uint32_t PID) {
     loadPageDir(pageDir[PID]);
 }
