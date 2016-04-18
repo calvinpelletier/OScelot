@@ -14,12 +14,14 @@
 #define VIRT_ADDR_BYTE_2          25         /* Bytes 24-27 of the EXE hold virtual address of first */
 #define VIRT_ADDR_BYTE_3          26         /* instruction to be executed.                          */
 #define VIRT_ADDR_BYTE_4          27
+#define NUM_TERMINALS             3
 
 uint8_t MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 
 // GLOBAL VARIABLES
 uint32_t CPID = 0;
 pcb_t processes[MAX_PROCESSES + 1];
+uint32_t active_processes[NUM_TERMINALS]; // active process for each terminal
 
 // File Ops Tables
 int32_t no_read (file_t * file, uint8_t * buf, int32_t nbytes) {
@@ -38,6 +40,8 @@ fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
 // FUNCTION DECLARATIONS
 void syscalls_init();
+void task_switch();
+void terminal_switch(int num);
 int32_t halt (uint8_t status);
 int32_t execute (int8_t* command);
 int32_t read (int32_t fd, void* buf, int32_t nbytes);
@@ -74,6 +78,30 @@ void syscalls_init() {
     processes[CPID].running = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
+}
+
+/*
+ * task_switch
+ *   DESCRIPTION:  switches the running process to a different active task
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: context switch
+ */
+void task_switch() {
+    return;
+}
+
+/*
+ * terminal_switch
+ *   DESCRIPTION:  switches to a new terminal
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: writes to video memory
+ */
+void terminal_switch(int num) {
+    return;
 }
 
 /*

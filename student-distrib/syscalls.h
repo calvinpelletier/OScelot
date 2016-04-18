@@ -26,17 +26,21 @@
 
 typedef struct {
 	file_t fd_array[MAX_FD]; // File descriptor array
-	uint32_t PID;            
-	uint32_t PPID;           
+	uint32_t PID;
+	uint32_t PPID;
 	int32_t esp;
 	int32_t ebp;
-	uint8_t running; // 0 for no, 1 for yes
 	int32_t tss_esp0;
     int8_t args[BUFFER_SIZE];
     uint32_t args_size;
+	uint8_t running; // 0 for no, 1 for yes
+	uint8_t active;
+	uint8_t terminal; // 0-2
 } pcb_t;
 
 extern void syscalls_init();
+extern void task_switch();
+extern void terminal_switch(int num);
 extern void kernel_to_user(uint32_t user_entry);
 extern void haltasm(int32_t ebp, int32_t esp, uint32_t PPID);
 extern int32_t exception_halt ();
