@@ -30,10 +30,10 @@ int32_t no_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     return -1;
 }
 
-fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
-fileops_t stdin_jumptable = {terminal_open, terminal_read, no_write, terminal_close};
-fileops_t stdout_jumptable = {terminal_open, no_read, terminal_write, terminal_close};
-fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
+static fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
+static fileops_t stdin_jumptable = {terminal_open, terminal_read, no_write, terminal_close};
+static fileops_t stdout_jumptable = {terminal_open, no_read, terminal_write, terminal_close};
+static fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
 
 // FUNCTION DECLARATIONS

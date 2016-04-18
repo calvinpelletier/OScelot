@@ -83,14 +83,14 @@ read_dentry_by_name
 */
 int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry) {
     int32_t len = 0, len2 = 0;
-    while (len <= MAX_FNAME_LEN && fname[len]) {
+    while (len <= MAX_FNAME_LEN && fname[len] != '\0') {
         len++;
     }
 
 
     int32_t i = 0;
     while (i < bootblock.n_dentries && i < MAX_DENTRIES) {
-        while (len2 <= MAX_FNAME_LEN && bootblock.dentries[i].name[len2]) {
+        while (len2 <= MAX_FNAME_LEN && bootblock.dentries[i].name[len2] != '\0') {
             len2++;
         }
         
@@ -118,7 +118,7 @@ read_dentry_by_index
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 	// Return error if invalid index
-	if (index >= MAX_DENTRIES || index >= bootblock.n_dentries)
+	if (index >= MAX_DENTRIES || index >= bootblock.n_dentries || index <0)
 		return -1;
 
     *dentry = bootblock.dentries[index];
@@ -288,13 +288,21 @@ dir_read
     RETURNS: directory name length on success, 0 for fail
 */
 int32_t dir_read (file_t * file, uint8_t * buf, int32_t nbytes) {
-	if (dirs_read >= bootblock.n_dentries)
+	int len = 0;
+    if (dirs_read >= bootblock.n_dentries)
 		return 0;
 
-	strncpy( (int8_t *) buf, bootblock.dentries[dirs_read].name, MAX_FNAME_LEN); // copy full 32 bytes of filename into buf
+    while (len <= MAX_FNAME_LEN && bootblock.dentries[dirs_read].name[len] != '\0') {
+            len++;
+    }
+	strncpy( (int8_t *) buf, bootblock.dentries[dirs_read].name, len); // copy full 32 bytes of filename into buf
+    if (len < MAX_FNAME_LEN){       // make it so if filename is less than max, we terminate it just past its length and return len+1
+        buf[len] = '\0';            // makes cat . look a lot better
+        len++;
+    }
 	dirs_read++;
 
-	return MAX_FNAME_LEN;
+	return len;
 }
 
 // TESTING FUNCTIONS
