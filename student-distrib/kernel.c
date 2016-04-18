@@ -184,7 +184,7 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
-
+	clear();
 	/* Execute the first program (`shell') ... */
 	if (execute("shell")) {
 		printf("ERROR: shell failed to run.\n");
