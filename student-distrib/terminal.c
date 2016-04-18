@@ -330,7 +330,7 @@ void do_spec(uint8_t  scancode) {
                 cur_buf_pos--;
 
                 /* Check if the current buffer position is at the end of the line */
-                if ((cur_buf_pos + shell_offset + 1) % NUM_COLS == 0) {
+                if (cur_buf_pos == NUM_COLS - shell_offset - 1) {
                     new_pos.pos_x = NUM_COLS - 1;
                     new_pos.pos_y = prev_pos.pos_y - 1;
 
