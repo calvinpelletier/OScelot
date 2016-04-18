@@ -394,12 +394,12 @@ int32_t close (int32_t fd) {
  *   SIDE EFFECTS: Overwrites PCB structs
  */
 int32_t getargs (int8_t* buf, int32_t nbytes) {
-    if (buf == NULL) {
+    if (buf == NULL || processes[CPID].args_size >= (nbytes-1)) {
         return -1;
     }
 
     memset(buf, 0, nbytes);
-    memcpy(buf, processes[CPID].args, nbytes);
+    memcpy(buf, processes[CPID].args, processes[CPID].args_size);
     buf[processes[CPID].args_size] = '\0';
 
     return 0;
