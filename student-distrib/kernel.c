@@ -184,7 +184,11 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
+	
+	/* Clear the screen and set screen position for cleanliness */
 	clear();
+	set_pos(0, 0);
+
 	/* Execute the first program (`shell') ... */
 	if (execute("shell")) {
 		printf("ERROR: shell failed to run.\n");
