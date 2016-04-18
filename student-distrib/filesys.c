@@ -82,6 +82,9 @@ read_dentry_by_name
     RETURNS: 0 for success, -1 for fail
 */
 int32_t read_dentry_by_name(const int8_t* fname, dentry_t* dentry) {
+
+    if (!fname || !dentry)
+        return -1;
     int32_t len = 0, len2 = 0;
     while (len <= MAX_FNAME_LEN && fname[len] != '\0') {
         len++;
@@ -118,7 +121,7 @@ read_dentry_by_index
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry) {
 
 	// Return error if invalid index
-	if (index >= MAX_DENTRIES || index >= bootblock.n_dentries || index <0)
+	if (index >= MAX_DENTRIES || index >= bootblock.n_dentries || index <0 || !dentry)
 		return -1;
 
     *dentry = bootblock.dentries[index];
@@ -142,6 +145,8 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 	uint8_t * curr_data_loc = (uint8_t *)(FS_DATA_START + fs_data_block*FS_BLOCK_SIZE + block_offset); // ptr to current byte to be read
 
 	// Error checking
+    if (!buf)
+        return -1; // NULL
     if (inode >= bootblock.n_inodes)
     	return -1; 	// inode out of range
     if (offset >= inodes[inode].length)
@@ -190,8 +195,8 @@ int32_t fs_copy(const int8_t* fname, uint8_t * mem_location) {
 	int32_t bytes_read;
 	uint8_t buf[bootblock.n_datablocks*FS_BLOCK_SIZE]; //maximum file size - if 1 file used all available datablocks
 
-	if (!fname)
-		return -1; // invalid file name
+	if (!fname || !mem_location)
+		return -1; // invalid file name or invalid mem_location
 
 	// get dentry for filename
 	if (read_dentry_by_name(fname, &file_dentry))
@@ -232,6 +237,8 @@ fs_close
 */
 
 int32_t fs_close(file_t * file) {
+    if (!file)
+        return -1; // NULL
 	if (file->filetype == 1)
 		dirs_read = 0;
 	return 0;
@@ -246,6 +253,8 @@ fs_read
     RETURNS: number of bytes read on success, -1 for fail
 */
 int32_t fs_read (file_t* file, uint8_t * buf, int32_t nbytes) {
+    if (!file || !buf)
+        return -1; // NULL
 	if (file->filetype == 2) // regular file
 		return file_read (file, buf, nbytes);
 	else if (file->filetype == 1) // dir

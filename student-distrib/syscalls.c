@@ -301,7 +301,7 @@ int32_t execute (int8_t* command) {
  *   SIDE EFFECTS: Can overwrite different buffers depending on which jump table is used
  */
 int32_t read (int32_t fd, void* buf, int32_t nbytes) {
-    if (fd < 0 || fd > MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
+    if (fd < 0 || fd >= MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
 
     return processes[CPID].fd_array[fd].jumptable->read(&processes[CPID].fd_array[fd], buf, nbytes);
@@ -318,7 +318,7 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes) {
  *   SIDE EFFECTS: Can overwrite different buffers depending on which jump table is used
  */
 int32_t write (int32_t fd, void* buf, int32_t nbytes) {
-    if (fd < 0 || fd > MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
+    if (fd < 0 || fd >= MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
 
     return processes[CPID].fd_array[fd].jumptable->write(&processes[CPID].fd_array[fd], buf, nbytes);
@@ -336,6 +336,9 @@ int32_t write (int32_t fd, void* buf, int32_t nbytes) {
 int32_t open (const int8_t* filename) {
     dentry_t dentry;
     int32_t i;
+
+    if (!filename)
+        return -1; // NULL
 
     if (read_dentry_by_name(filename, &dentry))
         return -1;
@@ -377,7 +380,7 @@ int32_t open (const int8_t* filename) {
 int32_t close (int32_t fd) {
 
     /* The user should not be able to close FD 0 or 1 */
-    if (fd < 2 || fd > (MAX_FD - 1) || processes[CPID].fd_array[fd].flags.in_use == 0)
+    if (fd < 2 || fd >= MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
 
     processes[CPID].fd_array[fd].flags.in_use = 0;
