@@ -65,31 +65,74 @@ void syscalls_init() {
     int32_t i;
 
     /* Initialize the PCB with the pertinent information */
-    if (i == 0 || i == 1) {
-        processes[CPID].fd_array[i].flags.in_use = 1;
-    } else {
-        processes[CPID].fd_array[i].flags.in_use = 0;
+    for (i = 0; i < MAX_FD; i++) {
+        if (i == 0 || i == 1) {
+            processes[CPID].fd_array[i].flags.in_use = 1;
+        } else {
+            processes[CPID].fd_array[i].flags.in_use = 0;
+        }
     }
     processes[CPID].fd_array[0].jumptable = &stdin_jumptable;
     processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
-
     processes[CPID].PID = CPID;
     processes[CPID].PPID = 0;
     processes[CPID].running = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
+    processes[CPID].terminal = 0; // so that the first shell is in terminal 0
+
+    // multitasking stuff
+    for (i = 0; i < NUM_TERMINALS; i++) {
+        active_processes[i] = -1;
+    }
 }
 
 /*
  * task_switch
- *   DESCRIPTION:  switches the running process to a different active task
+ *   DESCRIPTION:  switches the running task to a different active process
  *   INPUTS:       none
  *   OUTPUTS:      none
  *   RETURN VALUE: none
  *   SIDE EFFECTS: context switch
  */
 void task_switch() {
-    return;
+    // find next active process
+    int old_CPID = CPID;
+    int i = 0;
+    while (old_CPID != active_processes[i]) {
+        i++;
+    }
+    do {
+        i++;
+    } (active_processes[i % NUM_TERMINALS] != -1);
+    CPID = active_processes[i % NUM_TERMINALS];
+
+    // return if there are no other active processes
+    if (CPID == old_CPID) {
+        return;
+    }
+
+    // adjust PCB
+        int old_esp, old_ebp;
+    __asm__("movl %%esp, %0; movl %%ebp, %1"
+             :"=g"(old_esp), "=g"(old_ebp) /* outputs */
+            );
+    processes[old_CPID].esp_switch = old_esp;
+    processes[old_CPID].ebp_switch = old_ebp;
+
+    /* Write to TSS SS0 and ESP0 fields with new kernel stack info */
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
+
+    // switch page directories
+    swap_pages(CPID);
+
+    // load new esp/ebp and continue executing from new context
+    asm volatile("movl %0, %%ebp;\
+                  movl %1, %%esp"
+                  :
+                  : "r"(processes[CPID].ebp_switch), "r"(processes[CPID].esp_switch)
+              );
 }
 
 /*
@@ -121,9 +164,12 @@ int32_t halt (uint8_t status) {
         close(i);
     }
 
-    /* Set the current process running flag to 0 and update CPID field */
+    /* update process info */
     processes[CPID].running = 0;
+    processes[CPID].active = 0;
     CPID = processes[CPID].PPID;
+    active_processes[processes[CPID].terminal] = CPID;
+    processes[CPID].active = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
 
@@ -278,6 +324,12 @@ int32_t execute (int8_t* command) {
     memcpy(processes[CPID].args, args, args_size);
     processes[CPID].args[args_size] = '\0';  // play this safe, null terminate everywhere (in halt, in getargs as well)
     processes[CPID].args_size = args_size;
+
+    // multitasking stuff
+    processes[CPID].active = 1;
+    processes[old_CPID].active = 0;
+    processes[CPID].terminal = processes[old_CPID].terminal;
+    active_processes[processes[CPID].terminal] = CPID;
 
     /* Set up paging for current process */
     new_page_directory(CPID);

@@ -28,8 +28,10 @@ typedef struct {
 	file_t fd_array[MAX_FD]; // File descriptor array
 	uint32_t PID;
 	uint32_t PPID;
-	int32_t esp;
-	int32_t ebp;
+	int32_t esp_execute;
+	int32_t ebp_execute;
+	int32_t esp_switch;
+	int32_t ebp_switch;
 	int32_t tss_esp0;
     int8_t args[BUFFER_SIZE];
     uint32_t args_size;
