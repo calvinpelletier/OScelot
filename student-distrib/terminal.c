@@ -97,6 +97,7 @@ void keyboardHandler(void) {
         set_pos(0, 0);
         puts("391OS> ");
 
+        shell_offset = SHELL_PROMPT_OFFSET;
         buf_start.pos_x = SHELL_PROMPT_OFFSET;
         buf_start.pos_y = 0;
 
@@ -118,6 +119,7 @@ void keyboardHandler(void) {
         set_pos(0, 0);
         puts("391OS> ");
 
+        shell_offset = SHELL_PROMPT_OFFSET;
         buf_start.pos_x = SHELL_PROMPT_OFFSET;
         buf_start.pos_y = 0;
 
@@ -328,7 +330,7 @@ void do_spec(uint8_t  scancode) {
                 cur_buf_pos--;
 
                 /* Check if the current buffer position is at the end of the line */
-                if (cur_buf_pos == (NUM_COLS - shell_offset- 1)) {
+                if ((cur_buf_pos + shell_offset + 1) % NUM_COLS == 0) {
                     new_pos.pos_x = NUM_COLS - 1;
                     new_pos.pos_y = prev_pos.pos_y - 1;
 
@@ -428,6 +430,8 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     if (buf != NULL) {
         /* Print each character in the passed in buffer to the screen */
         for (i = 0; i < nbytes; i++) {
+          if (i == 0)
+            shell_offset = get_pos().pos_x;
             putc(buf[i]);
 
             buf_start.pos_x++;
@@ -448,7 +452,7 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     } else {
         return -1;
     }
-    shell_offset = num_bytes;
+    shell_offset += num_bytes;
     return num_bytes++;
 }
 
@@ -557,6 +561,8 @@ static void _update_buf_pos(pos_t cur_position) {
             t_buf_offset = NUM_COLS * 2 - shell_offset;
         } else if (cur_buf_pos >= NUM_COLS - shell_offset) {
             t_buf_offset = NUM_COLS - shell_offset;
+        } else {
+            t_buf_offset = shell_offset;
         }
             
     } else {
