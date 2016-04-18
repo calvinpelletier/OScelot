@@ -184,10 +184,14 @@ entry (unsigned long magic, unsigned long addr)
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
-	
+
 	/* Clear the screen and set screen position for cleanliness */
 	clear();
 	set_pos(0, 0);
+
+	int tmp_fd = rtc_open("rtc.c");
+    int rate = 2;
+    rtc_write(tmp_fd, &rate, 0);
 
 	/* Execute the first program (`shell') in terminal 0 */
 	if (execute_base_shell(0)) {

@@ -85,7 +85,7 @@ void syscalls_init() {
 
     // multitasking stuff
     for (i = 0; i < NUM_TERMINALS; i++) {
-        active_processes[i] = -1;
+        active_processes[i] = 0;
     }
 }
 
@@ -98,6 +98,8 @@ void syscalls_init() {
  *   SIDE EFFECTS: context switch
  */
 void task_switch() {
+    cli();
+
     // find next active process
     int old_CPID = CPID;
     int i = 0;
@@ -106,7 +108,7 @@ void task_switch() {
     }
     do {
         i++;
-    } while (active_processes[i % NUM_TERMINALS] != -1);
+    } while (active_processes[i % NUM_TERMINALS] == 0);
     CPID = active_processes[i % NUM_TERMINALS];
 
     // return if there are no other active processes
@@ -121,8 +123,8 @@ void task_switch() {
         set_video_context(processes[CPID].terminal);
     }
 
-    // adjust PCB
-        int old_esp, old_ebp;
+    // save esp/ebp
+    int old_esp, old_ebp;
     __asm__("movl %%esp, %0; movl %%ebp, %1"
              :"=g"(old_esp), "=g"(old_ebp) /* outputs */
             );
@@ -138,9 +140,10 @@ void task_switch() {
 
     // load new esp/ebp and continue executing from new context
     asm volatile("movl %0, %%ebp;\
-                  movl %1, %%esp"
+                  movl %1, %%esp;\
+                  sti"
                   :
-                  : "r"(processes[CPID].ebp_switch), "r"(processes[CPID].esp_switch)
+                  : "g"(processes[CPID].ebp_switch), "g"(processes[CPID].esp_switch)
               );
     return; // should switch to new context
 }
@@ -162,10 +165,16 @@ void terminal_switch(int new_terminal) {
     current_terminal = new_terminal;
 
     // check if we need to load the base shell
-    if (active_processes[current_terminal] == -1) {
+    if (active_processes[current_terminal] == 0) {
         save_video_context(old_terminal);
         set_video_context(ACTIVE_CONTEXT);
         clear();
+        int old_esp, old_ebp;
+        __asm__("movl %%esp, %0; movl %%ebp, %1"
+                 :"=g"(old_esp), "=g"(old_ebp) /* outputs */
+                );
+        processes[CPID].esp_switch = old_esp;
+        processes[CPID].ebp_switch = old_ebp;
         execute_base_shell(current_terminal);
         return;
     }

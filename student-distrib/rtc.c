@@ -5,6 +5,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "filesys.h"
+#include "syscalls.h"
 
 // CONSTANTS
 #define RTC_ADDR 0x70 // port for addressing RTC registers and enabling/disabling NMIs
@@ -62,8 +63,14 @@ void rtcHandler(void) {
         // test_interrupts();
     }
 
+    cli();
     send_eoi(RTC_IRQ_NUM);
     rtc_interrupt_flag = 1;
+    if (CPID != 0) {
+        task_switch();
+    } else {
+        sti();
+    }
 }
 
 /*

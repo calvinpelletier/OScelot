@@ -40,6 +40,8 @@ typedef struct {
 	uint8_t terminal; // 0-2
 } pcb_t;
 
+extern uint32_t CPID;
+
 extern void syscalls_init();
 extern void task_switch();
 extern void terminal_switch(int num);
