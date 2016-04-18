@@ -6,6 +6,7 @@
 
 // CONSTANTS
 #define KERNEL_LOC 0x00400000
+#define PROCESS_VIDEO_MEMORY_OFFSET 0x00047000
 
 
 // FUNCTION DECLARATIONS
@@ -152,9 +153,9 @@ void swap_pages(uint32_t PID) {
 }
 
 void hide_process(unsigned int PID) {
-
+    return;
 }
 
 void show_process(unsigned int PID) {
-    
+    return;
 }

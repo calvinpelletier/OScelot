@@ -105,7 +105,7 @@ void task_switch() {
     }
     do {
         i++;
-    } (active_processes[i % NUM_TERMINALS] != -1);
+    } while (active_processes[i % NUM_TERMINALS] != -1);
     CPID = active_processes[i % NUM_TERMINALS];
 
     // return if there are no other active processes
@@ -154,7 +154,7 @@ void terminal_switch(int new_terminal) {
 
     // remap video memory for now hidden/visible processes
     int i;
-    for (i = 1; i++; i <= MAX_PROCESSES) {
+    for (i = 1; i <= MAX_PROCESSES; i++) {
         if (processes[i].terminal == old_terminal) {
             hide_process(i);
         } else if (processes[i].terminal == new_terminal) {
@@ -191,7 +191,7 @@ int execute_base_shell(unsigned char terminal) {
     while (processes[CPID].running) {
         CPID++;
         if (CPID > MAX_PROCESSES) {
-            CPID = old_CPID; // reset CPID
+            CPID = 0; // reset CPID
             return -2;       // return value to indicate program found, but could not execute
         }
     }
@@ -220,8 +220,8 @@ int execute_base_shell(unsigned char terminal) {
 
     // multitasking stuff
     processes[CPID].active = 1;
-    processes[old_CPID].active = 0;
-    processes[CPID].terminal = terminal
+    processes[0].active = 0;
+    processes[CPID].terminal = terminal;
     active_processes[processes[CPID].terminal] = CPID;
 
     /* Set up paging for current process */
@@ -293,7 +293,7 @@ int32_t halt (uint8_t status) {
     }
 
     uint32_t ret = (uint32_t) status;
-    haltasm(processes[CPID].ebp, processes[CPID].esp, ret);
+    haltasm(processes[CPID].ebp_execute, processes[CPID].esp_execute, ret);
 
     return 0;
 }
@@ -324,7 +324,7 @@ int32_t exception_halt () {
         swap_pages(CPID);
         tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
     }
-    haltasm(processes[CPID].ebp, processes[CPID].esp, 256);
+    haltasm(processes[CPID].ebp_execute, processes[CPID].esp_execute, 256);
 
     return 0;
 }
@@ -375,7 +375,7 @@ int32_t execute (int8_t* command) {
     }
 
     args_size = 0;
-    for (j = i; command[j] != '\0' && j < BUFFER_SIZE - 1;  j++) {
+    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE - i);  j++) {
         if (CPID < MAX_PROCESSES) {
             args[j - i] = command[j];
             args_size++;
@@ -465,8 +465,8 @@ int32_t execute (int8_t* command) {
     __asm__("movl %%esp, %0; movl %%ebp, %1"
              :"=g"(old_esp), "=g"(old_ebp) /* outputs */
             );
-    processes[old_CPID].esp = old_esp;
-    processes[old_CPID].ebp = old_ebp;
+    processes[old_CPID].esp_execute = old_esp;
+    processes[old_CPID].ebp_execute = old_ebp;
 
     /* Write to TSS SS0 and ESP0 fields with new kernel stack info */
     tss.ss0 = KERNEL_DS;
