@@ -43,6 +43,7 @@ typedef struct {
 extern void syscalls_init();
 extern void task_switch();
 extern void terminal_switch(int num);
+extern int execute_base_shell(unsigned char terminal);
 extern void kernel_to_user(uint32_t user_entry);
 extern void haltasm(int32_t ebp, int32_t esp, uint32_t PPID);
 extern int32_t exception_halt ();
