@@ -428,6 +428,10 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     if (buf != NULL) {
         /* Print each character in the passed in buffer to the screen */
         for (i = 0; i < nbytes; i++) {
+          if (i == 0) {
+            pos_t started = get_pos();
+            shell_offset = started.pos_x;
+          }
             putc(buf[i]);
 
             buf_start.pos_x++;
@@ -448,7 +452,6 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     } else {
         return -1;
     }
-    shell_offset = num_bytes;
     return num_bytes++;
 }
 
