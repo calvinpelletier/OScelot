@@ -40,7 +40,6 @@ fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 // FUNCTION DECLARATIONS
 void syscalls_init();
 void task_switch();
-void terminal_switch(int num);
 int execute_base_shell(unsigned char terminal);
 int32_t halt (uint8_t status);
 int32_t execute (int8_t* command);

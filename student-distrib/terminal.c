@@ -15,9 +15,9 @@ terminal_t terminal[NUM_TERMINALS];
 int cur_terminal = 0;
 
 /* Local functions by group OScelot */
+void terminal_switch(int new_terminal);
 void do_reg(uint8_t scancode);
 void do_spec(uint8_t scancode);
-static void _do_key_press(uint8_t character);
 
 void terminal_init(int num) {
     terminal[num].kbd_is_read = 0;
@@ -41,6 +41,8 @@ void keyboardHandler(void) {
     uint8_t  key_released_code;
 
     disable_irq(KEYBOARD_IRQ_NUM);
+
+    cli();
 
     // write to the visible video memory
     set_video_context(ACTIVE_CONTEXT);
@@ -95,21 +97,18 @@ void keyboardHandler(void) {
 
     // handles special key combo of ALT-F1/F2/F3
     if (alt_active && scancode == F1) {
-        cli();
         send_eoi(KEYBOARD_IRQ_NUM);
         enable_irq(KEYBOARD_IRQ_NUM);
         terminal_switch(0);
         return;
     }
     if (alt_active && scancode == F2) {
-        cli();
         send_eoi(KEYBOARD_IRQ_NUM);
         enable_irq(KEYBOARD_IRQ_NUM);
         terminal_switch(1);
         return;
     }
     if (alt_active && scancode == F3) {
-        cli();
         send_eoi(KEYBOARD_IRQ_NUM);
         enable_irq(KEYBOARD_IRQ_NUM);
         terminal_switch(2);
@@ -123,11 +122,16 @@ void keyboardHandler(void) {
     /* Move cursor to the right spot */
     set_cursor(0);
 
-    set_video_context(processes[CPID].terminal);
+    if (processes[CPID].terminal == cur_terminal) {
+        set_video_context(ACTIVE_CONTEXT);
+    } else {
+        set_video_context(processes[CPID].terminal);
+    }
 
     /* Send EOI and enable the keyboard IRQ again so we keep getting keys */
     send_eoi(KEYBOARD_IRQ_NUM);
     enable_irq(KEYBOARD_IRQ_NUM);
+    sti();
 }
 
 /*
@@ -196,12 +200,57 @@ void do_reg(uint8_t scancode) {
         'b', 'n', 'm', ',', '.', '/', 0, 0,
         0,' ',0, 0, 0, 0, 0, 0
     };
+    uint8_t  caps_chars[64] = {
+        0, 0, '1', '2', '3', '4', '5', '6',
+        '7', '8', '9', '0', '-', '=', 0, 0,
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
+        'O', 'P','[', ']', 0, 0, 'A', 'S',
+        'D', 'F', 'G', 'H', 'J', 'K', 'L', ';',
+        '\'', '`', 0, '\\', 'Z', 'X', 'C', 'V',
+        'B', 'N', 'M', ',', '.', '/', 0, 0,
+        0,' ',0, 0, 0, 0, 0, 0
+    };
+    uint8_t  shift_chars[64] = {
+        0, 0, '!', '@', '#', '$', '%', '^',
+        '&', '*', '(', ')', '_', '+', 0, 0,
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I',
+        'O', 'P','{', '}', 0, 0,  'A', 'S',
+        'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',
+        '\"', '~', 0, '|', 'Z', 'X', 'C', 'V',
+        'B', 'N', 'M', '<', '>', '?', 0, 0,
+        0, ' ', 0, 0, 0, 0, 0, 0
+    };
+    uint8_t  combo_chars[64] = {
+        0, 0, '!', '@', '#', '$', '%', '^',
+        '&', '*', '(', ')', '_', '+', 0, 0,
+        'q', 'w', 'e', 'r', 't', 'y', 'u', 'i',
+        'o', 'p','{', '}', 0, 0, 'a', 's',
+        'd', 'f', 'g', 'h', 'j', 'k', 'l', ':',
+        '\"', '~', 0, '|', 'z', 'x', 'c', 'v',
+        'b', 'n', 'm', '<', '>', '?', 0, 0,
+        0,' ',0, 0, 0, 0, 0, 0
+    };
 
     /* Without this conditional statement, it prints random characters intermittently */
     if (scancode <= SPACE) {
-        if (self_chars[scancode] != NULL) {
-            _do_key_press(self_chars[scancode]);
+        char character;
+        if (shift_active && caps_active) {
+            character = combo_chars[scancode];
+        } else if (shift_active) {
+            character = shift_chars[scancode];
+        } else if (caps_active) {
+            character = caps_chars[scancode];
+        } else {
+            character = self_chars[scancode];
         }
+
+        if (character == NULL) {
+            return;
+        }
+
+        terminal[cur_terminal].keyboard_buffer[terminal[cur_terminal].cur_buf_pos] = character;
+        terminal[cur_terminal].cur_buf_pos++;
+        putc(character);
     }
 }
 
@@ -258,7 +307,6 @@ void do_spec(uint8_t scancode) {
 int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     int32_t  i;              /* Loop counter                           */
     int32_t  num_bytes = 0;  /* Number of bytes that have been written */
-
     if (buf != NULL) {
         /* Print each character in the passed in buffer to the screen */
         for (i = 0; i < nbytes; i++) {
@@ -325,24 +373,4 @@ int32_t terminal_open() {
  */
 int32_t terminal_close(file_t * file) {
     return -1;
-}
-
-/*
- * _do_key_press
- *   DESCRIPTION:  Helper function that handles the actual key press and updates
- *                 the relevant variables.
- *   INPUTS:       scancode     - scancode of key that has been pressed
- *                 chars        - array of characters to use for the scancodes
- *                 cur_position - current position in the terminal buffer
- *   OUTPUTS:      none
- *   RETURN VALUE: none
- *   SIDE EFFECTS: Overwrites the terminal buffer and updates global variables
- */
-static void _do_key_press(uint8_t character) {
-    /* Place the character into the keyboard buffer */
-    terminal[cur_terminal].keyboard_buffer[terminal[cur_terminal].cur_buf_pos] = character;
-
-    terminal[cur_terminal].cur_buf_pos++;
-
-    putc(character);
 }
