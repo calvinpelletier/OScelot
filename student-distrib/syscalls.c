@@ -14,7 +14,6 @@
 #define VIRT_ADDR_BYTE_2          25         /* Bytes 24-27 of the EXE hold virtual address of first */
 #define VIRT_ADDR_BYTE_3          26         /* instruction to be executed.                          */
 #define VIRT_ADDR_BYTE_4          27
-#define NUM_TERMINALS             3
 
 uint8_t MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 
@@ -22,7 +21,6 @@ uint8_t MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 uint32_t CPID = 0;
 pcb_t processes[MAX_PROCESSES + 1];
 uint32_t active_processes[NUM_TERMINALS]; // active process for each terminal
-int current_terminal = 0;
 
 // File Ops Tables
 int32_t no_read (file_t * file, uint8_t * buf, int32_t nbytes) {
@@ -117,7 +115,7 @@ void task_switch() {
     }
 
     // adjust video memory
-    if (processes[CPID].terminal == current_terminal) {
+    if (processes[CPID].terminal == cur_terminal) {
         set_video_context(ACTIVE_CONTEXT);
     } else {
         set_video_context(processes[CPID].terminal);
@@ -149,46 +147,6 @@ void task_switch() {
 }
 
 /*
- * terminal_switch
- *   DESCRIPTION:  switches to a new terminal
- *   INPUTS:       none
- *   OUTPUTS:      none
- *   RETURN VALUE: none
- *   SIDE EFFECTS: writes to video memory
- */
-void terminal_switch(int new_terminal) {
-    if (new_terminal == current_terminal) {
-        return;
-    }
-
-    int old_terminal = current_terminal;
-    current_terminal = new_terminal;
-
-    // check if we need to load the base shell
-    if (active_processes[current_terminal] == 0) {
-        save_video_context(old_terminal);
-        set_video_context(ACTIVE_CONTEXT);
-        clear();
-        int old_esp, old_ebp;
-        __asm__("movl %%esp, %0; movl %%ebp, %1"
-                 :"=g"(old_esp), "=g"(old_ebp) /* outputs */
-                );
-        processes[CPID].esp_switch = old_esp;
-        processes[CPID].ebp_switch = old_ebp;
-        execute_base_shell(current_terminal);
-        return;
-    }
-
-    save_video_context(old_terminal);
-    load_video_context(current_terminal);
-    if (processes[CPID].terminal == current_terminal) {
-        set_video_context(ACTIVE_CONTEXT);
-    } else {
-        set_video_context(processes[CPID].terminal);
-    }
-}
-
-/*
  * execute_base_shell
  *   DESCRIPTION:  starts the base shell in a given terminal
  *   INPUTS:       terminal number 0-2
@@ -202,6 +160,9 @@ int execute_base_shell(unsigned char terminal) {
     int32_t i;
     uint8_t new_eip[4];
     uint32_t user_entry;
+
+    // initialize terminal struct
+    terminal_init(terminal);
 
     /* Create a new PCB for the process and update relevant fields */
     CPID = 0;

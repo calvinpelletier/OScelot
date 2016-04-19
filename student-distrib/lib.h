@@ -54,8 +54,8 @@ void test_interrupts();
 
 /* Custom struct by group OScelot */
 typedef struct {
-	int pos_x;
-	int pos_y;
+	int x;
+	int y;
 } pos_t;
 
 /* Custom functions written by group OScelot */

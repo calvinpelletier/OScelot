@@ -8,6 +8,8 @@
 
 #define MAX_FD        8
 #define MAX_PROCESSES 6
+#define NUM_TERMINALS 3
+
 
 /*
  *	Process Control Block used to describe each process. Contains data
@@ -41,6 +43,8 @@ typedef struct {
 } pcb_t;
 
 extern uint32_t CPID;
+extern pcb_t processes[MAX_PROCESSES + 1];
+extern uint32_t active_processes[NUM_TERMINALS];
 
 extern void syscalls_init();
 extern void task_switch();

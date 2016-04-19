@@ -29,16 +29,21 @@
 
 #define SHELL_PROMPT_OFFSET 7
 
+typedef struct {
+    int kbd_is_read;                   // Boolean to determine if the keyboard has been read
+    int t_buf_offset;                 // offset to determine where in the terminal to start printing from
+    char keyboard_buffer[BUFFER_SIZE];  // Keyboard buffer
+    char terminal_buffer[BUFFER_SIZE];  // System call terminal buffer
+    int cur_buf_pos;                 // Current buffer position
+    pos_t buf_start;                      // pos_t struct to hold the coordinates of the buffer
+    int shell_offset;                     // Keeps track of how much user has written to beginning of line in terminal for handling key presses afterward
+} terminal_t;
+
+extern int cur_terminal;
+
 /* Function Declarations */
 void keyboardHandler();
-void do_self(uint8_t  scancode, pos_t cur_position);
-void do_spec(uint8_t  scancode);
-void do_caps(uint8_t  scancode, pos_t cur_position);
-void do_shift(uint8_t  scancode, pos_t cur_position);
-void do_shiftcap(uint8_t  scancode, pos_t cur_position);
-void buf_clear();
-void t_buf_clear(void);
-
+void terminal_init();
 
 extern int32_t terminal_write(file_t * file, uint8_t  * buf, int32_t nbytes);
 extern int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes);

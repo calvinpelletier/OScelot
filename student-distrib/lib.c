@@ -689,8 +689,8 @@ void set_pos(int x, int y) {
 pos_t get_pos(void) {
     pos_t cur_pos;
 
-    cur_pos.pos_x = screen_x;
-    cur_pos.pos_y = screen_y;
+    cur_pos.x = screen_x;
+    cur_pos.y = screen_y;
 
     return cur_pos;
 }
@@ -709,7 +709,7 @@ void set_cursor(int x) {
 
 	/* Get the current cursor position and update the cursor with the offset */
 	cur_cursor = get_pos();
-	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);
+	new_cursor = cur_cursor.x + x + (cur_cursor.y * NUM_COLS);
 
 	// if (x == -1) {
 	// 	set_pos(cur_cursor.pos_x - 1, cur_cursor.pos_y);
