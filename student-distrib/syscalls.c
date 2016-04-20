@@ -597,6 +597,7 @@ int32_t vidmap (uint8_t** screenstart) {
     }
 
     uint32_t user_video_addr = USER_PAGE_BOTTOM;
+    
     if (new_page_directory_entry(CPID, user_video_addr, VIDEO_MEMORY, 0, 3)) {
         return -1;
     }

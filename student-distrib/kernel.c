@@ -189,10 +189,6 @@ entry (unsigned long magic, unsigned long addr)
 	clear();
 	set_pos(0, 0);
 
-	int tmp_fd = rtc_open("rtc.c");
-    int rate = 30;
-    rtc_write(tmp_fd, &rate, 0);
-
 	/* Execute the first program (`shell') in terminal 0 */
 	if (execute_base_shell(0)) {
 		printf("ERROR: shell failed to run.\n");
