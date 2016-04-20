@@ -127,26 +127,32 @@ void task_switch() {
     }
 
     // adjust user mapping into video memory
-    if (processes[old_CPID].terminal == cur_terminal) {
-        new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
-    } else {
-        if (processes[old_CPID].terminal == 0) {
-            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
-        } else if (processes[old_CPID].terminal == 1) {
-            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
-        } else if (processes[old_CPID].terminal == 2) {
-            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+    // for old process
+    if (processes[old_CPID].using_video_mem) {
+        if (processes[old_CPID].terminal == cur_terminal) {
+            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
+        } else {
+            if (processes[old_CPID].terminal == 0) {
+                new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
+            } else if (processes[old_CPID].terminal == 1) {
+                new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
+            } else if (processes[old_CPID].terminal == 2) {
+                new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+            }
         }
     }
-    if (processes[CPID].terminal == cur_terminal) {
-        new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
-    } else {
-        if (processes[CPID].terminal == 0) {
-            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
-        } else if (processes[CPID].terminal == 1) {
-            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
-        } else if (processes[CPID].terminal == 2) {
-            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+    // and new process
+    if (processes[CPID].using_video_mem) {
+        if (processes[CPID].terminal == cur_terminal) {
+            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
+        } else {
+            if (processes[CPID].terminal == 0) {
+                new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
+            } else if (processes[CPID].terminal == 1) {
+                new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
+            } else if (processes[CPID].terminal == 2) {
+                new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+            }
         }
     }
 
@@ -308,6 +314,15 @@ int32_t halt (uint8_t status) {
     return 0;
 }
 
+/*
+ * exception_halt
+ *   DESCRIPTION:  Terminates a process that raised an exception. This function should never return
+ *                 to the caller.
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites PCB structs
+ */
 int32_t exception_halt () {
     int32_t i;
 
@@ -322,7 +337,6 @@ int32_t exception_halt () {
     CPID = processes[CPID].PPID;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
-
 
     /* If we attempt to halt the last process, we re-launch shell instead */
     if (CPID == 0) {
@@ -626,6 +640,7 @@ int32_t vidmap (uint8_t** screenstart) {
 
     uint32_t user_video_addr = USER_PAGE_BOTTOM;
 
+    // map to correct video memory
     if (processes[CPID].terminal == cur_terminal) {
         if (new_page_directory_entry(CPID, user_video_addr, VIDEO, 0, 3)) {
             return -1;

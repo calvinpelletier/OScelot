@@ -127,6 +127,7 @@ void keyboardHandler(void) {
         /* Clear the whole buffer */
         t->buf_pos = 0;
 
+        // so that the process in the current terminal is halted next time it receives processor time
         needs_to_be_halted[cur_terminal] = 1;
 
     /* Handles the special key combo of CTRL-L which
@@ -149,6 +150,7 @@ void keyboardHandler(void) {
     /* Move cursor to the right spot */
     set_cursor(0);
 
+    // adjust video memory back to what it was
     if (processes[CPID].terminal == cur_terminal) {
         set_video_context(ACTIVE_CONTEXT);
     } else {
@@ -197,6 +199,7 @@ void terminal_switch(int new_terminal) {
         return;
     }
 
+    // adjust video memory
     save_video_context(old_terminal);
     load_video_context(cur_terminal);
     if (processes[CPID].terminal == cur_terminal) {
@@ -207,14 +210,11 @@ void terminal_switch(int new_terminal) {
 }
 
 /*
- * do_self
- *   DESCRIPTION:  Helper function that handles regular keys (lowercase
- *                 characters).
+ * do_reg
+ *   DESCRIPTION:  Helper function that handles regular keys
  *   INPUTS:       scancode     - scancode of key that has been pressed
- *                 cur_position - current position on the screen
  *   OUTPUTS:      none
  *   RETURN VALUE: none
- *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_reg(uint8_t scancode) {
     /* Character array using scancode set 1 */
@@ -289,7 +289,6 @@ void do_reg(uint8_t scancode) {
  *   INPUTS:       scancode - scancode of key that has been pressed
  *   OUTPUTS:      none
  *   RETURN VALUE: none
- *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_spec(uint8_t scancode) {
     int i;  /* Loop counter */
@@ -346,7 +345,6 @@ void do_spec(uint8_t scancode) {
  *                 nbytes - number of bytes to write
  *   OUTPUTS:      none
  *   RETURN VALUE: Number of bytes written
- *   SIDE EFFECTS: Overwrites the terminal buffer and system call buffer
  */
 int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     int32_t  i;              /* Loop counter                           */
@@ -372,7 +370,6 @@ int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
  *                 nbytes - number of bytes to read
  *   OUTPUTS:      none
  *   RETURN VALUE: Number of bytes read
- *   SIDE EFFECTS: Overwrites the terminal buffer and keyboard buffer
  */
 int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes) {
     int32_t  i = 0;          /* Loop counter         */
@@ -404,8 +401,7 @@ int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes) {
  *   DESCRIPTION:  System call that opens the filename. Not used by terminal.
  *   INPUTS:       filename - name of file to open
  *   OUTPUTS:      none
- *   RETURN VALUE: -1 if unsuccessful
- *   SIDE EFFECTS: none
+ *   RETURN VALUE: -1
  */
 int32_t terminal_open() {
     return -1;
@@ -416,8 +412,7 @@ int32_t terminal_open() {
  *   DESCRIPTION:  System call that closes a file. Not used by terminal.
  *   INPUTS:       file- file descriptor ptr of file to close
  *   OUTPUTS:      none
- *   RETURN VALUE: -1 if unsuccessful
- *   SIDE EFFECTS: none
+ *   RETURN VALUE: -1
  */
 int32_t terminal_close(file_t * file) {
     return -1;

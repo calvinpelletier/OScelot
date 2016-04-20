@@ -9,11 +9,12 @@ static int screen_y;
 char* video_mem = (char *)VIDEO;
 
 /*
-* set_video_context
-*   Inputs: -1 for visible memory, 0-2 for hidden memory (terminal 0-2)
-*   Return Value: none
-*	Function: Clears video memory
-*/
+ * set_video_context
+ *   DESCRIPTION:  sets which video memory get written to in library functions
+ *   INPUTS:       -1 for visible memory, 0-2 for hidden (terminals 0-2)
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ */
 void set_video_context(int context) {
     if (context == ACTIVE_CONTEXT) {
         video_mem = (char*)VIDEO;
@@ -26,6 +27,13 @@ void set_video_context(int context) {
     }
 }
 
+/*
+ * save_video_context
+ *   DESCRIPTION:  saves visible memory in hidden memory
+ *   INPUTS:       destination (0-2)
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ */
 void save_video_context(int context) {
     if (context == 0) {
         memcpy(VIDEO_0, VIDEO, VIDEO_SIZE);
@@ -36,6 +44,13 @@ void save_video_context(int context) {
     }
 }
 
+/*
+ * load_video_context
+ *   DESCRIPTION:  loads hidden memory into visible memory
+ *   INPUTS:       source (0-2)
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ */
 void load_video_context(int context) {
     if (context == 0) {
         memcpy(VIDEO, VIDEO_0, VIDEO_SIZE);

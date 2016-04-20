@@ -13,14 +13,14 @@
 #define MAXIMUM_RTC_RATE 1024
 #define NUM_FREQS 10
 
+// GLOBAL VARIABLES
+int active_freq[MAX_PROCESSES + 1]; // frequency that each process wishes to be notified at (0, 2, 4, 8, 16, ..., 1024)
+volatile int8_t interrupt_flag[MAX_PROCESSES + 1];
+int count = 0; // used to keep track of lower frequencies from the base frequency of 1024
+
 // FUNCTION DECLARATIONS
 void rtc_init();
 void rtcHandler();
-
-// Flags for rtc_read
-int active_freq[MAX_PROCESSES + 1];
-volatile int8_t interrupt_flag[MAX_PROCESSES + 1];
-int count = 0;
 
 // GLOBAL FUNCTIONS
 /*
@@ -32,14 +32,17 @@ rtc_init
 NOTES: important that interrupts are disabled when calling this function
 */
 void rtc_init(void) {
+    // zero global vars
     int i;
     for (i = 0; i < MAX_PROCESSES + 1; i++) {
         active_freq[i] = 0;
         interrupt_flag[i] = 0;
     }
 
+    // set kernel interrupt frequency
     active_freq[0] = 32;
 
+    // initialize rtc chip
     outb(0x8B, RTC_ADDR); // address register 0x0B and disable NMIs (0x80)
     uint8_t  temp = inb(RTC_DATA); // read register 0x0B
     outb(0x8B, RTC_ADDR); // address register again because apparently reading resets this
@@ -63,12 +66,19 @@ void rtcHandler(void) {
     outb(0x0C, RTC_ADDR); // select register 0x0C
     inb(RTC_DATA); // throw away contents (important)
 
+    // this method utilizes binary counting
+    // by increasing count on every interrupt, the least significant bit will change every interrupt
+    // the second to least significant bit, however, will only change every other interrupt
+    // etc.
     int old_count = count;
     count++;
     int mask = 0x00000001;
     int i, j;
+    // iterate through each frequency
     for (i = 0; i < NUM_FREQS; i++) {
+        // check if the corresponding bit has changed
         if ((old_count & mask) != (count & mask)) {
+            // look for processes that are listening to that frequency
             for (j = 0; j < MAX_PROCESSES + 1; j++) {
                 if (active_freq[j] == (MAXIMUM_RTC_RATE >> i)) {
                     interrupt_flag[j] = 1;
@@ -78,6 +88,8 @@ void rtcHandler(void) {
         mask = mask << 1;
     }
 
+    // check if the kernel interrupt flag is up
+    // if so, task switch
     if ((CPID != 0) && interrupt_flag[0]) {
         interrupt_flag[0] = 0;
         send_eoi(RTC_IRQ_NUM);
@@ -96,7 +108,6 @@ void rtcHandler(void) {
  * INPUTS: none
  * OUTPUTS: none
  * RETURNS: 0
- * NOTES:
  */
 int32_t rtc_open()
 {
@@ -110,7 +121,7 @@ int32_t rtc_open()
  *         buf    - not used
  *         nbytes - not used
  * OUTPUTS: none
- * RETURNS: The number of bytes written, -1 if read not successful.
+ * RETURNS: nbytes on success, -1 if read not successful.
  * NOTES:
  */
 int32_t rtc_read(file_t * file, uint8_t *buf, int32_t nbytes)
@@ -126,33 +137,39 @@ int32_t rtc_read(file_t * file, uint8_t *buf, int32_t nbytes)
 
 /*
  * rtc_write
- * DESCRIPTION: Sets the RTC interrupt frequency to a specified rate
+ * DESCRIPTION: Sets the interrupt frequency to a specified rate
  * INPUTS: file    - not used
  *         buf    - The new rate to set the RTC Periodic Interrupt to
  *         nbytes - The number of bytes to write, not used.
  * OUTPUTS: none
- * RETURNS: The number of bytes written. -1 if it fails.
+ * RETURNS: nbytes on success. -1 if it fails.
  * NOTES:
  */
 int32_t rtc_write(file_t * file, uint8_t *buf, int32_t nbytes)
 {
+    // error checking
     if (buf == 0) {
         return -1;
     }
+    int rate = *((int*)buf);
+    if (rate != 0 && rate != 2 && rate != 4 && rate != 8 && rate != 16 && rate != 32 && rate != 64 && rate != 128 && rate != 256 && rate != 512 && rate != 1024) {
+        return -1;
+    }
 
-    active_freq[CPID] = *((int*)buf);
+    active_freq[CPID] = rate;
+
     return nbytes;
 }
 
 /*
  * rtc_close
- * DESCRIPTION: Closes the RTC driver stream thing
+ * DESCRIPTION: closes rtc
  * INPUTS: file - not used
- * OUTPUTS: non
- * RETURNS: 0 if the driver is closed properly, -1 otherwise.
- * NOTES:
+ * OUTPUTS: none
+ * RETURNS: 0
  */
 int32_t rtc_close(file_t* file)
 {
+    active_freq[CPID] = 0;
     return 0;
 }
