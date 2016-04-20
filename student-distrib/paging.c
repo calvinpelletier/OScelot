@@ -119,9 +119,6 @@ int32_t new_page_directory_entry (uint32_t PID, uint32_t virt_addr, uint32_t phy
     uint32_t pde = virt_addr >> 22;
     uint32_t pte = (virt_addr >> 12) & 0x3FF;
 
-    if (pageDir[PID][pde] & 0x00000001)
-        return -1;
-
     if (size == 0) { // 4 KB pages
         if (privilege == 3) {
             pageDir[PID][pde] = (uint32_t)(video_page_tables[PID]) | 0x00000007;  // sets flags to user-level, write-enabled, and present

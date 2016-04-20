@@ -126,6 +126,30 @@ void task_switch() {
         set_video_context(processes[CPID].terminal);
     }
 
+    // adjust user mapping into video memory
+    if (processes[old_CPID].terminal == cur_terminal) {
+        new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
+    } else {
+        if (processes[old_CPID].terminal == 0) {
+            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
+        } else if (processes[old_CPID].terminal == 1) {
+            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
+        } else if (processes[old_CPID].terminal == 2) {
+            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+        }
+    }
+    if (processes[CPID].terminal == cur_terminal) {
+        new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
+    } else {
+        if (processes[CPID].terminal == 0) {
+            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
+        } else if (processes[CPID].terminal == 1) {
+            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
+        } else if (processes[CPID].terminal == 2) {
+            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+        }
+    }
+
     // save esp/ebp
     int old_esp, old_ebp;
     __asm__("movl %%esp, %0; movl %%ebp, %1"
@@ -208,6 +232,7 @@ int execute_base_shell(unsigned char terminal) {
     processes[0].active = 0;
     processes[CPID].terminal = terminal;
     active_processes[processes[CPID].terminal] = CPID;
+    processes[CPID].using_video_mem = 0;
 
     /* Set up paging for current process */
     new_page_directory(CPID);
@@ -426,6 +451,7 @@ int32_t execute (int8_t* command) {
     processes[old_CPID].active = 0;
     processes[CPID].terminal = processes[old_CPID].terminal; // inherit from parent
     active_processes[processes[CPID].terminal] = CPID;
+    processes[CPID].using_video_mem = 0;
 
     /* Set up paging for current process */
     new_page_directory(CPID);
@@ -596,10 +622,28 @@ int32_t vidmap (uint8_t** screenstart) {
         return -1;
     }
 
+    processes[CPID].using_video_mem = 1;
+
     uint32_t user_video_addr = USER_PAGE_BOTTOM;
-    
-    if (new_page_directory_entry(CPID, user_video_addr, VIDEO_MEMORY, 0, 3)) {
-        return -1;
+
+    if (processes[CPID].terminal == cur_terminal) {
+        if (new_page_directory_entry(CPID, user_video_addr, VIDEO, 0, 3)) {
+            return -1;
+        }
+    } else {
+        if (processes[CPID].terminal == 0) {
+            if (new_page_directory_entry(CPID, user_video_addr, VIDEO_0, 0, 3)) {
+                return -1;
+            }
+        } else if (processes[CPID].terminal == 1) {
+            if (new_page_directory_entry(CPID, user_video_addr, VIDEO_1, 0, 3)) {
+                return -1;
+            }
+        } else if (processes[CPID].terminal == 2) {
+            if (new_page_directory_entry(CPID, user_video_addr, VIDEO_2, 0, 3)) {
+                return -1;
+            }
+        }
     }
 
     *screenstart = (uint8_t *) user_video_addr;

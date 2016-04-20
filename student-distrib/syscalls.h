@@ -40,6 +40,7 @@ typedef struct {
 	uint8_t running; // 0 for no, 1 for yes
 	uint8_t active;
 	uint8_t terminal; // 0-2
+	uint8_t using_video_mem;
 } pcb_t;
 
 extern uint32_t CPID;
