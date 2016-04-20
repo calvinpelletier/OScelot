@@ -45,6 +45,7 @@ typedef struct {
 extern uint32_t CPID;
 extern pcb_t processes[MAX_PROCESSES + 1];
 extern uint32_t active_processes[NUM_TERMINALS];
+extern uint8_t needs_to_be_halted[NUM_TERMINALS];
 
 extern void syscalls_init();
 extern void task_switch();

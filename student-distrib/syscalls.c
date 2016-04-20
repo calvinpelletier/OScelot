@@ -21,6 +21,7 @@ uint8_t MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 uint32_t CPID = 0;
 pcb_t processes[MAX_PROCESSES + 1];
 uint32_t active_processes[NUM_TERMINALS]; // active process for each terminal
+uint8_t needs_to_be_halted[NUM_TERMINALS]; // flag for letting the task_switch know that we need to halt an active processes
 
 // File Ops Tables
 int32_t no_read (file_t * file, uint8_t * buf, int32_t nbytes) {
@@ -83,6 +84,7 @@ void syscalls_init() {
     // multitasking stuff
     for (i = 0; i < NUM_TERMINALS; i++) {
         active_processes[i] = 0;
+        needs_to_be_halted[i] = 0;
     }
 }
 
@@ -97,12 +99,16 @@ void syscalls_init() {
 void task_switch() {
     cli();
 
+    // check if we need to halt this process
+    if (needs_to_be_halted[processes[CPID].terminal]) {
+        needs_to_be_halted[processes[CPID].terminal] = 0;
+        exception_halt();
+        return;
+    }
+
     // find next active process
     int old_CPID = CPID;
-    int i = 0;
-    while (old_CPID != active_processes[i]) {
-        i++;
-    }
+    int i = processes[old_CPID].terminal;
     do {
         i++;
     } while (active_processes[i % NUM_TERMINALS] == 0);

@@ -190,7 +190,7 @@ entry (unsigned long magic, unsigned long addr)
 	set_pos(0, 0);
 
 	int tmp_fd = rtc_open("rtc.c");
-    int rate = 2;
+    int rate = 30;
     rtc_write(tmp_fd, &rate, 0);
 
 	/* Execute the first program (`shell') in terminal 0 */

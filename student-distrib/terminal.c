@@ -13,6 +13,7 @@ static int alt_active = 0;
 
 terminal_t terminal[NUM_TERMINALS];
 int cur_terminal = 0;
+terminal_t* t; // shortcut for terminal[cur_terminal]
 
 /* Local functions by group OScelot */
 void terminal_switch(int new_terminal);
@@ -21,11 +22,9 @@ void do_spec(uint8_t scancode);
 
 void terminal_init(int num) {
     terminal[num].kbd_is_read = 0;
-    terminal[num].t_buf_offset = 0;
-    terminal[num].cur_buf_pos = 0;
-    terminal[num].buf_start.x = 0;
-    terminal[num].buf_start.y = 0;
-    terminal[num].shell_offset = 0;
+    terminal[num].buf_pos = 0;
+    terminal[num].pos.x = 0;
+    terminal[num].pos.y = 0;
 }
 
 /*
@@ -43,6 +42,9 @@ void keyboardHandler(void) {
     disable_irq(KEYBOARD_IRQ_NUM);
 
     cli();
+
+    // set shortcut t
+    t = &terminal[cur_terminal];
 
     // write to the visible video memory
     set_video_context(ACTIVE_CONTEXT);
@@ -115,7 +117,32 @@ void keyboardHandler(void) {
         return;
     }
 
-    if (terminal[cur_terminal].cur_buf_pos < BUFFER_SIZE - 1) {
+    if (ctrl_active && scancode == C) {
+        clear();
+
+        /* Reset buffer position to (0, 0) */
+        set_pos(0, 0);
+        puts("391OS> ");
+
+        /* Clear the whole buffer */
+        t->buf_pos = 0;
+
+        needs_to_be_halted[cur_terminal] = 1;
+
+    /* Handles the special key combo of CTRL-L which
+     * clears the screen except for the terminal buffer.
+     */
+    } else if (ctrl_active && scancode == L) {
+        clear();
+
+        /* Reset buffer position to (0, 0) */
+        set_pos(0, 0);
+        puts("391OS> ");
+
+        /* Clear the whole keyboard buffer */
+        t->buf_pos = 0;
+
+    } else if (t->buf_pos < BUFFER_SIZE - 1) {
         do_reg(scancode);
     }
 
@@ -151,8 +178,9 @@ void terminal_switch(int new_terminal) {
     cur_terminal = new_terminal;
 
     // save anything we need, restore new cursor
-    terminal[old_terminal].buf_start = get_pos();
-    set_pos(terminal[cur_terminal].buf_start.x, terminal[cur_terminal].buf_start.y);
+    terminal[old_terminal].pos = get_pos();
+    set_pos(terminal[new_terminal].pos.x, terminal[new_terminal].pos.y);
+    set_cursor(0);
 
     // check if we need to load the base shell
     if (active_processes[cur_terminal] == 0) {
@@ -248,8 +276,8 @@ void do_reg(uint8_t scancode) {
             return;
         }
 
-        terminal[cur_terminal].keyboard_buffer[terminal[cur_terminal].cur_buf_pos] = character;
-        terminal[cur_terminal].cur_buf_pos++;
+        t->buffer[t->buf_pos] = character;
+        t->buf_pos++;
         putc(character);
     }
 }
@@ -264,22 +292,38 @@ void do_reg(uint8_t scancode) {
  *   SIDE EFFECTS: Overwrites the terminal buffer
  */
 void do_spec(uint8_t scancode) {
-    int32_t  i;  /* Loop counter */
+    int i;  /* Loop counter */
 
     /* Depending on the scancode, do the special action for each key */
     switch (scancode) {
         case ENTER:
             /* Append a newline to the keyboard buffer */
-            terminal[cur_terminal].keyboard_buffer[terminal[cur_terminal].cur_buf_pos] = '\n';
-
+            t->buffer[t->buf_pos] = '\n';
             putc('\n');
-
             /* Set kbd_is_read flag so we know it can be read */
-            terminal[cur_terminal].kbd_is_read = 1;
+            t->kbd_is_read = 1;
+        break;
 
-            break;
         case BACKSPACE:
-            break;
+            /* If we're not at the beginning of the buffer, we can delete */
+            if (t->buf_pos == 0) {
+                return;
+            }
+            t->buf_pos--;
+            pos_t old_pos = get_pos();
+            pos_t new_pos;
+            if (old_pos.x == 0) {
+                new_pos.x = NUM_COLS - 1;
+                new_pos.y = old_pos.y - 1;
+            } else {
+                new_pos.x = old_pos.x - 1;
+                new_pos.y = old_pos.y;
+            }
+            set_pos(new_pos.x, new_pos.y);
+            putc(' ');
+            set_pos(new_pos.x, new_pos.y);
+        break;
+
         case CAPS_LOCK:
             /* Toggle the CAPS flag so we know which character array to use */
             if (caps_active) {
@@ -287,10 +331,10 @@ void do_spec(uint8_t scancode) {
             } else {
                 caps_active = 1;
             }
+        break;
 
-            break;
         default:
-            break;
+        break;
     }
 }
 
@@ -307,6 +351,7 @@ void do_spec(uint8_t scancode) {
 int32_t terminal_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     int32_t  i;              /* Loop counter                           */
     int32_t  num_bytes = 0;  /* Number of bytes that have been written */
+
     if (buf != NULL) {
         /* Print each character in the passed in buffer to the screen */
         for (i = 0; i < nbytes; i++) {
@@ -338,12 +383,15 @@ int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes) {
         sti();
     }
 
-    /* Whatever is in the terminal_buffer buffer goes into the input buffer */
-    while (i < nbytes && terminal[processes[CPID].terminal].keyboard_buffer[i] != NULL) {
-        buf[i] = terminal[processes[CPID].terminal].keyboard_buffer[i];
+    /* Whatever is in the terminal buffer goes into the input buffer */
+    while (i < nbytes && i < terminal[processes[CPID].terminal].buf_pos) {
+        buf[i] = terminal[processes[CPID].terminal].buffer[i];
         num_bytes++;
         i++;
     }
+
+    // clear buffer
+    terminal[processes[CPID].terminal].buf_pos = 0;
 
     /* Turn kbd_is_read flag to accept more interrupts */
     terminal[processes[CPID].terminal].kbd_is_read = 0;

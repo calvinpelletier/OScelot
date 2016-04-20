@@ -31,12 +31,9 @@
 
 typedef struct {
     int kbd_is_read;                   // Boolean to determine if the keyboard has been read
-    int t_buf_offset;                 // offset to determine where in the terminal to start printing from
-    char keyboard_buffer[BUFFER_SIZE];  // Keyboard buffer
-    char terminal_buffer[BUFFER_SIZE];  // System call terminal buffer
-    int cur_buf_pos;                 // Current buffer position
-    pos_t buf_start;                      // pos_t struct to hold the coordinates of the buffer
-    int shell_offset;                     // Keeps track of how much user has written to beginning of line in terminal for handling key presses afterward
+    char buffer[BUFFER_SIZE];          // Keyboard buffer
+    int buf_pos;                       // Current buffer position
+    pos_t pos;                         // pos_t struct to hold the coordinates of the buffer
 } terminal_t;
 
 extern int cur_terminal;
