@@ -99,22 +99,43 @@ void keyboardHandler(void) {
 
     // handles special key combo of ALT-F1/F2/F3
     if (alt_active && scancode == F1) {
+        // doesn't need an error check
         send_eoi(KEYBOARD_IRQ_NUM);
         enable_irq(KEYBOARD_IRQ_NUM);
         terminal_switch(0);
         return;
     }
     if (alt_active && scancode == F2) {
-        send_eoi(KEYBOARD_IRQ_NUM);
-        enable_irq(KEYBOARD_IRQ_NUM);
-        terminal_switch(1);
-        return;
+        // error check
+        int process_available = 0;
+        int i;
+        for (i = 1; i < MAX_PROCESSES + 1; i++) {
+            if (!processes[i].running) {
+                process_available = 1;
+            }
+        }
+        if (active_processes[1] != 0 || process_available) {
+            send_eoi(KEYBOARD_IRQ_NUM);
+            enable_irq(KEYBOARD_IRQ_NUM);
+            terminal_switch(1);
+            return;
+        }
     }
     if (alt_active && scancode == F3) {
-        send_eoi(KEYBOARD_IRQ_NUM);
-        enable_irq(KEYBOARD_IRQ_NUM);
-        terminal_switch(2);
-        return;
+        // error check
+        int process_available = 0;
+        int i;
+        for (i = 1; i < MAX_PROCESSES + 1; i++) {
+            if (!processes[i].running) {
+                process_available = 1;
+            }
+        }
+        if (active_processes[2] != 0 || process_available) {
+            send_eoi(KEYBOARD_IRQ_NUM);
+            enable_irq(KEYBOARD_IRQ_NUM);
+            terminal_switch(2);
+            return;
+        }
     }
 
     if (ctrl_active && scancode == C) {
