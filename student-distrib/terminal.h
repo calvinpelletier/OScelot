@@ -29,11 +29,16 @@
 
 #define SHELL_PROMPT_OFFSET 7
 
+#define ATTRIB_0    0x05
+#define ATTRIB_1    0x0C
+#define ATTRIB_2    0x0A
+
 typedef struct {
     int kbd_is_read;                   // Boolean to determine if the keyboard has been read
     char buffer[BUFFER_SIZE];          // Keyboard buffer
     int buf_pos;                       // Current buffer position
     pos_t pos;                         // pos_t struct to hold the coordinates when changing terminals
+    char attribute;
 } terminal_t;
 
 extern int cur_terminal;

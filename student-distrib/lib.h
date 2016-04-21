@@ -12,7 +12,6 @@
 #define ACTIVE_CONTEXT -1
 #define NUM_COLS 80
 #define NUM_ROWS 25
-#define ATTRIB   0x7
 #define VIDEO_SIZE 0xFA0
 
 /* Custom defines by group OScelot */
@@ -63,6 +62,7 @@ void scroll(void);
 void set_pos(int x, int y);
 pos_t get_pos(void);
 void set_cursor(int x);
+void set_attribute(char attribute);
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

@@ -25,6 +25,11 @@ void terminal_init(int num) {
     terminal[num].buf_pos = 0;
     terminal[num].pos.x = 0;
     terminal[num].pos.y = 0;
+    
+    /* Initialize terminal attribute colors */
+    terminal[0].attribute = ATTRIB_0;
+    terminal[1].attribute = ATTRIB_1; 
+    terminal[2].attribute = ATTRIB_2;  
 }
 
 /*
@@ -130,6 +135,7 @@ void keyboardHandler(void) {
                 process_available = 1;
             }
         }
+
         if (active_processes[2] != 0 || process_available) {
             send_eoi(KEYBOARD_IRQ_NUM);
             enable_irq(KEYBOARD_IRQ_NUM);
@@ -200,8 +206,9 @@ void terminal_switch(int new_terminal) {
     int old_terminal = cur_terminal;
     cur_terminal = new_terminal;
 
-    // save anything we need, restore new cursor
+    // save anything we need, restore new cursor and color
     terminal[old_terminal].pos = get_pos();
+    set_attribute(terminal[new_terminal].attribute);
     set_pos(terminal[new_terminal].pos.x, terminal[new_terminal].pos.y);
     set_cursor(0);
 
@@ -210,6 +217,7 @@ void terminal_switch(int new_terminal) {
         save_video_context(old_terminal);
         set_video_context(ACTIVE_CONTEXT);
         clear();
+
         int old_esp, old_ebp;
         __asm__("movl %%esp, %0; movl %%ebp, %1"
                  :"=g"(old_esp), "=g"(old_ebp) /* outputs */
@@ -312,8 +320,6 @@ void do_reg(uint8_t scancode) {
  *   RETURN VALUE: none
  */
 void do_spec(uint8_t scancode) {
-    int i;  /* Loop counter */
-
     /* Depending on the scancode, do the special action for each key */
     switch (scancode) {
         case ENTER:
@@ -322,7 +328,7 @@ void do_spec(uint8_t scancode) {
             putc('\n');
             /* Set kbd_is_read flag so we know it can be read */
             t->kbd_is_read = 1;
-        break;
+            break;
 
         case BACKSPACE:
             /* If we're not at the beginning of the buffer, we can delete */
@@ -342,7 +348,7 @@ void do_spec(uint8_t scancode) {
             set_pos(new_pos.x, new_pos.y);
             putc(' ');
             set_pos(new_pos.x, new_pos.y);
-        break;
+            break;
 
         case CAPS_LOCK:
             /* Toggle the CAPS flag so we know which character array to use */
@@ -351,10 +357,10 @@ void do_spec(uint8_t scancode) {
             } else {
                 caps_active = 1;
             }
-        break;
+            break;
 
         default:
-        break;
+            break;
     }
 }
 

@@ -8,6 +8,8 @@ static int screen_x;
 static int screen_y;
 char* video_mem = (char *)VIDEO;
 
+char cur_attribute = 0x05; /* Initialize current attribute to magenta */
+
 /*
  * set_video_context
  *   DESCRIPTION:  sets which video memory get written to in library functions
@@ -36,11 +38,11 @@ void set_video_context(int context) {
  */
 void save_video_context(int context) {
     if (context == 0) {
-        memcpy(VIDEO_0, VIDEO, VIDEO_SIZE);
+        memcpy((char*)VIDEO_0, (char*)VIDEO, VIDEO_SIZE);
     } else if (context == 1) {
-        memcpy(VIDEO_1, VIDEO, VIDEO_SIZE);
+        memcpy((char*)VIDEO_1, (char*)VIDEO, VIDEO_SIZE);
     } else if (context == 2) {
-        memcpy(VIDEO_2, VIDEO, VIDEO_SIZE);
+        memcpy((char*)VIDEO_2, (char*)VIDEO, VIDEO_SIZE);
     }
 }
 
@@ -53,11 +55,11 @@ void save_video_context(int context) {
  */
 void load_video_context(int context) {
     if (context == 0) {
-        memcpy(VIDEO, VIDEO_0, VIDEO_SIZE);
+        memcpy((char*)VIDEO, (char*)VIDEO_0, VIDEO_SIZE);
     } else if (context == 1) {
-        memcpy(VIDEO, VIDEO_1, VIDEO_SIZE);
+        memcpy((char*)VIDEO, (char*)VIDEO_1, VIDEO_SIZE);
     } else if (context == 2) {
-        memcpy(VIDEO, VIDEO_2, VIDEO_SIZE);
+        memcpy((char*)VIDEO, (char*)VIDEO_2, VIDEO_SIZE);
     }
 }
 
@@ -73,7 +75,7 @@ clear(void)
     int32_t i;
     for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute;
     }
 }
 
@@ -246,7 +248,7 @@ putc(uint8_t c)
         scroll();
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = cur_attribute;
         screen_x++;
 
         /* Check if x is at the end of the line, if yes, go to the next row.
@@ -659,7 +661,7 @@ void scroll(void) {
          */
         for (i = (NUM_ROWS - 1) * NUM_COLS; i < (NUM_ROWS * NUM_COLS); i++) {
             *(uint8_t *)(video_mem + (i << 1)) = ' ';
-            *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+            *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute;
         }
 	}
 }
@@ -738,4 +740,16 @@ void set_cursor(int x) {
 
 	outb(CURSOR_HIGH_REG, CRTC_ADDR_REG);
 	outb((uint8_t)(new_cursor >> 8), CRTC_DATA_REG);
+}
+
+/*
+* set_attribute
+*   DESCRIPTION:  Changes the current attribute being used.
+*	INPUTS:		  attribute - attribute to change to
+*   OUTPUTS:	  none
+*   RETURN VALUE: none
+*	SIDE EFFECTS: Overwrites video memory to change color
+*/
+void set_attribute(char attribute) {
+	cur_attribute = attribute;
 }
