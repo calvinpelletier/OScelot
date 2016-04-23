@@ -177,20 +177,20 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Init syscalls */
 	syscalls_init();
-	
+
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your
 	 * IDT correctly otherwise QEMU will triple fault and simple close
 	 * without showing you any output */
 	printf("Enabling Interrupts\n");
 	sti();
-	
+
 	/* Clear the screen and set screen position for cleanliness */
 	clear();
 	set_pos(0, 0);
 
-	/* Execute the first program (`shell') ... */
-	if (execute("shell")) {
+	/* Execute the first program (`shell') in terminal 0 */
+	if (execute_base_shell(0)) {
 		printf("ERROR: shell failed to run.\n");
 	}
 

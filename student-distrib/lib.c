@@ -6,7 +6,62 @@
 
 static int screen_x;
 static int screen_y;
-static char* video_mem = (char *)VIDEO;
+char* video_mem = (char *)VIDEO;
+
+char cur_attribute = 0x05; /* Initialize current attribute to magenta */
+
+/*
+ * set_video_context
+ *   DESCRIPTION:  sets which video memory get written to in library functions
+ *   INPUTS:       -1 for visible memory, 0-2 for hidden (terminals 0-2)
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ */
+void set_video_context(int context) {
+    if (context == ACTIVE_CONTEXT) {
+        video_mem = (char*)VIDEO;
+    } else if (context == 0) {
+        video_mem = (char*)VIDEO_0;
+    } else if (context == 1) {
+        video_mem = (char*)VIDEO_1;
+    } else if (context == 2) {
+        video_mem = (char*)VIDEO_2;
+    }
+}
+
+/*
+ * save_video_context
+ *   DESCRIPTION:  saves visible memory in hidden memory
+ *   INPUTS:       destination (0-2)
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ */
+void save_video_context(int context) {
+    if (context == 0) {
+        memcpy((char*)VIDEO_0, (char*)VIDEO, VIDEO_SIZE);
+    } else if (context == 1) {
+        memcpy((char*)VIDEO_1, (char*)VIDEO, VIDEO_SIZE);
+    } else if (context == 2) {
+        memcpy((char*)VIDEO_2, (char*)VIDEO, VIDEO_SIZE);
+    }
+}
+
+/*
+ * load_video_context
+ *   DESCRIPTION:  loads hidden memory into visible memory
+ *   INPUTS:       source (0-2)
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ */
+void load_video_context(int context) {
+    if (context == 0) {
+        memcpy((char*)VIDEO, (char*)VIDEO_0, VIDEO_SIZE);
+    } else if (context == 1) {
+        memcpy((char*)VIDEO, (char*)VIDEO_1, VIDEO_SIZE);
+    } else if (context == 2) {
+        memcpy((char*)VIDEO, (char*)VIDEO_2, VIDEO_SIZE);
+    }
+}
 
 /*
 * void clear(void);
@@ -14,14 +69,13 @@ static char* video_mem = (char *)VIDEO;
 *   Return Value: none
 *	Function: Clears video memory
 */
-
 void
 clear(void)
 {
     int32_t i;
     for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute;
     }
 }
 
@@ -194,10 +248,10 @@ putc(uint8_t c)
         scroll();
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = cur_attribute;
         screen_x++;
-        
-        /* Check if x is at the end of the line, if yes, go to the next row. 
+
+        /* Check if x is at the end of the line, if yes, go to the next row.
          * This allows for text wrapping.
          */
         if (screen_x == NUM_COLS) {
@@ -597,7 +651,7 @@ void scroll(void) {
 
     /* If the y position of the text is in the last row, shift the data up */
 	if (screen_y >= NUM_ROWS) {
-		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS), 
+		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS),
 			     2 * (NUM_ROWS - 1) * NUM_COLS);
 
         screen_y--;
@@ -607,7 +661,7 @@ void scroll(void) {
          */
         for (i = (NUM_ROWS - 1) * NUM_COLS; i < (NUM_ROWS * NUM_COLS); i++) {
             *(uint8_t *)(video_mem + (i << 1)) = ' ';
-            *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+            *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute;
         }
 	}
 }
@@ -652,8 +706,8 @@ void set_pos(int x, int y) {
 pos_t get_pos(void) {
     pos_t cur_pos;
 
-    cur_pos.pos_x = screen_x;
-    cur_pos.pos_y = screen_y;
+    cur_pos.x = screen_x;
+    cur_pos.y = screen_y;
 
     return cur_pos;
 }
@@ -669,10 +723,10 @@ pos_t get_pos(void) {
 void set_cursor(int x) {
 	int new_cursor;
 	pos_t cur_cursor;
-	
+
 	/* Get the current cursor position and update the cursor with the offset */
 	cur_cursor = get_pos();
-	new_cursor = cur_cursor.pos_x + x + (cur_cursor.pos_y * NUM_COLS);
+	new_cursor = cur_cursor.x + x + (cur_cursor.y * NUM_COLS);
 
 	// if (x == -1) {
 	// 	set_pos(cur_cursor.pos_x - 1, cur_cursor.pos_y);
@@ -686,4 +740,16 @@ void set_cursor(int x) {
 
 	outb(CURSOR_HIGH_REG, CRTC_ADDR_REG);
 	outb((uint8_t)(new_cursor >> 8), CRTC_DATA_REG);
+}
+
+/*
+* set_attribute
+*   DESCRIPTION:  Changes the current attribute being used.
+*	INPUTS:		  attribute - attribute to change to
+*   OUTPUTS:	  none
+*   RETURN VALUE: none
+*	SIDE EFFECTS: Overwrites video memory to change color
+*/
+void set_attribute(char attribute) {
+	cur_attribute = attribute;
 }

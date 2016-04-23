@@ -20,6 +20,8 @@ uint8_t MAGIC_EXE_NUMS[4] = {0x7f, 0x45, 0x4c, 0x46};
 // GLOBAL VARIABLES
 uint32_t CPID = 0;
 pcb_t processes[MAX_PROCESSES + 1];
+uint32_t active_processes[NUM_TERMINALS]; // active process for each terminal
+uint8_t needs_to_be_halted[NUM_TERMINALS]; // flag for letting the task_switch know that we need to halt an active processes
 
 // File Ops Tables
 int32_t no_read (file_t * file, uint8_t * buf, int32_t nbytes) {
@@ -38,6 +40,8 @@ static fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
 // FUNCTION DECLARATIONS
 void syscalls_init();
+void task_switch();
+int execute_base_shell(unsigned char terminal);
 int32_t halt (uint8_t status);
 int32_t execute (int8_t* command);
 int32_t read (int32_t fd, void* buf, int32_t nbytes);
@@ -70,13 +74,201 @@ void syscalls_init() {
     }
     processes[CPID].fd_array[0].jumptable = &stdin_jumptable;
     processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
-
     processes[CPID].PID = CPID;
     processes[CPID].PPID = 0;
     processes[CPID].running = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
+    processes[CPID].terminal = 0; // so that the first shell is in terminal 0
+
+    // multitasking stuff
+    for (i = 0; i < NUM_TERMINALS; i++) {
+        active_processes[i] = 0;
+        needs_to_be_halted[i] = 0;
+    }
 }
+
+/*
+ * task_switch
+ *   DESCRIPTION:  switches the running task to a different active process
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: context switch
+ */
+void task_switch() {
+    cli();
+
+    // check if we need to halt this process
+    if (needs_to_be_halted[processes[CPID].terminal]) {
+        needs_to_be_halted[processes[CPID].terminal] = 0;
+        exception_halt();
+        return;
+    }
+
+    // find next active process
+    int old_CPID = CPID;
+    int i = processes[old_CPID].terminal;
+    do {
+        i++;
+    } while (active_processes[i % NUM_TERMINALS] == 0);
+    CPID = active_processes[i % NUM_TERMINALS];
+
+    // return if there are no other active processes
+    if (CPID == old_CPID) {
+        return;
+    }
+
+    // adjust video memory
+    if (processes[CPID].terminal == cur_terminal) {
+        set_video_context(ACTIVE_CONTEXT);
+    } else {
+        set_video_context(processes[CPID].terminal);
+    }
+
+    // adjust user mapping into video memory
+    // for old process
+    if (processes[old_CPID].using_video_mem) {
+        if (processes[old_CPID].terminal == cur_terminal) {
+            new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
+        } else {
+            if (processes[old_CPID].terminal == 0) {
+                new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
+            } else if (processes[old_CPID].terminal == 1) {
+                new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
+            } else if (processes[old_CPID].terminal == 2) {
+                new_page_directory_entry(old_CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+            }
+        }
+    }
+    // and new process
+    if (processes[CPID].using_video_mem) {
+        if (processes[CPID].terminal == cur_terminal) {
+            new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO, 0, 3);
+        } else {
+            if (processes[CPID].terminal == 0) {
+                new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_0, 0, 3);
+            } else if (processes[CPID].terminal == 1) {
+                new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_1, 0, 3);
+            } else if (processes[CPID].terminal == 2) {
+                new_page_directory_entry(CPID, USER_PAGE_BOTTOM, VIDEO_2, 0, 3);
+            }
+        }
+    }
+
+    // save esp/ebp
+    int old_esp, old_ebp;
+    __asm__("movl %%esp, %0; movl %%ebp, %1"
+             :"=g"(old_esp), "=g"(old_ebp) /* outputs */
+            );
+    processes[old_CPID].esp_switch = old_esp;
+    processes[old_CPID].ebp_switch = old_ebp;
+
+    /* Write to TSS SS0 and ESP0 fields with new kernel stack info */
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
+
+    // switch page directories
+    swap_pages(CPID);
+
+    // load new esp/ebp and continue executing from new context
+    asm volatile("movl %0, %%ebp;\
+                  movl %1, %%esp;\
+                  sti"
+                  :
+                  : "g"(processes[CPID].ebp_switch), "g"(processes[CPID].esp_switch)
+              );
+    return; // should switch to new context
+}
+
+/*
+ * execute_base_shell
+ *   DESCRIPTION:  starts the base shell in a given terminal
+ *   INPUTS:       terminal number 0-2
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: same as execute
+ */
+int execute_base_shell(unsigned char terminal) {
+    cli();
+
+    int32_t i;
+    uint8_t new_eip[4];
+    uint32_t user_entry;
+
+    // initialize terminal struct
+    terminal_init(terminal);
+
+    /* Create a new PCB for the process and update relevant fields */
+    CPID = 0;
+
+    /* If the current process is running, update CPID to set up next PCB */
+    while (processes[CPID].running) {
+        CPID++;
+        if (CPID > MAX_PROCESSES) {
+            CPID = 0; // reset CPID
+            return -2;       // return value to indicate program found, but could not execute
+        }
+    }
+
+    /* Set file descriptors */
+    for (i = 0; i < MAX_FD; i++) {
+
+        /* FD 0 and FD 1 are stdin and stdout so they should be set to in-use on init */
+        if (i == 0 || i == 1) {
+            processes[CPID].fd_array[i].flags.in_use = 1;
+        } else {
+            processes[CPID].fd_array[i].flags.in_use = 0;
+        }
+    }
+
+    /* Update current process PCB struct fields */
+    processes[CPID].PID = CPID;
+    processes[CPID].PPID = 0; // kernel
+    processes[CPID].running = 1;
+
+    processes[CPID].fd_array[0].jumptable = &stdin_jumptable;
+    processes[CPID].fd_array[1].jumptable = &stdout_jumptable;
+
+    processes[CPID].args[0] = '\0';  // play this safe, null terminate everywhere (in halt, in getargs as well)
+    processes[CPID].args_size = 0;
+
+    // multitasking stuff
+    processes[CPID].active = 1;
+    processes[0].active = 0;
+    processes[CPID].terminal = terminal;
+    active_processes[processes[CPID].terminal] = CPID;
+    processes[CPID].using_video_mem = 0;
+
+    /* Set up paging for current process */
+    new_page_directory(CPID);
+
+    /* Load the file into memory */
+    if (fs_copy("shell", (uint8_t *) EXE_ENTRY_POINT)) {
+        return -1;
+    }
+
+    /* Determine the entry point for the executable */
+    new_eip[0] = *((uint8_t *) EXE_ENTRY_POINT + VIRT_ADDR_BYTE_1);
+    new_eip[1] = *((uint8_t *) EXE_ENTRY_POINT + VIRT_ADDR_BYTE_2);
+    new_eip[2] = *((uint8_t *) EXE_ENTRY_POINT + VIRT_ADDR_BYTE_3);
+    new_eip[3] = *((uint8_t *) EXE_ENTRY_POINT + VIRT_ADDR_BYTE_4);
+
+    user_entry = 0;
+    for (i = 0; i < 4; i ++) {
+        user_entry |= (uint32_t) new_eip[i] << (8*i);
+    }
+
+    /* Write to TSS SS0 and ESP0 fields with new kernel stack info */
+    tss.ss0 = KERNEL_DS;
+    tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
+
+    /* Context switch */
+    kernel_to_user(user_entry);
+
+    return 0;
+}
+
 
 /*
  * halt
@@ -95,9 +287,13 @@ int32_t halt (uint8_t status) {
         close(i);
     }
 
-    /* Set the current process running flag to 0 and update CPID field */
+    /* update process info */
     processes[CPID].running = 0;
+    processes[CPID].active = 0;
+    unsigned char terminal = processes[CPID].terminal;
     CPID = processes[CPID].PPID;
+    active_processes[processes[CPID].terminal] = CPID;
+    processes[CPID].active = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
 
@@ -105,7 +301,7 @@ int32_t halt (uint8_t status) {
     if (CPID == 0) {
         swap_pages(CPID);
         printf("Cannot close last process! Restarting shell...\n");
-        execute("shell");
+        execute_base_shell(terminal);
         return 0;
     } else {
         swap_pages(CPID);
@@ -113,11 +309,20 @@ int32_t halt (uint8_t status) {
     }
 
     uint32_t ret = (uint32_t) status;
-    haltasm(processes[CPID].ebp, processes[CPID].esp, ret);
+    haltasm(processes[CPID].ebp_execute, processes[CPID].esp_execute, ret);
 
     return 0;
 }
 
+/*
+ * exception_halt
+ *   DESCRIPTION:  Terminates a process that raised an exception. This function should never return
+ *                 to the caller.
+ *   INPUTS:       none
+ *   OUTPUTS:      none
+ *   RETURN VALUE: none
+ *   SIDE EFFECTS: Overwrites PCB structs
+ */
 int32_t exception_halt () {
     int32_t i;
 
@@ -128,22 +333,22 @@ int32_t exception_halt () {
 
     /* Set the current process running flag to 0 and update CPID field */
     processes[CPID].running = 0;
+    unsigned char terminal = processes[CPID].terminal;
     CPID = processes[CPID].PPID;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
-
 
     /* If we attempt to halt the last process, we re-launch shell instead */
     if (CPID == 0) {
         swap_pages(CPID);
         printf("Cannot close last process! Restarting shell...\n");
-        execute("shell");
+        execute_base_shell(terminal);
         return 0;
     } else {
         swap_pages(CPID);
         tss.esp0 = PROCESS_KERNEL_STACK_ADDR - (STACK_SIZE*(CPID-1));
     }
-    haltasm(processes[CPID].ebp, processes[CPID].esp, 256);
+    haltasm(processes[CPID].ebp_execute, processes[CPID].esp_execute, 256);
 
     return 0;
 }
@@ -161,6 +366,8 @@ int32_t exception_halt () {
  *   SIDE EFFECTS: Overwrites PCB structs and memory
  */
 int32_t execute (int8_t* command) {
+    cli();
+
     int8_t exename[MAX_FNAME_LEN];
     int32_t i, j;
     int32_t old_CPID;
@@ -192,7 +399,7 @@ int32_t execute (int8_t* command) {
     }
 
     args_size = 0;
-    for (j = i; command[j] != '\0' && j < BUFFER_SIZE - 1;  j++) {
+    for (j = i; command[j] != '\0' && j < (BUFFER_SIZE - i);  j++) {
         if (CPID < MAX_PROCESSES) {
             args[j - i] = command[j];
             args_size++;
@@ -253,6 +460,13 @@ int32_t execute (int8_t* command) {
     processes[CPID].args[args_size] = '\0';  // play this safe, null terminate everywhere (in halt, in getargs as well)
     processes[CPID].args_size = args_size;
 
+    // multitasking stuff
+    processes[CPID].active = 1;
+    processes[old_CPID].active = 0;
+    processes[CPID].terminal = processes[old_CPID].terminal; // inherit from parent
+    active_processes[processes[CPID].terminal] = CPID;
+    processes[CPID].using_video_mem = 0;
+
     /* Set up paging for current process */
     new_page_directory(CPID);
 
@@ -276,8 +490,8 @@ int32_t execute (int8_t* command) {
     __asm__("movl %%esp, %0; movl %%ebp, %1"
              :"=g"(old_esp), "=g"(old_ebp) /* outputs */
             );
-    processes[old_CPID].esp = old_esp;
-    processes[old_CPID].ebp = old_ebp;
+    processes[old_CPID].esp_execute = old_esp;
+    processes[old_CPID].ebp_execute = old_ebp;
 
     /* Write to TSS SS0 and ESP0 fields with new kernel stack info */
     tss.ss0 = KERNEL_DS;
@@ -425,9 +639,29 @@ int32_t vidmap (uint8_t** screenstart) {
         return -1;
     }
 
+    processes[CPID].using_video_mem = 1;
+
     uint32_t user_video_addr = USER_PAGE_BOTTOM;
-    if (new_page_directory_entry(CPID, user_video_addr, VIDEO_MEMORY, 0, 3)) {
-        return -1;
+
+    // map to correct video memory
+    if (processes[CPID].terminal == cur_terminal) {
+        if (new_page_directory_entry(CPID, user_video_addr, VIDEO, 0, 3)) {
+            return -1;
+        }
+    } else {
+        if (processes[CPID].terminal == 0) {
+            if (new_page_directory_entry(CPID, user_video_addr, VIDEO_0, 0, 3)) {
+                return -1;
+            }
+        } else if (processes[CPID].terminal == 1) {
+            if (new_page_directory_entry(CPID, user_video_addr, VIDEO_1, 0, 3)) {
+                return -1;
+            }
+        } else if (processes[CPID].terminal == 2) {
+            if (new_page_directory_entry(CPID, user_video_addr, VIDEO_2, 0, 3)) {
+                return -1;
+            }
+        }
     }
 
     *screenstart = (uint8_t *) user_video_addr;

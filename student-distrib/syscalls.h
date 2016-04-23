@@ -8,6 +8,8 @@
 
 #define MAX_FD        8
 #define MAX_PROCESSES 6
+#define NUM_TERMINALS 3
+
 
 /*
  *	Process Control Block used to describe each process. Contains data
@@ -26,17 +28,29 @@
 
 typedef struct {
 	file_t fd_array[MAX_FD]; // File descriptor array
-	uint32_t PID;            
-	uint32_t PPID;           
-	int32_t esp;
-	int32_t ebp;
-	uint8_t running; // 0 for no, 1 for yes
+	uint32_t PID;
+	uint32_t PPID;
+	int32_t esp_execute;
+	int32_t ebp_execute;
+	int32_t esp_switch;
+	int32_t ebp_switch;
 	int32_t tss_esp0;
     int8_t args[BUFFER_SIZE];
     uint32_t args_size;
+	uint8_t running; // 0 for no, 1 for yes
+	uint8_t active;
+	uint8_t terminal; // 0-2
+	uint8_t using_video_mem;
 } pcb_t;
 
+extern uint32_t CPID;
+extern pcb_t processes[MAX_PROCESSES + 1];
+extern uint32_t active_processes[NUM_TERMINALS];
+extern uint8_t needs_to_be_halted[NUM_TERMINALS];
+
 extern void syscalls_init();
+extern void task_switch();
+extern int execute_base_shell(unsigned char terminal);
 extern void kernel_to_user(uint32_t user_entry);
 extern void haltasm(int32_t ebp, int32_t esp, uint32_t PPID);
 extern int32_t exception_halt ();

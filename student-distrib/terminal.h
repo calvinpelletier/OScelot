@@ -22,19 +22,30 @@
 #define C 			0x2E
 #define LEFT_ARROW  0x4B
 #define RIGHT_ARROW 0x4D
+#define ALT         0x38
+#define F1          0x3B
+#define F2          0x3C
+#define F3          0x3D
 
 #define SHELL_PROMPT_OFFSET 7
 
+#define ATTRIB_0    0x05
+#define ATTRIB_1    0x0C
+#define ATTRIB_2    0x0A
+
+typedef struct {
+    int kbd_is_read;                   // Boolean to determine if the keyboard has been read
+    char buffer[BUFFER_SIZE];          // Keyboard buffer
+    int buf_pos;                       // Current buffer position
+    pos_t pos;                         // pos_t struct to hold the coordinates when changing terminals
+    char attribute;
+} terminal_t;
+
+extern int cur_terminal;
+
 /* Function Declarations */
 void keyboardHandler();
-void do_self(uint8_t  scancode, pos_t cur_position);
-void do_spec(uint8_t  scancode);
-void do_caps(uint8_t  scancode, pos_t cur_position);
-void do_shift(uint8_t  scancode, pos_t cur_position);
-void do_shiftcap(uint8_t  scancode, pos_t cur_position);
-void buf_clear();
-void t_buf_clear(void);
-
+void terminal_init();
 
 extern int32_t terminal_write(file_t * file, uint8_t  * buf, int32_t nbytes);
 extern int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes);

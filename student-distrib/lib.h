@@ -6,9 +6,13 @@
 #define _LIB_H
 
 #define VIDEO    0xB8000
+#define VIDEO_0  0xB9000
+#define VIDEO_1	 0xBA000
+#define VIDEO_2  0xBB000
+#define ACTIVE_CONTEXT -1
 #define NUM_COLS 80
 #define NUM_ROWS 25
-#define ATTRIB   0x7
+#define VIDEO_SIZE 0xFA0
 
 /* Custom defines by group OScelot */
 #define DEBUG_ALL 1
@@ -19,6 +23,10 @@
 #define CRTC_DATA_REG   0x3D5
 
 #include "types.h"
+
+void set_video_context(int context);
+void save_video_context(int context);
+void load_video_context(int context);
 
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
@@ -45,8 +53,8 @@ void test_interrupts();
 
 /* Custom struct by group OScelot */
 typedef struct {
-	int pos_x;
-	int pos_y;
+	int x;
+	int y;
 } pos_t;
 
 /* Custom functions written by group OScelot */
@@ -54,6 +62,7 @@ void scroll(void);
 void set_pos(int x, int y);
 pos_t get_pos(void);
 void set_cursor(int x);
+void set_attribute(char attribute);
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
