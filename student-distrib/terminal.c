@@ -25,11 +25,11 @@ void terminal_init(int num) {
     terminal[num].buf_pos = 0;
     terminal[num].pos.x = 0;
     terminal[num].pos.y = 0;
-    
+
     /* Initialize terminal attribute colors */
     terminal[0].attribute = ATTRIB_0;
-    terminal[1].attribute = ATTRIB_1; 
-    terminal[2].attribute = ATTRIB_2;  
+    terminal[1].attribute = ATTRIB_1;
+    terminal[2].attribute = ATTRIB_2;
 }
 
 /*

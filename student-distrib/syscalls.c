@@ -32,10 +32,10 @@ int32_t no_write(file_t * file, uint8_t * buf, int32_t nbytes) {
     return -1;
 }
 
-fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
-fileops_t stdin_jumptable = {terminal_open, terminal_read, no_write, terminal_close};
-fileops_t stdout_jumptable = {terminal_open, no_read, terminal_write, terminal_close};
-fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
+static fileops_t fs_jumptable = {fs_open, fs_read, fs_write, fs_close};
+static fileops_t stdin_jumptable = {terminal_open, terminal_read, no_write, terminal_close};
+static fileops_t stdout_jumptable = {terminal_open, no_read, terminal_write, terminal_close};
+static fileops_t rtc_jumptable = {rtc_open, rtc_read, rtc_write, rtc_close};
 
 
 // FUNCTION DECLARATIONS
@@ -515,7 +515,7 @@ int32_t execute (int8_t* command) {
  *   SIDE EFFECTS: Can overwrite different buffers depending on which jump table is used
  */
 int32_t read (int32_t fd, void* buf, int32_t nbytes) {
-    if (fd < 0 || fd > MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
+    if (fd < 0 || fd >= MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
 
     return processes[CPID].fd_array[fd].jumptable->read(&processes[CPID].fd_array[fd], buf, nbytes);
@@ -532,7 +532,7 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes) {
  *   SIDE EFFECTS: Can overwrite different buffers depending on which jump table is used
  */
 int32_t write (int32_t fd, void* buf, int32_t nbytes) {
-    if (fd < 0 || fd > MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
+    if (fd < 0 || fd >= MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
 
     return processes[CPID].fd_array[fd].jumptable->write(&processes[CPID].fd_array[fd], buf, nbytes);
@@ -550,6 +550,9 @@ int32_t write (int32_t fd, void* buf, int32_t nbytes) {
 int32_t open (const int8_t* filename) {
     dentry_t dentry;
     int32_t i;
+
+    if (!filename)
+        return -1; // NULL
 
     if (read_dentry_by_name(filename, &dentry))
         return -1;
@@ -591,7 +594,7 @@ int32_t open (const int8_t* filename) {
 int32_t close (int32_t fd) {
 
     /* The user should not be able to close FD 0 or 1 */
-    if (fd < 2 || fd > (MAX_FD - 1) || processes[CPID].fd_array[fd].flags.in_use == 0)
+    if (fd < 2 || fd >= MAX_FD || processes[CPID].fd_array[fd].flags.in_use == 0)
         return -1;
 
     processes[CPID].fd_array[fd].flags.in_use = 0;
@@ -608,12 +611,12 @@ int32_t close (int32_t fd) {
  *   SIDE EFFECTS: Overwrites PCB structs
  */
 int32_t getargs (int8_t* buf, int32_t nbytes) {
-    if (buf == NULL) {
+    if (buf == NULL || processes[CPID].args_size >= (nbytes-1)) {
         return -1;
     }
 
     memset(buf, 0, nbytes);
-    memcpy(buf, processes[CPID].args, nbytes);
+    memcpy(buf, processes[CPID].args, processes[CPID].args_size);
     buf[processes[CPID].args_size] = '\0';
 
     return 0;
