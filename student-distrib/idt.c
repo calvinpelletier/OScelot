@@ -112,6 +112,10 @@ void idt_init() {
     SET_IDT_ENTRY(kb, keyboardHandler_wrapper);
     idt[33] = kb;
 
+    idt_desc_t pit = the_idt_desc;
+    SET_IDT_ENTRY(pit, pitHandler_wrapper);
+    idt[32] = pit;
+
     the_idt_desc.reserved3 = 1;
     the_idt_desc.dpl = 3;
 

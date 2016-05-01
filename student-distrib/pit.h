@@ -6,7 +6,7 @@
 #include "types.h"
 
 // GLOBAL FUNCTIONS
-void pit_init(void);
-void pit_handler(void);
+extern void pit_init(void);
+extern void pitHandler(void);
 
 #endif
