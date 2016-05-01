@@ -39,9 +39,6 @@ void rtc_init(void) {
         interrupt_flag[i] = 0;
     }
 
-    // set kernel interrupt frequency
-    active_freq[0] = 32;
-
     // initialize rtc chip
     outb(0x8B, RTC_ADDR); // address register 0x0B and disable NMIs (0x80)
     uint8_t  temp = inb(RTC_DATA); // read register 0x0B
@@ -86,15 +83,6 @@ void rtcHandler(void) {
             }
         }
         mask = mask << 1;
-    }
-
-    // check if the kernel interrupt flag is up
-    // if so, task switch
-    if ((CPID != 0) && interrupt_flag[0]) {
-        interrupt_flag[0] = 0;
-        send_eoi(RTC_IRQ_NUM);
-        enable_irq(RTC_IRQ_NUM);
-        task_switch();
     }
 
     send_eoi(RTC_IRQ_NUM);

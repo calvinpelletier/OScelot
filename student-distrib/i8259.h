@@ -11,6 +11,7 @@
 // useful IRQ numbers
 #define RTC_IRQ_NUM      8
 #define KEYBOARD_IRQ_NUM 1
+#define PIT_IRQ_NUM      0
 #define SLAVE_IRQ_NUM    2
 
 /* Externally-visible functions */
