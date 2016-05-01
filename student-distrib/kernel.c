@@ -13,6 +13,7 @@
 #include "idt.h"
 #include "filesys.h"
 #include "syscalls.h"
+#include "pit.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -177,6 +178,9 @@ entry (unsigned long magic, unsigned long addr)
 
 	/* Init syscalls */
 	syscalls_init();
+
+	// init PIT
+	pit_init();
 
 	/* Enable interrupts */
 	/* Do not enable the following until after you have set up your

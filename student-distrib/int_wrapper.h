@@ -23,5 +23,6 @@ extern void machineCheck_wrapper();
 extern void simdFloatingPointException_wrapper();
 extern void rtcHandler_wrapper();
 extern void keyboardHandler_wrapper();
+extern void pitHandler_wrapper();
 
 #endif

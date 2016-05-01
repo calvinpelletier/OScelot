@@ -20,6 +20,7 @@
 .globl simdFloatingPointException_wrapper
 .globl rtcHandler_wrapper
 .globl keyboardHandler_wrapper
+.globl pitHandler_wrapper
 .align 4
 
 divideByZero_wrapper:
@@ -560,6 +561,31 @@ _keyboardHandler_wrapper:
     pushl   %edi
     pushl   %ebp
     call	keyboardHandler
+    popl    %ebp
+    popl    %edi
+    popl    %esi
+    popl    %edx
+    popl    %ecx
+    popl    %ebx
+    popl    %eax
+    popl    %ds
+    popl    %es
+    sti
+    iret
+
+pitHandler_wrapper:
+_pitHandler_wrapper:
+    cli
+    pushl   %es
+    pushl   %ds
+    pushl   %eax
+    pushl   %ebx
+    pushl   %ecx
+    pushl   %edx
+    pushl   %esi
+    pushl   %edi
+    pushl   %ebp
+    call	pitHandler
     popl    %ebp
     popl    %edi
     popl    %esi
