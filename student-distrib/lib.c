@@ -3,12 +3,26 @@
  */
 
 #include "lib.h"
+#include "syscalls.h"
+#include "terminal.h"
 
-static int screen_x;
-static int screen_y;
+static int screen_x[NUM_TERMINALS];
+static int screen_y[NUM_TERMINALS];
 char* video_mem = (char *)VIDEO;
 
 char cur_attribute = 0x05; /* Initialize current attribute to magenta */
+
+int get_screen_xy_idx(void) {
+    if (video_mem == (char*)VIDEO_0) {
+        return 0;
+    } else if (video_mem == (char*)VIDEO_1) {
+        return 1;
+    } else if (video_mem == (char*)VIDEO_2) {
+        return 2;
+    } else {
+        return cur_terminal;
+    }
+}
 
 /*
  * set_video_context
@@ -241,26 +255,26 @@ void
 putc(uint8_t c)
 {
     if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x=0;
+        screen_y[get_screen_xy_idx()]++;
+        screen_x[get_screen_xy_idx()]=0;
 
         /* If c is a newline or carriage return, scroll the screen */
         scroll();
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1) + 1) = cur_attribute;
-        screen_x++;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[get_screen_xy_idx()] + screen_x[get_screen_xy_idx()]) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[get_screen_xy_idx()] + screen_x[get_screen_xy_idx()]) << 1) + 1) = cur_attribute;
+        screen_x[get_screen_xy_idx()]++;
 
         /* Check if x is at the end of the line, if yes, go to the next row.
          * This allows for text wrapping.
          */
-        if (screen_x == NUM_COLS) {
-            screen_y++;
+        if (screen_x[get_screen_xy_idx()] == NUM_COLS) {
+            screen_y[get_screen_xy_idx()]++;
             scroll();
         }
 
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        screen_x[get_screen_xy_idx()] %= NUM_COLS;
+        screen_y[get_screen_xy_idx()] = (screen_y[get_screen_xy_idx()] + (screen_x[get_screen_xy_idx()] / NUM_COLS)) % NUM_ROWS;
         set_cursor(0);
     }
 }
@@ -650,11 +664,11 @@ void scroll(void) {
     int32_t i;
 
     /* If the y position of the text is in the last row, shift the data up */
-	if (screen_y >= NUM_ROWS) {
+	if (screen_y[get_screen_xy_idx()] >= NUM_ROWS) {
 		memmove((uint8_t *)video_mem, (uint8_t *)(video_mem + 2 * NUM_COLS),
 			     2 * (NUM_ROWS - 1) * NUM_COLS);
 
-        screen_y--;
+        screen_y[get_screen_xy_idx()]--;
 
         /* Similar to clear(), but instead of clearing the whole video memory,
          * this will only clear the last row of video memory.
@@ -690,8 +704,8 @@ void set_pos(int x, int y) {
         y--;
     }
 
-    screen_x = x;
-    screen_y = y;
+    screen_x[get_screen_xy_idx()] = x;
+    screen_y[get_screen_xy_idx()] = y;
 }
 
 /*
@@ -700,14 +714,14 @@ void set_pos(int x, int y) {
  *                 the pos_t struct.
  *   INPUTS:       none
  *   OUTPUTS:      none
- *   RETURN VALUE: a struct with screen_x and screen_y as the pos_x and pos_y values
+ *   RETURN VALUE: a struct with screen_x[get_screen_xy_idx()] and screen_y[get_screen_xy_idx()] as the pos_x and pos_y values
  *   SIDE EFFECTS: Creates a new pos_t struct
  */
 pos_t get_pos(void) {
     pos_t cur_pos;
 
-    cur_pos.x = screen_x;
-    cur_pos.y = screen_y;
+    cur_pos.x = screen_x[get_screen_xy_idx()];
+    cur_pos.y = screen_y[get_screen_xy_idx()];
 
     return cur_pos;
 }
@@ -723,6 +737,10 @@ pos_t get_pos(void) {
 void set_cursor(int x) {
 	int new_cursor;
 	pos_t cur_cursor;
+
+    if (video_mem != (char*)VIDEO) {
+        return;
+    }
 
 	/* Get the current cursor position and update the cursor with the offset */
 	cur_cursor = get_pos();

@@ -213,9 +213,9 @@ void terminal_switch(int new_terminal) {
     cur_terminal = new_terminal;
 
     // save anything we need, restore new cursor and color
-    terminal[old_terminal].pos = get_pos();
+    // terminal[old_terminal].pos = get_pos();
     set_attribute(terminal[new_terminal].attribute);
-    set_pos(terminal[new_terminal].pos.x, terminal[new_terminal].pos.y);
+    // set_pos(terminal[new_terminal].pos.x, terminal[new_terminal].pos.y);
     set_cursor(0);
 
     // check if we need to load the base shell
