@@ -102,6 +102,9 @@ void task_switch() {
     // check if we need to halt this process
     if (needs_to_be_halted[processes[CPID].terminal]) {
         needs_to_be_halted[processes[CPID].terminal] = 0;
+        clear();
+        set_pos(0, 0);
+        puts("391OS> ");
         exception_halt();
         return;
     }
