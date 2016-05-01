@@ -38,7 +38,6 @@ typedef struct {
     char buffer[BUFFER_SIZE];          // Keyboard buffer
     int buf_pos;                       // Current buffer position
     pos_t pos;                         // pos_t struct to hold the coordinates when changing terminals
-    char attribute;
 } terminal_t;
 
 extern int cur_terminal;

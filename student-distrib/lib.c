@@ -10,7 +10,7 @@ static int screen_x[NUM_TERMINALS];
 static int screen_y[NUM_TERMINALS];
 char* video_mem = (char *)VIDEO;
 
-char cur_attribute = 0x05; /* Initialize current attribute to magenta */
+char attributes[NUM_TERMINALS] = {0x05, 0x05, 0x05}; /* Initialize current attribute to magenta */
 
 int get_screen_xy_idx(void) {
     if (video_mem == (char*)VIDEO_0) {
@@ -22,6 +22,10 @@ int get_screen_xy_idx(void) {
     } else {
         return cur_terminal;
     }
+}
+
+char cur_attribute(void) {
+    return attributes[get_screen_xy_idx()];
 }
 
 /*
@@ -89,7 +93,7 @@ clear(void)
     int32_t i;
     for(i=0; i<NUM_ROWS*NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute;
+        *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute();
     }
 }
 
@@ -262,7 +266,7 @@ putc(uint8_t c)
         scroll();
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[get_screen_xy_idx()] + screen_x[get_screen_xy_idx()]) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[get_screen_xy_idx()] + screen_x[get_screen_xy_idx()]) << 1) + 1) = cur_attribute;
+        *(uint8_t *)(video_mem + ((NUM_COLS*screen_y[get_screen_xy_idx()] + screen_x[get_screen_xy_idx()]) << 1) + 1) = cur_attribute();
         screen_x[get_screen_xy_idx()]++;
 
         /* Check if x is at the end of the line, if yes, go to the next row.
@@ -675,7 +679,7 @@ void scroll(void) {
          */
         for (i = (NUM_ROWS - 1) * NUM_COLS; i < (NUM_ROWS * NUM_COLS); i++) {
             *(uint8_t *)(video_mem + (i << 1)) = ' ';
-            *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute;
+            *(uint8_t *)(video_mem + (i << 1) + 1) = cur_attribute();
         }
 	}
 }
@@ -768,6 +772,6 @@ void set_cursor(int x) {
 *   RETURN VALUE: none
 *	SIDE EFFECTS: Overwrites video memory to change color
 */
-void set_attribute(char attribute) {
-	cur_attribute = attribute;
+void set_attribute(char attribute, int terminal) {
+	attributes[terminal] = attribute;
 }

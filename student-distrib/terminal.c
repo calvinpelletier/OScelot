@@ -27,9 +27,9 @@ void terminal_init(int num) {
     terminal[num].pos.y = 0;
 
     /* Initialize terminal attribute colors */
-    terminal[0].attribute = ATTRIB_0;
-    terminal[1].attribute = ATTRIB_1;
-    terminal[2].attribute = ATTRIB_2;
+    set_attribute(ATTRIB_0, 0);
+    set_attribute(ATTRIB_1, 1);
+    set_attribute(ATTRIB_2, 2);
 }
 
 /*
@@ -214,7 +214,7 @@ void terminal_switch(int new_terminal) {
 
     // save anything we need, restore new cursor and color
     // terminal[old_terminal].pos = get_pos();
-    set_attribute(terminal[new_terminal].attribute);
+    // set_attribute(terminal[new_terminal].attribute);
     // set_pos(terminal[new_terminal].pos.x, terminal[new_terminal].pos.y);
     set_cursor(0);
 
