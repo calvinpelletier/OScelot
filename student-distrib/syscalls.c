@@ -333,8 +333,11 @@ int32_t exception_halt () {
 
     /* Set the current process running flag to 0 and update CPID field */
     processes[CPID].running = 0;
+    processes[CPID].active = 0;
     unsigned char terminal = processes[CPID].terminal;
     CPID = processes[CPID].PPID;
+    active_processes[processes[CPID].terminal] = CPID;
+    processes[CPID].active = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
 
