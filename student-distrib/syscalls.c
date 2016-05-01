@@ -283,6 +283,8 @@ int execute_base_shell(unsigned char terminal) {
  *   SIDE EFFECTS: Overwrites PCB structs
  */
 int32_t halt (uint8_t status) {
+    cli();
+
     int32_t i;
 
     /* Close all file descriptors */
@@ -295,7 +297,11 @@ int32_t halt (uint8_t status) {
     processes[CPID].active = 0;
     unsigned char terminal = processes[CPID].terminal;
     CPID = processes[CPID].PPID;
-    active_processes[processes[CPID].terminal] = CPID;
+    if (CPID == 0) {
+        active_processes[terminal] = CPID;
+    } else {
+        active_processes[processes[CPID].terminal] = CPID;
+    }
     processes[CPID].active = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
@@ -327,6 +333,8 @@ int32_t halt (uint8_t status) {
  *   SIDE EFFECTS: Overwrites PCB structs
  */
 int32_t exception_halt () {
+    cli();
+
     int32_t i;
 
     /* Close all file descriptors */
@@ -339,7 +347,11 @@ int32_t exception_halt () {
     processes[CPID].active = 0;
     unsigned char terminal = processes[CPID].terminal;
     CPID = processes[CPID].PPID;
-    active_processes[processes[CPID].terminal] = CPID;
+    if (CPID == 0) {
+        active_processes[terminal] = CPID;
+    } else {
+        active_processes[processes[CPID].terminal] = CPID;
+    }
     processes[CPID].active = 1;
     processes[CPID].args[0] = '\0';
     processes[CPID].args_size = 0;
