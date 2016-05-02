@@ -414,7 +414,7 @@ int32_t terminal_read(file_t * file, uint8_t * buf, int32_t nbytes) {
     }
 
     /* Whatever is in the terminal buffer goes into the input buffer */
-    while (i < nbytes && i < terminal[processes[CPID].terminal].buf_pos) {
+    while (i < nbytes && i <= terminal[processes[CPID].terminal].buf_pos) {
         buf[i] = terminal[processes[CPID].terminal].buffer[i];
         num_bytes++;
         i++;
