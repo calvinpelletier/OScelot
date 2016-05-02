@@ -1,0 +1,38 @@
+TOTAL:
+Nachiket Joshi - 48 commits, 1464 lines of code written, 910 deleted.
+Calvin Pelletier - 94 commits, 3902 lines of code written (7649 total minus 3747 for initial commit), 1987 deleted.
+John Ryan - 42 commits, 1341 lines of code written, 930 deleted.
+Michael Salceda - 33 commits, 1620 lines of code written, 768 deleted.
+
+CHECKPOINT 1:
+GDT - John
+Interrupts - Nackiket
+PIC - Calvin
+Keyboard/RTC Initialization - Calvin
+Paging - John, Calvin
+Debugging - Calvin, Nachiket, John
+
+CHECKPOINT 2:
+Terminal - Michael
+RTC - Nachiket
+File System - John, Calvin
+Debugging - Nachiket
+
+CHECKPOINT 3/4:
+System Calls - John, Nachiket, Calvin, Michael
+Tasks - John, Nachiket, Calvin, Michael
+Loader - John, Nachiket, Calvin, Michael
+Executing User Code - John, Nachiket, Calvin, Michael
+PCB - John, Nachiket, Calvin, Michael
+Debugging - John
+
+CHECKPOINT 4:
+Debugging - John, Michael, Nachiket
+
+CHECKPOINT 5:
+Multiple Terminals - Calvin
+Scheduling - Calvin
+Debugging - Calvin
+
+ETC:
+Bug Log - Nachiket
