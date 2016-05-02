@@ -114,6 +114,10 @@ int32_t rtc_open()
  */
 int32_t rtc_read(file_t * file, uint8_t *buf, int32_t nbytes)
 {
+    if (!active_freq[CPID]) {
+        return 0;
+    }
+
     while(!interrupt_flag[CPID]) {
         sti();
     }
