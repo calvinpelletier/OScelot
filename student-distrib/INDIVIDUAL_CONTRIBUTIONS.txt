@@ -6,7 +6,7 @@ Michael Salceda - 33 commits, 1620 lines of code written, 768 deleted.
 
 CHECKPOINT 1:
 GDT - John
-Interrupts - Nackiket
+Interrupts - Nachiket
 PIC - Calvin
 Keyboard/RTC Initialization - Calvin
 Paging - John, Calvin
