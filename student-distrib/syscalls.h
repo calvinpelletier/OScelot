@@ -9,6 +9,12 @@
 #define MAX_FD        8
 #define MAX_PROCESSES 6
 #define NUM_TERMINALS 3
+#define NUM_SIGNALS   5
+#define SIG_DIVZERO   0
+#define SIG_SEGFAULT  1
+#define SIG_INTERRUPT 2
+#define SIG_ALARM     3
+#define SIG_USER1     4
 
 
 /*
@@ -41,12 +47,13 @@ typedef struct {
 	uint8_t active;
 	uint8_t terminal; // 0-2
 	uint8_t using_video_mem;
+	void* sig_handlers[NUM_SIGNALS];
+	uint8_t sig_flags[NUM_SIGNALS];
 } pcb_t;
 
 extern uint32_t CPID;
 extern pcb_t processes[MAX_PROCESSES + 1];
 extern uint32_t active_processes[NUM_TERMINALS];
-extern uint8_t needs_to_be_halted[NUM_TERMINALS];
 
 extern void syscalls_init();
 extern void task_switch();

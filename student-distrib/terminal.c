@@ -154,14 +154,9 @@ void keyboardHandler(void) {
         /* Clear the whole buffer */
         t->buf_pos = 0;
 
-        if (CPID == active_processes[cur_terminal]) {
-            send_eoi(KEYBOARD_IRQ_NUM);
-            enable_irq(KEYBOARD_IRQ_NUM);
-            exception_halt();
-        } else {
-            // so that the process in the current terminal is halted next time it receives processor time
-            needs_to_be_halted[cur_terminal] = 1;
-        }
+        send_eoi(KEYBOARD_IRQ_NUM);
+        enable_irq(KEYBOARD_IRQ_NUM);
+        exception_halt();
 
     /* Handles the special key combo of CTRL-L which
      * clears the screen except for the terminal buffer.

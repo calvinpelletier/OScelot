@@ -5,6 +5,7 @@
 #include "x86_desc.h"
 #include "paging.h"
 #include "syscalls_asm.h"
+#include "terminal.h"
 
 // CONSTANTS
 #define PROCESS_KERNEL_STACK_ADDR 0x007ffffc // Last location in kernel page that is accessable
@@ -223,6 +224,11 @@ int execute_base_shell(unsigned char terminal) {
         } else {
             processes[CPID].fd_array[i].flags.in_use = 0;
         }
+    }
+
+    // set signal handlers
+    for (i = 0; i < NUM_SIGNALS; i++) {
+        processes[CPID].signal_handlers[i] = NULL;
     }
 
     /* Update current process PCB struct fields */
@@ -466,6 +472,11 @@ int32_t execute (int8_t* command) {
         }
     }
 
+    // set signal handlers
+    for (i = 0; i < NUM_SIGNALS; i++) {
+        processes[CPID].signal_handlers[i] = NULL;
+    }
+
     /* Update current process PCB struct fields */
     processes[CPID].PID = CPID;
     processes[CPID].PPID = old_CPID;
@@ -687,6 +698,35 @@ int32_t vidmap (uint8_t** screenstart) {
     return 0;
 }
 
+// SIGNAL STUFF
+void sighandler(int signum) {
+    cli();
+
+    // check if there is a user defined handler
+    if (processes[CPID].sig_handlers[signum]) {
+        if (CPID == active_processes[cur_terminal]) {
+
+        } else {
+            processes[CPID].sig_flags[signum] = 1;
+        }
+    } else {
+        // perform default actions
+        if (signum == SIG_DIVZERO) {
+            exception_halt();
+        } else if (signum == SIG_SEGFAULT) {
+            exception_halt();
+        } else if (signum == SIG_INTERRUPT) {
+            if (CPID == active_processes[cur_terminal]) {
+                exception_halt();
+            } else {
+                processes[CPID].sig_flags[signum] = 1;
+            }
+        }
+    }
+
+    sti();
+}
+
 /*
  * set_handler
  *   DESCRIPTION:  does nothing
@@ -696,7 +736,7 @@ int32_t vidmap (uint8_t** screenstart) {
  *   SIDE EFFECTS: none
  */
 int32_t set_handler (int32_t signum, void* handler_address) {
-    return -1;
+    processes[CPID].sig_handlers[signum] = handler_address;
 }
 
 /*

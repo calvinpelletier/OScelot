@@ -1,5 +1,6 @@
 #include "kernel_handlers.h"
 #include "lib.h"
+#include "syscalls.h"
 
 void divideByZero()
 {
@@ -105,10 +106,10 @@ void pageFault()
     uint32_t error_code;
     uint32_t bitmask;
 
-    asm volatile("movl %%cr2, %0;" 
-                "movl (%%esp), %%eax;" 
+    asm volatile("movl %%cr2, %0;"
+                "movl (%%esp), %%eax;"
                 "movl %%eax, %1"
-                :"=r" (cr2), "=r" (error_code)              
+                :"=r" (cr2), "=r" (error_code)
                 );
 
     bitmask = 0x00000001;
